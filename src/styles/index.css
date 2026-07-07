@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────
+   Palette — deep night sky + neon arcade accents.
+   Single source of truth: tailwind.config.js maps these variables
+   to utility classes (bg-night, text-neon, …).
+   ───────────────────────────────────────────────────────────────── */
+:root {
+  --night: #0b1026;       /* deep night-sky background */
+  --panel: #141b3c;       /* UI panel surface */
+  --panel-2: #1d2650;     /* raised panel / hover surface */
+  --neon: #39ff88;        /* neon green — primary accent, XP, success */
+  --pix-purple: #a06bff;  /* purple — magic, links, secondary accent */
+  --pix-yellow: #ffd93d;  /* yellow — coins, stars, highlights */
+  --pix-orange: #ff8a3d;  /* warm orange — streaks, warnings, fire */
+  --danger: #ff5d5d;      /* bugs, errors, wrong answers */
+  --ink: #e6e9ff;         /* main text on dark */
+  --ink-dim: #9aa3d1;     /* secondary text */
+}
+
+@layer base {
+  html {
+    background: var(--night);
+    scrollbar-color: var(--panel-2) var(--night);
+  }
+  body {
+    @apply bg-night font-body text-ink antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-pixel;
+    line-height: 1.6;
+  }
+  :focus-visible {
+    outline: 3px solid var(--pix-yellow);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--pix-purple);
+    color: var(--night);
+  }
+}
+
+@layer components {
+  /* Chunky pixel panel: hard 4px border + offset shadow, no rounding */
+  .pixel-panel {
+    @apply border-4 bg-panel p-4;
+    border-color: var(--panel-2);
+    box-shadow: 6px 6px 0 0 rgb(0 0 0 / 0.45);
+    image-rendering: pixelated;
+  }
+
+  .pixel-btn {
+    @apply inline-block cursor-pointer select-none border-4 bg-panel-2 px-4 py-3 font-pixel text-xs text-ink;
+    border-color: var(--neon);
+    box-shadow: 4px 4px 0 0 rgb(0 0 0 / 0.45);
+    transition: transform 80ms ease, box-shadow 80ms ease;
+  }
+  .pixel-btn:hover { @apply bg-panel; }
+  .pixel-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 rgb(0 0 0 / 0.45);
+  }
+  .pixel-btn--warn { border-color: var(--pix-orange); }
+  .pixel-btn--danger { border-color: var(--danger); }
+
+  /* XP bar: track + fill, sized by inline width % */
+  .xp-track {
+    @apply h-5 w-full border-4 bg-night;
+    border-color: var(--panel-2);
+  }
+  .xp-fill {
+    @apply h-full;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--neon) 0px,
+      var(--neon) 8px,
+      #2fdd75 8px,
+      #2fdd75 16px
+    );
+    transition: width 300ms steps(8);
+  }
+}
+
+/* Accessibility: kill heavy motion for users who ask for it (gate H3) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
