@@ -50,11 +50,17 @@ export default function BugsyChat() {
   const [busy, setBusy] = useState(false)
   const panelRef = useRef(null)
   const logRef = useRef(null)
+  const inputRef = useRef(null)
   useFocusTrap(panelRef, chatOpen, () => setChatOpen(false))
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight })
   }, [messages, busy])
+
+  // land the cursor in the message box, not on the close button
+  useEffect(() => {
+    if (chatOpen) setTimeout(() => inputRef.current?.focus(), 60)
+  }, [chatOpen])
 
   const capped = chatMessageCount >= CHAT_LIMITS.maxMessages
 
@@ -118,13 +124,23 @@ export default function BugsyChat() {
             aria-modal="true"
             aria-label="Chat with Bugsy"
             tabIndex={-1}
-            className="pixel-panel fixed bottom-20 right-2 z-40 flex h-[70vh] max-h-[560px] w-[min(24rem,calc(100vw-1rem))] flex-col !p-3"
+            className="pixel-panel fixed bottom-20 right-2 z-40 flex h-[min(70vh,560px)] w-[min(24rem,calc(100vw-1rem))] flex-col !border-neon !p-3"
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
           >
             <header className="mb-2 flex items-center justify-between border-b-4 border-panel-2 pb-2">
-              <p className="font-pixel text-[10px] text-neon">🐞 BUGSY — AI SIDEKICK</p>
+              <p className="font-pixel text-[10px] text-neon">
+                <motion.span
+                  className="inline-block"
+                  animate={{ y: [0, -3, 0], rotate: [0, -8, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.8 }}
+                  aria-hidden="true"
+                >
+                  🐞
+                </motion.span>{' '}
+                BUGSY — AI SIDEKICK
+              </p>
               <button
                 className="pixel-btn pixel-btn--danger !px-2 !py-1 !text-[10px]"
                 onClick={() => {
@@ -177,6 +193,7 @@ export default function BugsyChat() {
               <label className="sr-only" htmlFor="bugsy-input">Message Bugsy</label>
               <input
                 id="bugsy-input"
+                ref={inputRef}
                 value={input}
                 maxLength={CHAT_LIMITS.maxLength}
                 onChange={(e) => setInput(e.target.value)}

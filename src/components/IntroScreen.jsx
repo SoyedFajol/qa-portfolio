@@ -23,7 +23,27 @@ export default function IntroScreen() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <p aria-hidden="true" className="text-5xl">🐞</p>
+      {/* drifting pixel sprites */}
+      {['⭐', '👾', '🍄', '🗡️', '💎', '⭐', '🏆', '🎮'].map((e, i) => (
+        <motion.span
+          key={i}
+          aria-hidden="true"
+          className="pointer-events-none absolute text-2xl opacity-40"
+          style={{ left: `${8 + i * 11.5}%`, top: `${12 + ((i * 29) % 70)}%` }}
+          animate={{ y: [0, i % 2 ? -18 : 14, 0], rotate: [0, i % 2 ? 12 : -12, 0] }}
+          transition={{ repeat: Infinity, duration: 3.5 + (i % 3), ease: 'easeInOut' }}
+        >
+          {e}
+        </motion.span>
+      ))}
+      <motion.p
+        aria-hidden="true"
+        className="text-5xl"
+        animate={{ y: [0, -10, 0] }}
+        transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+      >
+        🐞
+      </motion.p>
       <div>
         <h1 className="text-sm leading-relaxed text-pix-yellow sm:text-xl">
           <Typewriter text={PROFILE.name.toUpperCase()} speed={45} onDone={() => setNameDone(true)} />

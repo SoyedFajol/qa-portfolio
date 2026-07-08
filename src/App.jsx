@@ -90,23 +90,23 @@ function GameWorld() {
         />
       </Suspense>
 
-      {/* the invisible track the player scrolls along */}
-      <div style={{ height: `${SCROLL_PAGES * 100}vh` }} aria-hidden="true" />
+      {/* the track the player scrolls along; footer waits at the very end */}
+      <div className="relative" style={{ height: `${SCROLL_PAGES * 100}vh` }}>
+        <footer className="absolute inset-x-0 bottom-6 z-10 px-4 text-center font-body text-xs text-ink-dim">
+          <p className="font-pixel text-[9px] text-neon">— END OF PATH · THANKS FOR PLAYING —</p>
+          <p className="mt-3">
+            <a className="underline hover:text-ink" href="/privacy">Privacy</a>
+            {' · '}
+            <a className="underline hover:text-ink" href="/terms">Terms</a>
+            {' · '}
+            <a className="underline hover:text-ink" href="mailto:soyedmdsolemanfajul@gmail.com?subject=🐞 Bug report — qa-portfolio">
+              🐞 Report a bug
+            </a>
+          </p>
+        </footer>
+      </div>
 
-      {/* scroll hint + end-of-path footer live on the track */}
       <ScrollHint progressRef={progressRef} />
-      <footer className="absolute bottom-4 left-0 right-0 z-10 text-center font-body text-xs text-ink-dim">
-        <p className="font-pixel text-[9px] text-neon">— END OF PATH · THANKS FOR PLAYING —</p>
-        <p className="mt-3">
-          <a className="underline hover:text-ink" href="/privacy">Privacy</a>
-          {' · '}
-          <a className="underline hover:text-ink" href="/terms">Terms</a>
-          {' · '}
-          <a className="underline hover:text-ink" href="mailto:soyedmdsolemanfajul@gmail.com?subject=🐞 Bug report — qa-portfolio">
-            🐞 Report a bug
-          </a>
-        </p>
-      </footer>
     </>
   )
 }

@@ -26,6 +26,11 @@ function Checkpoint({ section, side, visited, onOpen }) {
         <boxGeometry args={[0.9, 0.5, 0.9]} />
         <meshStandardMaterial color="#1d2650" />
       </mesh>
+      {/* light beam rising into the sky */}
+      <mesh position={[0, 5.5, 0]}>
+        <cylinderGeometry args={[0.28, 0.42, 10, 8, 1, true]} />
+        <meshBasicMaterial color={color} transparent opacity={hover ? 0.16 : 0.07} depthWrite={false} />
+      </mesh>
       {/* floating crystal — the clickable "level" */}
       <mesh
         ref={crystal}
