@@ -21,6 +21,13 @@ export default [
     },
   },
   {
+    // server-only shared modules (imported by /api, never by the frontend)
+    files: ['lib/ai.js', 'lib/rateLimit.js'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
+  {
     files: ['api/**/*.js', 'tests/**/*.js', '*.config.js', 'scripts/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,

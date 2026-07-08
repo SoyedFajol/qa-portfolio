@@ -1,80 +1,211 @@
-// Phase 1 scaffold screen: proves palette, fonts, store, persistence and the
-// shared profile module are wired. Replaced by the 3D world in Phase 2.
+// App shell: routes the static pages, gates the game behind PRESS START,
+// renders the 3D world (or the flat fallback), and mounts every overlay.
 
-import { PROFILE } from './data/profile'
+import { lazy, Suspense, useEffect, useRef } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { Analytics } from '@vercel/analytics/react'
+
+import { sectionById } from './data/sections'
 import { useGameStore } from './store/useGameStore'
-import { rankForLevel, progressToNext } from './game/progression'
+import { useUiStore } from './store/useUiStore'
+import { visitSection } from './game/rewards'
+import { trackEvent } from './game/analytics'
+import { usePrefersReducedMotion } from './hooks/usePrefersReducedMotion'
 
-function StatusRow({ label, value }) {
+import IntroScreen from './components/IntroScreen'
+import LoadingScreen from './components/LoadingScreen'
+import FlatWorld from './components/FlatWorld'
+import Hud from './components/Hud'
+import NavMenu from './components/NavMenu'
+import Toasts from './components/Toasts'
+import LevelUpBurst from './components/LevelUpBurst'
+import BugsyChat from './components/BugsyChat'
+import SectionOverlay from './components/SectionOverlay'
+import { PrivacyPage, TermsPage, GameOverPage } from './components/StaticPages'
+
+import JourneySection from './components/sections/JourneySection'
+import SkillsSection from './components/sections/SkillsSection'
+import ProjectsSection from './components/sections/ProjectsSection'
+import QuestionDungeon from './components/sections/QuestionDungeon'
+import RoadmapSection from './components/sections/RoadmapSection'
+import LearningGame from './components/sections/LearningGame'
+import JobQuestBoard from './components/sections/JobQuestBoard'
+import AskMeSection from './components/sections/AskMeSection'
+import SideQuestsSection from './components/sections/SideQuestsSection'
+import ContactSection from './components/sections/ContactSection'
+
+const World = lazy(() => import('./scene/World'))
+
+const SECTION_COMPONENTS = {
+  journey: JourneySection,
+  skills: SkillsSection,
+  projects: ProjectsSection,
+  dungeon: QuestionDungeon,
+  roadmap: RoadmapSection,
+  game: LearningGame,
+  jobs: JobQuestBoard,
+  ask: AskMeSection,
+  sidequests: SideQuestsSection,
+  contact: ContactSection,
+}
+const WIDE_SECTIONS = new Set(['dungeon', 'game', 'jobs', 'ask', 'projects'])
+
+const SCROLL_PAGES = 7 // how many viewport-heights the journey spans
+
+function webglAvailable() {
+  try {
+    const c = document.createElement('canvas')
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')))
+  } catch {
+    return false
+  }
+}
+
+function GameWorld() {
+  const progressRef = useRef(0)
+  const { flatMode, openSection, setChatOpen } = useUiStore()
+  const visited = useGameStore((s) => s.progress.sectionsVisited)
+
+  useEffect(() => {
+    if (flatMode) return
+    function onScroll() {
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      progressRef.current = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [flatMode])
+
+  if (flatMode) return <FlatWorld />
+
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b-2 border-panel-2 py-2 text-sm">
-      <span className="text-ink-dim">{label}</span>
-      <span className="text-right">{value}</span>
-    </div>
+    <>
+      <Suspense fallback={<LoadingScreen />}>
+        <World
+          progressRef={progressRef}
+          visitedIds={visited}
+          onOpenSection={openSection}
+          onOpenChat={() => setChatOpen(true)}
+        />
+      </Suspense>
+
+      {/* the invisible track the player scrolls along */}
+      <div style={{ height: `${SCROLL_PAGES * 100}vh` }} aria-hidden="true" />
+
+      {/* scroll hint + end-of-path footer live on the track */}
+      <ScrollHint progressRef={progressRef} />
+      <footer className="absolute bottom-4 left-0 right-0 z-10 text-center font-body text-xs text-ink-dim">
+        <p className="font-pixel text-[9px] text-neon">— END OF PATH · THANKS FOR PLAYING —</p>
+        <p className="mt-3">
+          <a className="underline hover:text-ink" href="/privacy">Privacy</a>
+          {' · '}
+          <a className="underline hover:text-ink" href="/terms">Terms</a>
+          {' · '}
+          <a className="underline hover:text-ink" href="mailto:soyedmdsolemanfajul@gmail.com?subject=🐞 Bug report — qa-portfolio">
+            🐞 Report a bug
+          </a>
+        </p>
+      </footer>
+    </>
+  )
+}
+
+/** "SCROLL TO WALK" nudge, hidden once the player starts moving. */
+function ScrollHint({ progressRef }) {
+  const hintRef = useRef(null)
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (hintRef.current) {
+        hintRef.current.style.opacity = progressRef.current < 0.01 ? '1' : '0'
+      }
+    }, 300)
+    return () => clearInterval(id)
+  }, [progressRef])
+  return (
+    <p
+      ref={hintRef}
+      className="pointer-events-none fixed bottom-6 left-1/2 z-10 -translate-x-1/2 animate-bounce font-pixel text-[10px] text-pix-yellow transition-opacity duration-500"
+    >
+      SCROLL TO WALK ▼
+    </p>
+  )
+}
+
+function Game() {
+  const { started, activeSection, closeSection, navOpen, chatOpen } = useUiStore()
+  const reducedMotion = usePrefersReducedMotion()
+  const setFlatMode = useUiStore((s) => s.setFlatMode)
+
+  // Pick the right render mode before the game starts (gates H3, H4).
+  useEffect(() => {
+    if (!webglAvailable()) setFlatMode(true, 'webgl')
+    else if (reducedMotion) setFlatMode(true, 'motion')
+  }, [reducedMotion, setFlatMode])
+
+  // Reward + analytics whenever a section opens; lock body scroll under overlays.
+  useEffect(() => {
+    if (activeSection) {
+      visitSection(activeSection)
+      trackEvent('section_opened', { id: activeSection })
+    }
+  }, [activeSection])
+
+  useEffect(() => {
+    if (chatOpen) trackEvent('chat_opened')
+  }, [chatOpen])
+
+  useEffect(() => {
+    document.body.style.overflow = activeSection || navOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [activeSection, navOpen])
+
+  const meta = activeSection ? sectionById(activeSection) : null
+  const Body = activeSection ? SECTION_COMPONENTS[activeSection] : null
+
+  return (
+    <>
+      <AnimatePresence>{!started && <IntroScreen key="intro" />}</AnimatePresence>
+
+      {started && (
+        <>
+          <GameWorld />
+          <Hud />
+          <NavMenu />
+          <BugsyChat />
+        </>
+      )}
+
+      <SectionOverlay
+        open={!!(meta && Body)}
+        icon={meta?.icon}
+        title={meta?.label ?? ''}
+        onClose={closeSection}
+        wide={meta ? WIDE_SECTIONS.has(meta.id) : false}
+      >
+        {Body && <Body />}
+      </SectionOverlay>
+
+      <Toasts />
+      <LevelUpBurst />
+    </>
   )
 }
 
 export default function App() {
-  const { xp, level, achievements, mute, addXp, toggleMute, resetSave } = useGameStore()
-  const rank = rankForLevel(level)
-  const { pct, next } = progressToNext(xp)
+  const path = window.location.pathname.replace(/\/+$/, '') || '/'
+  let page
+  if (path === '/') page = <Game />
+  else if (path === '/privacy') page = <PrivacyPage />
+  else if (path === '/terms') page = <TermsPage />
+  else page = <GameOverPage />
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-6 p-4">
-      <header className="text-center">
-        <p className="font-pixel text-xs text-neon">— SYSTEMS CHECK · PHASE 1 —</p>
-        <h1 className="mt-4 text-base text-pix-yellow sm:text-xl">{PROFILE.name}</h1>
-        <p className="mt-3 text-sm text-ink-dim">{PROFILE.title}</p>
-      </header>
-
-      <section className="pixel-panel w-full" aria-label="Save file status">
-        <h2 className="mb-3 text-xs text-neon">SAVE FILE: qa-portfolio-save-v1</h2>
-        <StatusRow label="RANK" value={`Lv.${level} ${rank.title}`} />
-        <StatusRow label="XP" value={next === null ? `${xp} (MAX)` : `${xp} / ${next}`} />
-        <StatusRow label="ACHIEVEMENTS" value={achievements.length} />
-        <StatusRow label="SOUND" value={mute ? 'MUTED' : 'ON'} />
-        <div
-          className="xp-track mt-4"
-          role="progressbar"
-          aria-label="XP progress to next level"
-          aria-valuenow={Math.round(pct * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div className="xp-fill" style={{ width: `${pct * 100}%` }} />
-        </div>
-      </section>
-
-      <div className="flex flex-wrap justify-center gap-3">
-        <button className="pixel-btn" onClick={() => addXp(25)}>
-          +25 XP (debug)
-        </button>
-        <button className="pixel-btn pixel-btn--warn" onClick={toggleMute}>
-          {mute ? 'UNMUTE' : 'MUTE'}
-        </button>
-        <button className="pixel-btn pixel-btn--danger" onClick={resetSave}>
-          RESET SAVE
-        </button>
-      </div>
-
-      <footer className="text-center text-xs text-ink-dim">
-        <p>
-          Refresh the page — XP and settings persist. The 3D world arrives in Phase 2.
-        </p>
-        <p className="mt-2">
-          <a className="text-neon underline" href={`mailto:${PROFILE.email}`}>
-            {PROFILE.email}
-          </a>{' '}
-          ·{' '}
-          <a className="text-neon underline" href={PROFILE.github} target="_blank" rel="noreferrer">
-            GitHub
-          </a>{' '}
-          ·{' '}
-          <a className="text-neon underline" href={PROFILE.linkedin} target="_blank" rel="noreferrer">
-            LinkedIn
-          </a>
-        </p>
-      </footer>
-    </main>
+    <>
+      {page}
+      <Analytics />
+    </>
   )
 }

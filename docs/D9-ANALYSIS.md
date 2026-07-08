@@ -1,0 +1,35 @@
+# D9 — ANALYSIS DOC (owner: BA + PM) — v1.0 (post-build)
+
+## Shipped vs. planned (Master Prompt v4)
+
+| Phase | Planned | Shipped | Notes |
+| --- | --- | --- | --- |
+| 1 | Scaffold, palette, store, profile, tests, CI | ✅ | commit 7dbf241 |
+| 2 | 3D world, voxel hero, Bugsy NPC, scroll camera, PRESS START | ✅ | box-geometry only, no external models |
+| 3 | Checkpoints + section overlays + 6 signposts | ✅ | overlays focus-trapped, Esc-closable |
+| 4 | Skills, Projects, Roadmap, Side-Quests, Contact | ✅ | honest level bars; no phone anywhere |
+| 5 | Question Dungeon | ✅ | 6 topics × 5 Q&A, search + dice |
+| 6 | Learning Game + /api/generate-quiz | ✅ | validate → retry → fallback chain smoke-tested |
+| 7 | Bugsy chat + /api/chat | ✅ | server-side system prompt, caps, 429 limiter |
+| 8 | Job Quest Board + /api/jobs | ✅ | 6h CDN cache; curated-links fallback |
+| 9 | Ask Me / Party Up | ✅ | Web3Forms + Calendly both behind graceful "not configured" states |
+| 10 | Polish & ship | ✅ | SEO/OG/robots/sitemap, privacy, terms, 404, analytics, sounds+mute |
+
+## Known deltas / deferred (need Soyed)
+1. `WEB3FORMS_ACCESS_KEY`, `CALENDLY_URL`, `RESUME_URL` are placeholder-empty
+   in lib/profile.js — UI shows friendly "coming soon" states until set.
+2. `GEMINI_API_KEY` / `RAPIDAPI_KEY` must be set in Vercel env vars — until
+   then chat/quiz/jobs run on their fallbacks (site fully usable).
+3. Search Console + Bing submission (gate F1/F2) and the LinkedIn launch post
+   (gate F5) are human-account actions.
+4. Real-device Android performance pass (gate H1/H2) needs physical hardware.
+
+## Metric baseline
+To be filled ~2 weeks post-launch from Vercel Analytics (targets in D8).
+
+## Top 5 v2 candidates
+1. Wire real Calendly + resume PDF (highest conversion impact, zero code).
+2. GitHub API auto-populated Projects arcade.
+3. Playwright E2E smoke suite in CI (fits the brand; gate H6 automation).
+4. More dungeon content + difficulty filter.
+5. Bangla language toggle for local recruiters.

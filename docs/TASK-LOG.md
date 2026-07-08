@@ -47,3 +47,59 @@
   RESULT:   see next entry for review outcome
   GATE:     D suite prerequisite for Phase 2
   DOCS:     D1–D10 created
+
+[2026-07-08] TASK: Phases 2–3 — 3D world, hero, Bugsy NPC, checkpoints, signposts, overlays
+  ROLE:     3D + DEV + DESIGN
+  CHANGE:   src/scene/{constants,World,Hero,BugsyNpc,Checkpoints,Signposts}.jsx — scroll-driven camera rig (exp-damped lerp), voxel hero (glasses/hoodie/laptop/bug-net, walk+idle anims), floating Bugsy (click → chat), 10 crystal checkpoints + 6 story signposts, Stars/Sparkles particles, fog, mobile budget (dpr cap, shadow off, reduced counts); src/components/{SectionOverlay,IntroScreen,LoadingScreen,Hud,NavMenu,Toasts,LevelUpBurst,Typewriter}.jsx; hooks/{useFocusTrap,usePrefersReducedMotion}
+  VERIFY:   npm run build ✓ (three chunk lazy, 270 kB gz); lint 0/0; manual review of anim math
+  RESULT:   PASS
+  GATE:     H3 (flat mode on prefers-reduced-motion), H4 (FlatWorld + MENU reach all sections without WebGL), H7 (Suspense pixel loading screen)
+  DOCS:     D3-TAD scene layer as-built
+
+[2026-07-08] TASK: Phase 4–5 — content sections + Question Dungeon
+  ROLE:     DEV + BA
+  CHANGE:   src/components/sections/{Journey,Skills,Projects,Roadmap,SideQuests,Contact}Section.jsx, QuestionDungeon.jsx; src/data/{sections,projects,dungeonQuestions}.js (6 topics × 5 real Q&A with model answers)
+  VERIFY:   tests/dungeon.test.js (5-per-topic, unique ids, substantial answers, privacy grep) — green
+  RESULT:   PASS
+  GATE:     B7 (no phone/address in any content — grep-tested)
+  DOCS:     —
+
+[2026-07-08] TASK: Phase 6 — Learning Game + /api/generate-quiz
+  ROLE:     DEV + QA + SEC
+  CHANGE:   src/components/sections/LearningGame.jsx (topic→lesson→quiz→result, difficulty scales with level, XP 10/15/20, 70% pass); lib/fallbackQuizzes.js (7 topics, schema-validated content); api/generate-quiz.js (enum/type input validation, callAI json mode, validate → retry-once(temp 0.4) → fallback, 6 req/min/IP)
+  VERIFY:   tests/fallbackQuizzes.test.js (every fallback passes validateQuiz); api smoke: bad topic 400, bad count 400, no-key → 200 fallback quiz
+  RESULT:   PASS
+  GATE:     A1 (all 3 contract paths exercised), C1, C2 (limiter smoke-tested)
+  DOCS:     D2-TRD API contract as-built
+
+[2026-07-08] TASK: Phase 7 — Bugsy chat (frontend + /api/chat)
+  ROLE:     DEV + SEC
+  CHANGE:   lib/bugsy.js (server-side system prompt: profile-grounded, injection-hardened, no-phone rule; validateChatBody); lib/ai.js (shared callAI, Gemini flash, 20s timeout, provider-swappable); api/chat.js (8 req/min/IP, 512-token cap, in-character fallback on AI failure); src/components/BugsyChat.jsx (floating button, typewriter replies, 3 starters, 500-char cap, 20-msg session cap → potion-break, error fallback with email)
+  VERIFY:   tests/bugsy.test.js — 14 cases: prompt grounding, injection rules, phone-leak grep, body validation matrix; api smoke: 405/400/oversize-400/no-key-fallback/429 after burst
+  RESULT:   PASS
+  GATE:     A3/A4 (rules encoded + unit-tested; live-model attack set pending key), A5 (caps live, burst-tested), C1, C2
+  DOCS:     D10 threat model updated to as-built
+
+[2026-07-08] TASK: Phase 8 — Job Quest Board + /api/jobs
+  ROLE:     DEV + DEVOPS
+  CHANGE:   api/jobs.js (JSearch, country=bd, per-category queries, s-maxage=21600 + SWR 86400, error/no-key → fallback:true cached 300s, 10 req/min/IP); src/components/sections/JobQuestBoard.jsx (tabs, search, difficulty stars, skeleton scrolls, courier-resting fallback + curated links, per-visit category cache)
+  VERIFY:   api smoke: 405, bad category 400, no-key fallback with 300s cache header; existing jobs.test.js XSS/URL normalization still green
+  RESULT:   PASS
+  GATE:     C4 (external data sanitized, no dangerouslySetInnerHTML)
+  DOCS:     —
+
+[2026-07-08] TASK: Phase 9 — Ask Me / Party Up
+  ROLE:     DEV
+  CHANGE:   src/components/sections/AskMeSection.jsx — Web3Forms raven form (client validation, botcheck honeypot, flying-raven success, error path → direct email) behind not-configured state; Calendly inline embed lazy-loaded on demand behind CALENDLY_URL placeholder ("Session scrolls coming soon")
+  VERIFY:   build + lint green; both unconfigured states render (keys intentionally empty until Soyed provides them — HALT item)
+  RESULT:   PASS
+  GATE:     G3 pending real key (HALT: credentials)
+  DOCS:     —
+
+[2026-07-08] TASK: Phase 10 — polish & ship prep
+  ROLE:     DEV + DEVOPS + SEC + STRATEGIST
+  CHANGE:   rewritten src/App.jsx (routes /, /privacy, /terms, 404 GAME OVER; PRESS START gate; WebGL detect → FlatWorld; body-scroll lock under overlays; section rewards + analytics events); StaticPages (plain-language privacy/terms per gate B1/B2 incl. no-cookie-banner rationale); Vercel Analytics + trackEvent wrapper; retro WebAudio sfx + mute; public/{og.png,robots.txt,sitemap.xml}; docs/D8-STRATEGY, D9-ANALYSIS, D10-THREAT-MODEL
+  VERIFY:   npm test 64/64; lint 0/0; build ✓; API smoke suite 11/11 PASS
+  RESULT:   PASS
+  GATE:     B1, B2, B3 (documented: no non-essential cookies), E1, E3, F3, F4 groundwork
+  DOCS:     D8, D9, D10 complete — suite D1–D10 present

@@ -44,6 +44,21 @@ tests/          vitest unit suite
 
 Copy `.env.example` to `.env` for local dev. Real values live only in Vercel → Project → Settings → Environment Variables.
 
+## Deploying (Vercel)
+
+```bash
+vercel          # preview deployment
+vercel --prod   # production
+```
+
+Set `GEMINI_API_KEY` and `RAPIDAPI_KEY` in Vercel → Project → Settings →
+Environment Variables. Until they exist, chat/quiz/jobs run on their built-in
+fallbacks — the site never breaks.
+
+**Activation TODOs in `lib/profile.js`:** `WEB3FORMS_ACCESS_KEY` (free at
+web3forms.com — enables the "Send a Raven" form), `CALENDLY_URL` (enables
+"Party Up" booking), `RESUME_URL` (drop the PDF in `/public` first).
+
 ## Non-negotiables
 
 - No API keys in frontend code.
