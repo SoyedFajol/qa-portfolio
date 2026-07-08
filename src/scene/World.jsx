@@ -6,6 +6,7 @@ import BugsyNpc from './BugsyNpc'
 import Checkpoints from './Checkpoints'
 import Signposts from './Signposts'
 import { PATH_LENGTH, seeded } from './constants'
+import { SECTIONS } from '../data/sections'
 import { gainXp } from '../game/rewards'
 import { sfx } from '../game/sfx'
 
@@ -184,6 +185,21 @@ function ShootingStar() {
   )
 }
 
+/** Quiet chime whenever the hero walks past a checkpoint. */
+function CheckpointChimes({ heroZRef }) {
+  const passed = useRef(new Set())
+  useFrame(() => {
+    for (const s of SECTIONS) {
+      const z = -s.at * PATH_LENGTH
+      if (!passed.current.has(s.id) && heroZRef.current <= z + 0.4) {
+        passed.current.add(s.id)
+        sfx.ding()
+      }
+    }
+  })
+  return null
+}
+
 /** Spinning XP coins hovering over the walkway — walk through to collect. */
 function Coins({ heroZRef, mobile }) {
   const group = useRef()
@@ -255,7 +271,7 @@ function Rig({ progressRef, heroZRef, speedRef }) {
  * The 3D pixel world. Rendered fixed behind the scroll container; the page's
  * native scroll (progressRef 0..1) walks the hero down the path.
  */
-export default function World({ progressRef, visitedIds, onOpenSection, onOpenChat }) {
+export default function World({ progressRef, visitedIds, onOpenSection }) {
   const heroZRef = useRef(0)
   const speedRef = useRef(0)
   const mobile = typeof window !== 'undefined' && window.innerWidth < 640
@@ -289,8 +305,9 @@ export default function World({ progressRef, visitedIds, onOpenSection, onOpenCh
         <SkyLife mobile={mobile} />
         <ShootingStar />
         <Coins heroZRef={heroZRef} mobile={mobile} />
+        <CheckpointChimes heroZRef={heroZRef} />
         <Hero speedRef={speedRef} positionRef={heroZRef} />
-        <BugsyNpc positionRef={heroZRef} onClick={onOpenChat} />
+        <BugsyNpc positionRef={heroZRef} />
         <Checkpoints visitedIds={visitedIds} onOpen={onOpenSection} />
         <Signposts onOpen={onOpenSection} />
 

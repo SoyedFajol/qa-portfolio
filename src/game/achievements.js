@@ -8,7 +8,7 @@ export const ACHIEVEMENTS = [
   { id: 'topic-cleared', icon: '📗', title: 'Topic Cleared', desc: 'Finish your first Learning Game topic.', xp: 50 },
   { id: 'world-explorer', icon: '🗺️', title: 'World Explorer', desc: 'Visit every level of the world.', xp: 80 },
   { id: 'dungeon-crawler', icon: '🏰', title: 'Dungeon Crawler', desc: 'Flip 10 cards in the Question Dungeon.', xp: 40 },
-  { id: 'party-chat', icon: '🤖', title: 'NPC Whisperer', desc: 'Have a chat with Bugsy the sidekick.', xp: 25 },
+  { id: 'party-chat', icon: '🐞', title: 'NPC Whisperer', desc: 'Poke Bugsy the sidekick and make him barrel-roll.', xp: 25 },
   { id: 'quest-accepted', icon: '📜', title: 'Quest Accepted', desc: 'Open a real job quest from the board.', xp: 30 },
   { id: 'raven-sent', icon: '🕊️', title: 'Raven Master', desc: 'Send Soyed a message.', xp: 30 },
   { id: 'level-5', icon: '⭐', title: 'Regression Ranger', desc: 'Reach level 5.', xp: 0 },

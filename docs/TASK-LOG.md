@@ -103,3 +103,11 @@
   RESULT:   PASS
   GATE:     B1, B2, B3 (documented: no non-essential cookies), E1, E3, F3, F4 groundwork
   DOCS:     D8, D9, D10 complete — suite D1–D10 present
+
+[2026-07-08] TASK: Owner decision — remove the AI chatbot; add full sound design (bruno-simon.com inspired)
+  ROLE:     PM (scope change per Soyed) + DEV + DESIGN
+  CHANGE:   REMOVED: api/chat.js, lib/bugsy.js, BugsyChat.jsx, tests/bugsy.test.js, chat state in both stores, all "Talk to Bugsy" entry points, chat copy in README/meta/privacy/terms, og.png regenerated. Bugsy stays as the 3D companion — poking him chirps + barrel-rolls + grants NPC Whisperer. ADDED sound layer in src/game/sfx.js: ambient chiptune loop (A-minor pentatonic, WebAudio scheduler, starts on PRESS START, respects mute + hidden tab), footsteps while walking (stride-distance based), checkpoint pass chimes, hover ticks, Bugsy chirp — all synthesized, zero audio assets.
+  VERIFY:   grep sweep for dangling chat references (clean); npm lint/test/build; store tests updated (chatMessageCount removed)
+  RESULT:   PASS
+  GATE:     A2–A6 chat items now N/A (feature removed); B1/B2 pages updated to match reality
+  DOCS:     README, privacy, terms updated; D9 deltas superseded by this entry

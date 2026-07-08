@@ -1,10 +1,10 @@
 # 🎮 Soyed's Gamified 3D QA Portfolio
 
-A pixel/retro RPG portfolio rendered in 3D for **Soyed Md. Solaman Fajul** — Junior SQA Engineer @ BRAC IT Services Ltd., Dhaka. The visitor is a player: scroll to walk a voxel hero through the journey, open glowing checkpoints (Skills, Projects, Question Dungeon, Learning Game, Job Quest Board…), and chat with **Bugsy**, the AI sidekick.
+A pixel/retro RPG portfolio rendered in 3D for **Soyed Md. Solaman Fajul** — Junior SQA Engineer @ BRAC IT Services Ltd., Dhaka. The visitor is a player: scroll to walk a voxel hero through the journey, open glowing checkpoints (Skills, Projects, Question Dungeon, Learning Game, Job Quest Board…), collect XP coins, and poke **Bugsy**, the ladybug sidekick — all over a synthesized chiptune soundtrack.
 
 ## Stack
 
-React 18 + Vite · Three.js via @react-three/fiber + drei · Framer Motion · Tailwind CSS · zustand (+ localStorage save `qa-portfolio-save-v1`) · Vercel serverless `/api` (Gemini for quiz + chat, JSearch for the Job Quest Board) · Web3Forms + Calendly.
+React 18 + Vite · Three.js via @react-three/fiber + drei · Framer Motion · Tailwind CSS · zustand (+ localStorage save `qa-portfolio-save-v1`) · Vercel serverless `/api` (Gemini for the quiz generator, JSearch for the Job Quest Board) · Web3Forms + Calendly.
 
 ## Commands
 
@@ -22,7 +22,7 @@ npm run build   # production build
 lib/            shared modules — profile data (single source of truth),
                 job normalization, quiz schema validation; imported by
                 BOTH src/ and api/
-api/            Vercel serverless functions (chat, generate-quiz, jobs)
+api/            Vercel serverless functions (generate-quiz, jobs)
 src/
   components/   pixel UI components
   scene/        R3F 3D world (hero, Bugsy, checkpoints, particles)
@@ -39,7 +39,7 @@ tests/          vitest unit suite
 
 | Var | Used by | Where to get it |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | `/api/chat`, `/api/generate-quiz` | Google AI Studio (free tier) |
+| `GEMINI_API_KEY` | `/api/generate-quiz` | Google AI Studio (free tier) |
 | `RAPIDAPI_KEY` | `/api/jobs` | RapidAPI → JSearch (free tier) |
 
 Copy `.env.example` to `.env` for local dev. Real values live only in Vercel → Project → Settings → Environment Variables.
@@ -52,7 +52,7 @@ vercel --prod   # production
 ```
 
 Set `GEMINI_API_KEY` and `RAPIDAPI_KEY` in Vercel → Project → Settings →
-Environment Variables. Until they exist, chat/quiz/jobs run on their built-in
+Environment Variables. Until they exist, quiz/jobs run on their built-in
 fallbacks — the site never breaks.
 
 **Activation TODOs in `lib/profile.js`:** `WEB3FORMS_ACCESS_KEY` (free at

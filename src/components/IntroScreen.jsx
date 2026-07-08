@@ -13,6 +13,7 @@ export default function IntroScreen() {
 
   function pressStart() {
     sfx.coin() // first user gesture also unlocks the AudioContext
+    sfx.startMusic() // ambient chiptune loop (respects the mute toggle)
     trackEvent('press_start')
     start()
   }

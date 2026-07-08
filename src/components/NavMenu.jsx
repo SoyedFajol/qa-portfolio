@@ -12,7 +12,7 @@ import { sfx } from '../game/sfx'
  */
 export default function NavMenu() {
   const ref = useRef(null)
-  const { navOpen, setNavOpen, openSection, setChatOpen } = useUiStore()
+  const { navOpen, setNavOpen, openSection } = useUiStore()
   const visited = useGameStore((s) => s.progress.sectionsVisited)
   const resetSave = useGameStore((s) => s.resetSave)
   useFocusTrap(ref, navOpen, () => setNavOpen(false))
@@ -71,22 +71,6 @@ export default function NavMenu() {
                   </button>
                 </li>
               ))}
-              <li>
-                <button
-                  className="pixel-btn pixel-btn--warn w-full !text-left !text-[10px]"
-                  onClick={() => {
-                    sfx.blip()
-                    setNavOpen(false)
-                    setChatOpen(true)
-                  }}
-                >
-                  <span aria-hidden="true">🐞 </span>
-                  Talk to Bugsy
-                  <span className="mt-1 block font-body text-xs normal-case text-ink-dim">
-                    AI sidekick — ask about Soyed
-                  </span>
-                </button>
-              </li>
             </ul>
 
             <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-4 border-panel-2 pt-3">

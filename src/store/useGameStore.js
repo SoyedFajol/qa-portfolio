@@ -1,6 +1,4 @@
 // Global game state, persisted to localStorage under qa-portfolio-save-v1.
-// chatMessageCount is deliberately NOT persisted: Bugsy's 20-message cap is
-// per visit, so it lives in memory only and resets on reload.
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
@@ -20,10 +18,6 @@ const defaultSave = {
   },
   achievements: [],      // achievement ids, in the order earned
   mute: false,
-}
-
-const sessionOnly = {
-  chatMessageCount: 0,
 }
 
 const stringArray = (v) =>
@@ -58,7 +52,6 @@ export const useGameStore = create(
   persist(
     (set, get) => ({
       ...defaultSave,
-      ...sessionOnly,
 
       /** Adds XP, recomputes level. Returns { xp, level, leveledUp }. */
       addXp: (amount) => {
@@ -104,14 +97,8 @@ export const useGameStore = create(
 
       toggleMute: () => set({ mute: !get().mute }),
 
-      incrementChatCount: () => {
-        const chatMessageCount = get().chatMessageCount + 1
-        set({ chatMessageCount })
-        return chatMessageCount
-      },
-
       /** Full reset — wipes the save back to a brand-new game. */
-      resetSave: () => set({ ...structuredClone(defaultSave), ...sessionOnly }),
+      resetSave: () => set(structuredClone(defaultSave)),
     }),
     {
       name: SAVE_KEY,

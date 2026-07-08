@@ -8,7 +8,6 @@ let toastSeq = 0
 export const useUiStore = create((set, get) => ({
   started: false,          // PRESS START pressed
   activeSection: null,     // section id or null (world view)
-  chatOpen: false,
   navOpen: false,
   flatMode: false,         // true = no-3D fallback (WebGL missing, reduced motion, or user choice)
   flatModeReason: null,    // 'webgl' | 'motion' | 'user' | null
@@ -20,7 +19,6 @@ export const useUiStore = create((set, get) => ({
   openSection: (id) => set({ activeSection: id, navOpen: false }),
   closeSection: () => set({ activeSection: null }),
 
-  setChatOpen: (chatOpen) => set({ chatOpen }),
   setNavOpen: (navOpen) => set({ navOpen }),
 
   setFlatMode: (flatMode, reason = 'user') =>

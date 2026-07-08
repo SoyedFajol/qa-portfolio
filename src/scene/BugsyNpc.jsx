@@ -1,15 +1,19 @@
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
+import { grantAchievement } from '../game/rewards'
+import { sfx } from '../game/sfx'
 
 /**
- * Bugsy — the pixel ladybug sidekick. Bobs alongside the hero; clicking it
- * opens the chat window. Kept deliberately low-poly: a few boxes and wings.
+ * Bugsy — the pixel ladybug sidekick. Bobs alongside the hero; poking it
+ * makes it chirp and barrel-roll (and unlocks NPC Whisperer). Kept
+ * deliberately low-poly: a few boxes and wings.
  */
-export default function BugsyNpc({ positionRef, onClick }) {
+export default function BugsyNpc({ positionRef }) {
   const group = useRef()
   const wingL = useRef()
   const wingR = useRef()
+  const spinStart = useRef(-1)
   const [hover, setHover] = useState(false)
 
   useFrame((state) => {
@@ -22,20 +26,40 @@ export default function BugsyNpc({ positionRef, onClick }) {
       positionRef.current + 0.9 + Math.cos(t * 0.7) * 0.2
     )
     group.current.rotation.y = Math.PI + Math.sin(t * 0.9) * 0.2
+
+    // barrel roll for 0.8s after being poked (-2 = poked, start this frame)
+    if (spinStart.current === -2) spinStart.current = t
+    if (spinStart.current >= 0) {
+      const p = (t - spinStart.current) / 0.8
+      if (p >= 1) {
+        spinStart.current = -1
+        group.current.rotation.z = 0
+      } else {
+        group.current.rotation.z = p * Math.PI * 2
+      }
+    }
+
     const flap = Math.sin(t * 18) * 0.6
     wingL.current.rotation.z = 0.5 + flap
     wingR.current.rotation.z = -0.5 - flap
   })
 
+  function poke(e) {
+    e.stopPropagation()
+    sfx.bugsy()
+    grantAchievement('party-chat')
+    spinStart.current = -2
+  }
+
   return (
     <group
       ref={group}
       onClick={(e) => {
-        e.stopPropagation()
-        onClick?.()
+        poke(e)
       }}
       onPointerOver={() => {
         setHover(true)
+        sfx.hover()
         document.body.style.cursor = 'pointer'
       }}
       onPointerOut={() => {
@@ -91,7 +115,7 @@ export default function BugsyNpc({ positionRef, onClick }) {
       {hover && (
         <Html center position={[0, 0.55, 0]} style={{ pointerEvents: 'none' }}>
           <span className="whitespace-nowrap border-2 border-neon bg-night px-2 py-1 font-pixel text-[8px] text-neon">
-            talk to Bugsy!
+            bzzt! 🐞
           </span>
         </Html>
       )}

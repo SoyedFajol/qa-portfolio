@@ -11,7 +11,6 @@ import { sfx } from '../game/sfx'
  */
 export default function FlatWorld() {
   const openSection = useUiStore((s) => s.openSection)
-  const setChatOpen = useUiStore((s) => s.setChatOpen)
   const flatModeReason = useUiStore((s) => s.flatModeReason)
   const visited = useGameStore((s) => s.progress.sectionsVisited)
 
@@ -58,18 +57,6 @@ export default function FlatWorld() {
               <span className="mt-1 block font-body text-xs normal-case text-ink-dim">{s.blurb}</span>
             </button>
           ))}
-          <button
-            className="pixel-btn pixel-btn--warn !text-left !text-[10px]"
-            onClick={() => {
-              sfx.blip()
-              setChatOpen(true)
-            }}
-          >
-            🐞 Talk to Bugsy
-            <span className="mt-1 block font-body text-xs normal-case text-ink-dim">
-              AI sidekick — instant answers about Soyed
-            </span>
-          </button>
         </div>
       </section>
 

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { SECTIONS } from '../data/sections'
 import { PATH_LENGTH } from './constants'
+import { sfx } from '../game/sfx'
 
 function Checkpoint({ section, side, visited, onOpen }) {
   const crystal = useRef()
@@ -41,6 +42,7 @@ function Checkpoint({ section, side, visited, onOpen }) {
         }}
         onPointerOver={() => {
           setHover(true)
+          sfx.hover()
           document.body.style.cursor = 'pointer'
         }}
         onPointerOut={() => {

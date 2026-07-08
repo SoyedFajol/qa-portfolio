@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { sfx } from '../game/sfx'
 
 const SKIN = '#e8b17e'
 const HOODIE = '#7a4fd0'
@@ -18,6 +19,8 @@ export default function Hero({ speedRef, positionRef }) {
   const armL = useRef()
   const armR = useRef()
   const body = useRef()
+  const stepAcc = useRef(0)
+  const lastZ = useRef(0)
 
   useFrame((state) => {
     if (!group.current) return
@@ -26,6 +29,14 @@ export default function Hero({ speedRef, positionRef }) {
     const walking = speed > 0.02
 
     group.current.position.z = positionRef.current
+
+    // footsteps: one soft tick roughly every stride of walked distance
+    stepAcc.current += Math.abs(positionRef.current - lastZ.current)
+    lastZ.current = positionRef.current
+    if (walking && stepAcc.current > 1.1) {
+      stepAcc.current = 0
+      sfx.step()
+    }
 
     if (walking) {
       const swing = Math.sin(t * 10) * 0.65 * Math.min(1, speed * 3)

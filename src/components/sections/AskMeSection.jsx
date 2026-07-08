@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { PROFILE, WEB3FORMS_ACCESS_KEY, CALENDLY_URL } from '../../data/profile'
 import { grantAchievement } from '../../game/rewards'
-import { useUiStore } from '../../store/useUiStore'
 import { sfx } from '../../game/sfx'
 
 const SESSION_TYPES = ['🐞 QA Career Chat', '⚔️ Interview Prep Duel', '🛠 Project Collab']
@@ -195,7 +194,6 @@ function PartyUp() {
 
 /** Ask Me / Party Up: raven mail + session booking, RPG-styled. */
 export default function AskMeSection() {
-  const setChatOpen = useUiStore((s) => s.setChatOpen)
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
@@ -208,12 +206,6 @@ export default function AskMeSection() {
           <PartyUp />
         </section>
       </div>
-      <p className="text-center font-body text-xs text-ink-dim">
-        Need an instant answer about Soyed?{' '}
-        <button className="underline" onClick={() => { sfx.blip(); setChatOpen(true) }}>
-          Ask Bugsy the sidekick 🐞
-        </button>
-      </p>
     </div>
   )
 }

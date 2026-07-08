@@ -19,7 +19,6 @@ import Hud from './components/Hud'
 import NavMenu from './components/NavMenu'
 import Toasts from './components/Toasts'
 import LevelUpBurst from './components/LevelUpBurst'
-import BugsyChat from './components/BugsyChat'
 import SectionOverlay from './components/SectionOverlay'
 import { PrivacyPage, TermsPage, GameOverPage } from './components/StaticPages'
 
@@ -63,7 +62,7 @@ function webglAvailable() {
 
 function GameWorld() {
   const progressRef = useRef(0)
-  const { flatMode, openSection, setChatOpen } = useUiStore()
+  const { flatMode, openSection } = useUiStore()
   const visited = useGameStore((s) => s.progress.sectionsVisited)
 
   useEffect(() => {
@@ -86,7 +85,6 @@ function GameWorld() {
           progressRef={progressRef}
           visitedIds={visited}
           onOpenSection={openSection}
-          onOpenChat={() => setChatOpen(true)}
         />
       </Suspense>
 
@@ -133,7 +131,7 @@ function ScrollHint({ progressRef }) {
 }
 
 function Game() {
-  const { started, activeSection, closeSection, navOpen, chatOpen } = useUiStore()
+  const { started, activeSection, closeSection, navOpen } = useUiStore()
   const reducedMotion = usePrefersReducedMotion()
   const setFlatMode = useUiStore((s) => s.setFlatMode)
 
@@ -150,10 +148,6 @@ function Game() {
       trackEvent('section_opened', { id: activeSection })
     }
   }, [activeSection])
-
-  useEffect(() => {
-    if (chatOpen) trackEvent('chat_opened')
-  }, [chatOpen])
 
   useEffect(() => {
     document.body.style.overflow = activeSection || navOpen ? 'hidden' : ''
@@ -174,7 +168,6 @@ function Game() {
           <GameWorld />
           <Hud />
           <NavMenu />
-          <BugsyChat />
         </>
       )}
 

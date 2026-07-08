@@ -13,7 +13,6 @@ describe('useGameStore actions', () => {
     expect(state().level).toBe(1)
     expect(state().achievements).toEqual([])
     expect(state().mute).toBe(false)
-    expect(state().chatMessageCount).toBe(0)
   })
 
   it('addXp accumulates and levels up across a threshold', () => {
@@ -53,11 +52,11 @@ describe('useGameStore actions', () => {
     expect(state().progress.bestStreak).toBe(2)
   })
 
-  it('toggleMute flips and incrementChatCount counts', () => {
+  it('toggleMute flips the sound setting', () => {
     state().toggleMute()
     expect(state().mute).toBe(true)
-    expect(state().incrementChatCount()).toBe(1)
-    expect(state().incrementChatCount()).toBe(2)
+    state().toggleMute()
+    expect(state().mute).toBe(false)
   })
 
   it('resetSave restores a brand-new game', () => {
