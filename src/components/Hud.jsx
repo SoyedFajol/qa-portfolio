@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useGameStore } from '../store/useGameStore'
 import { useUiStore } from '../store/useUiStore'
 import { rankForLevel, progressToNext } from '../game/progression'
@@ -12,7 +13,13 @@ export default function Hud() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-30 flex items-start justify-between gap-2 p-2 sm:p-3">
-      <div className="pixel-panel pointer-events-auto !p-2 sm:!p-3" aria-label="Player status">
+      <motion.div
+        className="pixel-panel pointer-events-auto !p-2 sm:!p-3"
+        aria-label="Player status"
+        initial={{ y: -60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.3 }}
+      >
         <p className="font-pixel text-[9px] text-pix-yellow sm:text-[10px]">
           Lv.{level} {rank.title}
         </p>
@@ -29,9 +36,14 @@ export default function Hud() {
         <p className="mt-1 font-pixel text-[8px] text-ink-dim">
           {next === null ? `${xp} XP · MAX` : `${xp} / ${next} XP`}
         </p>
-      </div>
+      </motion.div>
 
-      <div className="pointer-events-auto flex gap-2">
+      <motion.div
+        className="pointer-events-auto flex gap-2"
+        initial={{ y: -60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.45 }}
+      >
         <button
           className="pixel-btn !px-3 !py-2 !text-[10px]"
           onClick={() => {
@@ -66,7 +78,7 @@ export default function Hud() {
         >
           {mute ? '🔇' : '🔊'}
         </button>
-      </div>
+      </motion.div>
     </div>
   )
 }

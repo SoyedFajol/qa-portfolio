@@ -1,11 +1,12 @@
 // App shell: routes the static pages, gates the game behind PRESS START,
 // renders the 3D world (or the flat fallback), and mounts every overlay.
 
-import { lazy, Suspense, useEffect, useRef } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Analytics } from '@vercel/analytics/react'
 
-import { sectionById } from './data/sections'
+import { SECTIONS, sectionById } from './data/sections'
+import { sfx } from './game/sfx'
 import { useGameStore } from './store/useGameStore'
 import { useUiStore } from './store/useUiStore'
 import { visitSection } from './game/rewards'
@@ -88,9 +89,10 @@ function GameWorld() {
         />
       </Suspense>
 
-      {/* the track the player scrolls along; footer waits at the very end */}
-      <div className="relative" style={{ height: `${SCROLL_PAGES * 100}vh` }}>
-        <footer className="absolute inset-x-0 bottom-6 z-10 px-4 text-center font-body text-xs text-ink-dim">
+      {/* The track the player scrolls along. pointer-events-none is what lets
+          clicks reach the 3D canvas underneath — only the footer opts back in. */}
+      <div className="pointer-events-none relative" style={{ height: `${SCROLL_PAGES * 100}vh` }}>
+        <footer className="pointer-events-auto absolute inset-x-0 bottom-12 z-10 px-4 text-center font-body text-xs text-ink-dim">
           <p className="font-pixel text-[9px] text-neon">— END OF PATH · THANKS FOR PLAYING —</p>
           <p className="mt-3">
             <a className="underline hover:text-ink" href="/privacy">Privacy</a>
@@ -105,6 +107,9 @@ function GameWorld() {
       </div>
 
       <ScrollHint progressRef={progressRef} />
+      <HowToPlay />
+      <JourneyMap />
+      <EndOfPathCheer progressRef={progressRef} />
     </>
   )
 }
@@ -123,11 +128,123 @@ function ScrollHint({ progressRef }) {
   return (
     <p
       ref={hintRef}
-      className="pointer-events-none fixed bottom-6 left-1/2 z-10 -translate-x-1/2 animate-bounce font-pixel text-[10px] text-pix-yellow transition-opacity duration-500"
+      className="pointer-events-none fixed bottom-10 left-1/2 z-10 -translate-x-1/2 animate-bounce font-pixel text-[10px] text-pix-yellow transition-opacity duration-500"
     >
       SCROLL TO WALK ▼
     </p>
   )
+}
+
+/** Bruno-style controls card: shown once after PRESS START, dismissed by
+ * scrolling, clicking, or the timer. */
+function HowToPlay() {
+  const [visible, setVisible] = useState(true)
+  useEffect(() => {
+    if (!visible) return
+    const hide = () => setVisible(false)
+    const timer = setTimeout(hide, 9000)
+    window.addEventListener('scroll', hide, { once: true, passive: true })
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('scroll', hide)
+    }
+  }, [visible])
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          className="pointer-events-none fixed left-1/2 top-20 z-20 -translate-x-1/2"
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ delay: 0.6 }}
+        >
+          <div className="pixel-panel !border-pix-yellow !p-3 text-center">
+            <p className="font-pixel text-[9px] text-pix-yellow">HOW TO PLAY</p>
+            <p className="mt-2 font-body text-xs text-ink-dim">
+              🖱️ Scroll to walk · 💎 Click crystals to open levels
+              <br />
+              🪙 Walk through coins · 🐞 Poke Bugsy
+            </p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+/** Mini-map of the journey: progress fill + one clickable dot per level.
+ * Clicking a dot walks (smooth-scrolls) the hero to that checkpoint. */
+function JourneyMap() {
+  const fillRef = useRef(null)
+  const visited = useGameStore((s) => s.progress.sectionsVisited)
+
+  useEffect(() => {
+    function onScroll() {
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+      if (fillRef.current) fillRef.current.style.width = `${p * 100}%`
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  function travelTo(at) {
+    sfx.blip()
+    const max = document.documentElement.scrollHeight - window.innerHeight
+    window.scrollTo({ top: at * max, behavior: 'smooth' })
+  }
+
+  return (
+    <motion.nav
+      aria-label="Journey map — jump to a level"
+      className="fixed inset-x-0 bottom-0 z-20 px-3 pb-2"
+      initial={{ y: 40, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 1.2 }}
+    >
+      <div className="relative mx-auto h-6 max-w-3xl">
+        {/* track + fill */}
+        <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 border-2 border-panel-2 bg-night/80">
+          <div ref={fillRef} className="h-full bg-neon/60" style={{ width: 0, background: 'rgba(57,255,136,0.5)' }} />
+        </div>
+        {/* checkpoint dots */}
+        {SECTIONS.map((s) => (
+          <button
+            key={s.id}
+            title={`${s.icon} ${s.label}`}
+            aria-label={`Walk to ${s.label}`}
+            onClick={() => travelTo(s.at)}
+            className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 border-2 transition-transform hover:scale-150"
+            style={{
+              left: `${s.at * 100}%`,
+              background: visited.includes(s.id) ? 'var(--neon)' : 'var(--night)',
+              borderColor: visited.includes(s.id) ? 'var(--neon)' : 'var(--pix-purple)',
+            }}
+          />
+        ))}
+      </div>
+    </motion.nav>
+  )
+}
+
+/** One-time fanfare when the player walks the whole path (Bruno's finish line). */
+function EndOfPathCheer({ progressRef }) {
+  const done = useRef(false)
+  const pushToast = useUiStore((s) => s.pushToast)
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!done.current && progressRef.current > 0.97) {
+        done.current = true
+        sfx.achievement()
+        pushToast({ icon: '🏁', title: 'END OF PATH', desc: 'You walked the whole world — thanks for playing!' })
+      }
+    }, 500)
+    return () => clearInterval(id)
+  }, [progressRef, pushToast])
+  return null
 }
 
 function Game() {

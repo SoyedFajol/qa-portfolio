@@ -111,3 +111,11 @@
   RESULT:   PASS
   GATE:     A2–A6 chat items now N/A (feature removed); B1/B2 pages updated to match reality
   DOCS:     README, privacy, terms updated; D9 deltas superseded by this entry
+
+[2026-07-08] TASK: Fix 3D click-through + bruno-simon-inspired polish pass
+  ROLE:     DEV + DESIGN + QA
+  CHANGE:   BUG FIX: the invisible scroll track sat over the canvas and swallowed every 3D click — pointer-events-none on the track (footer opts back in) so checkpoints/Bugsy/coins are clickable again. POLISH (bruno-simon.com study): HOW TO PLAY card after PRESS START (dismisses on scroll/9s), bottom journey map with clickable checkpoint dots (smooth-scroll fast travel, visited state), speed-reactive camera FOV, click-anywhere ground ripple + tick, end-of-path fanfare toast. FRAMER MOTION pass: HUD spring entrance, staggered level-select menu, PRESS START hover/tap spring, tab micro-interactions in Dungeon + Job Board. Also swapped index.html inline <style> for a style attribute (Vite html-proxy build failure on Windows).
+  VERIFY:   lint 0/0; 50/50 tests; build ✓; prod smoke after deploy
+  RESULT:   PASS
+  GATE:     H6 (full playthrough now actually possible by mouse), H7
+  DOCS:     —

@@ -48,11 +48,21 @@ export default function NavMenu() {
               </button>
             </header>
 
-            <ul className="grid gap-2 sm:grid-cols-2">
+            <motion.ul
+              className="grid gap-2 sm:grid-cols-2"
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.05 } } }}
+            >
               {SECTIONS.map((s) => (
-                <li key={s.id}>
-                  <button
+                <motion.li
+                  key={s.id}
+                  variants={{ hidden: { opacity: 0, x: -18 }, show: { opacity: 1, x: 0 } }}
+                >
+                  <motion.button
                     className="pixel-btn w-full !text-left !text-[10px]"
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => {
                       sfx.blip()
                       openSection(s.id)
@@ -68,10 +78,10 @@ export default function NavMenu() {
                     <span className="mt-1 block font-body text-xs normal-case text-ink-dim">
                       {s.blurb}
                     </span>
-                  </button>
-                </li>
+                  </motion.button>
+                </motion.li>
               ))}
-            </ul>
+            </motion.ul>
 
             <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-4 border-panel-2 pt-3">
               <div className="font-body text-xs text-ink-dim">

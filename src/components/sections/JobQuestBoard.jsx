@@ -107,18 +107,20 @@ export default function JobQuestBoard() {
 
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Job categories">
         {TABS.map((t) => (
-          <button
+          <motion.button
             key={t.id}
             role="tab"
             aria-selected={category === t.id}
             className={`pixel-btn !px-3 !py-2 !text-[9px] ${category === t.id ? '!border-pix-yellow' : '!border-panel-2'}`}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => {
               sfx.blip()
               setCategory(t.id)
             }}
           >
             {t.label}
-          </button>
+          </motion.button>
         ))}
         <label className="sr-only" htmlFor="job-search">Filter quests</label>
         <input

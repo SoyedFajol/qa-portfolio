@@ -60,13 +60,16 @@ export default function IntroScreen() {
         )}
       </div>
 
-      <button
+      <motion.button
         className="pixel-btn press-start-blink !border-pix-yellow !px-8 !py-4 !text-sm"
         onClick={pressStart}
         autoFocus
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 15 }}
       >
         ▶ PRESS START
-      </button>
+      </motion.button>
 
       <p className="max-w-sm font-body text-xs text-ink-dim">
         Scroll to walk through my world. Open the glowing checkpoints. Talk to

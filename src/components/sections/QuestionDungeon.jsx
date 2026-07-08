@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import { DUNGEON_TOPICS, DUNGEON_QUESTIONS } from '../../data/dungeonQuestions'
 import { grantAchievement } from '../../game/rewards'
 import { sfx } from '../../game/sfx'
@@ -96,18 +97,20 @@ export default function QuestionDungeon() {
       {!query && (
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Question topics">
           {DUNGEON_TOPICS.map((t) => (
-            <button
+            <motion.button
               key={t.id}
               role="tab"
               aria-selected={topic === t.id}
               className={`pixel-btn !px-2 !py-2 !text-[9px] ${topic === t.id ? '!border-pix-yellow' : '!border-panel-2'}`}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.94 }}
               onClick={() => {
                 sfx.blip()
                 setTopic(t.id)
               }}
             >
               {t.icon} {t.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       )}

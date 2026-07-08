@@ -185,6 +185,64 @@ function ShootingStar() {
   )
 }
 
+/** Click anywhere on the ground → neon ripple + blip (pure play, Bruno-style). */
+function ClickPing() {
+  const ring = useRef()
+  const ping = useRef({ t0: -1, x: 0, z: 0 })
+
+  useFrame((state) => {
+    if (!ring.current) return
+    const { t0, x, z } = ping.current
+    if (t0 < 0) {
+      ring.current.visible = false
+      return
+    }
+    const p = (state.clock.elapsedTime - t0) / 0.55
+    if (p >= 1) {
+      ping.current.t0 = -1
+      ring.current.visible = false
+      return
+    }
+    ring.current.visible = true
+    ring.current.position.set(x, 0.05, z)
+    const s = 0.3 + p * 2.2
+    ring.current.scale.set(s, s, s)
+    ring.current.material.opacity = 0.8 * (1 - p)
+  })
+
+  return (
+    <>
+      {/* invisible catcher plane over the whole floor */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.05, -PATH_LENGTH / 2]}
+        onPointerDown={(e) => {
+          // -2 = pending; PingRing stamps the scene-clock time next frame
+          ping.current = { t0: -2, x: e.point.x, z: e.point.z }
+          sfx.hover()
+        }}
+      >
+        <planeGeometry args={[44, PATH_LENGTH + 20]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+      <PingRing ring={ring} ping={ping} />
+    </>
+  )
+}
+
+/** The ripple ring itself; resolves the -2 "pending" timestamp to clock time. */
+function PingRing({ ring, ping }) {
+  useFrame((state) => {
+    if (ping.current.t0 === -2) ping.current.t0 = state.clock.elapsedTime
+  })
+  return (
+    <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
+      <ringGeometry args={[0.34, 0.44, 24]} />
+      <meshBasicMaterial color="#39ff88" transparent opacity={0} depthWrite={false} side={2} />
+    </mesh>
+  )
+}
+
 /** Quiet chime whenever the hero walks past a checkpoint. */
 function CheckpointChimes({ heroZRef }) {
   const passed = useRef(new Set())
@@ -241,10 +299,12 @@ function Coins({ heroZRef, mobile }) {
   )
 }
 
-/** Smoothly follows the scroll progress and drives hero + camera (with sway). */
+/** Smoothly follows the scroll progress and drives hero + camera. The camera
+ * sways gently and widens its FOV with walking speed (Bruno's speed feel). */
 function Rig({ progressRef, heroZRef, speedRef }) {
   const { camera } = useThree()
   const smoothed = useRef(0)
+  const fov = useRef(50)
 
   useFrame((state, delta) => {
     const target = progressRef.current
@@ -263,6 +323,14 @@ function Rig({ progressRef, heroZRef, speedRef }) {
       heroZ + 7.5
     )
     camera.lookAt(Math.sin(t * 0.2) * 0.2, 1.2, heroZ - 2.5)
+
+    // speed → wider FOV, eased back when idle
+    const targetFov = 50 + Math.min(1, Math.abs(speedRef.current) * 3) * 9
+    fov.current += (targetFov - fov.current) * (1 - Math.exp(-delta * 4))
+    if (Math.abs(camera.fov - fov.current) > 0.05) {
+      camera.fov = fov.current
+      camera.updateProjectionMatrix()
+    }
   })
   return null
 }
@@ -305,6 +373,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <SkyLife mobile={mobile} />
         <ShootingStar />
         <Coins heroZRef={heroZRef} mobile={mobile} />
+        <ClickPing />
         <CheckpointChimes heroZRef={heroZRef} />
         <Hero speedRef={speedRef} positionRef={heroZRef} />
         <BugsyNpc positionRef={heroZRef} />
