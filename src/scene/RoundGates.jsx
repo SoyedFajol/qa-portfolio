@@ -54,25 +54,32 @@ function Gate({ round }) {
         <meshStandardMaterial color={c} emissive={c} emissiveIntensity={0.9} />
       </mesh>
 
-      {/* lit letters, mounted on the board — ONE side only; the board
-          occludes them so they never ghost through from behind */}
-      <Html
-        transform
-        occlude={[board]}
-        position={[0, 4.1, 0.3]}
-        distanceFactor={6}
-        style={{ pointerEvents: 'none' }}
-        zIndexRange={[9, 0]}
-      >
-        <div className="select-none text-center leading-tight">
-          <p className="font-pixel text-[22px]" style={{ color: c, textShadow: glow }}>
-            {title}
-          </p>
-          <p className="font-pixel text-[9px] text-white" style={{ textShadow: '0 0 5px rgba(255,255,255,0.8)' }}>
-            {subtitle}
-          </p>
-        </div>
-      </Html>
+      {/* lit letters on BOTH faces — each occluded by the board, so each
+          side reads only from its own side (no ghosting through) */}
+      {[
+        { z: 0.3, rot: 0 },
+        { z: -0.3, rot: Math.PI },
+      ].map((face) => (
+        <Html
+          key={face.z}
+          transform
+          occlude={[board]}
+          position={[0, 4.1, face.z]}
+          rotation={[0, face.rot, 0]}
+          distanceFactor={6}
+          style={{ pointerEvents: 'none' }}
+          zIndexRange={[9, 0]}
+        >
+          <div className="select-none text-center leading-tight">
+            <p className="font-pixel text-[22px]" style={{ color: c, textShadow: glow }}>
+              {title}
+            </p>
+            <p className="font-pixel text-[9px] text-white" style={{ textShadow: '0 0 5px rgba(255,255,255,0.8)' }}>
+              {subtitle}
+            </p>
+          </div>
+        </Html>
+      ))}
 
       {/* glowing start line across the road */}
       <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
