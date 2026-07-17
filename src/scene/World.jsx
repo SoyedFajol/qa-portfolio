@@ -723,6 +723,111 @@ function Nature({ mobile }) {
   )
 }
 
+/** ⚽ Camp Nou — a voxel homage to Barcelona's cathedral of football,
+ * standing outside the loop where Round 2 begins. Blaugrana tiers, green
+ * pitch, four floodlight towers and a crowd of sparkles. */
+function Stadium() {
+  const spot = circlePoint(0.5, 43)
+  const faceCity = Math.atan2(LOOP_CENTER.x - spot.x, LOOP_CENTER.z - spot.z)
+  const lights = useRef([])
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime
+    lights.current.forEach((l, i) => {
+      if (l) l.material.emissiveIntensity = 0.75 + Math.sin(t * 2.2 + i * 1.6) * 0.25
+    })
+  })
+
+  const BLAU = '#004d98'
+  const GRANA = '#a50044'
+
+  return (
+    <group position={[spot.x, 0, spot.z]} rotation={[0, faceCity, 0]}>
+      {/* stands: three oval blaugrana tiers + dark outer shell */}
+      {[
+        { rx: 5.6, rz: 4.4, y: 0.55, h: 1.1, color: GRANA },
+        { rx: 6.3, rz: 5.0, y: 1.35, h: 1.3, color: BLAU },
+        { rx: 7.0, rz: 5.6, y: 2.25, h: 1.5, color: GRANA },
+      ].map((tier, i) => (
+        <mesh key={i} position={[0, tier.y, 0]} scale={[tier.rx, 1, tier.rz]}>
+          <cylinderGeometry args={[1, 1, tier.h, 28, 1, true]} />
+          <meshStandardMaterial color={tier.color} side={2} />
+        </mesh>
+      ))}
+      <mesh position={[0, 1.6, 0]} scale={[7.4, 1, 6.0]}>
+        <cylinderGeometry args={[1, 1, 3.2, 28, 1, true]} />
+        <meshStandardMaterial color="#14204a" side={2} transparent opacity={0.9} />
+      </mesh>
+
+      {/* the pitch */}
+      <mesh position={[0, 0.05, 0]}>
+        <boxGeometry args={[8.2, 0.08, 5.6]} />
+        <meshStandardMaterial color="#1e7d3c" />
+      </mesh>
+      {/* halfway line + center circle + goals */}
+      <mesh position={[0, 0.1, 0]}>
+        <boxGeometry args={[0.08, 0.02, 5.2]} />
+        <meshStandardMaterial color="#e6e9ff" />
+      </mesh>
+      <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.9, 0.04, 6, 24]} />
+        <meshStandardMaterial color="#e6e9ff" />
+      </mesh>
+      {[-3.7, 3.7].map((x) => (
+        <group key={x} position={[x, 0, 0]}>
+          <mesh position={[0, 0.45, 0]}>
+            <boxGeometry args={[0.08, 0.9, 1.6]} />
+            <meshStandardMaterial color="#e6e9ff" emissive="#e6e9ff" emissiveIntensity={0.15} />
+          </mesh>
+        </group>
+      ))}
+      {/* the ball, waiting at the center spot */}
+      <mesh position={[0, 0.22, 0]}>
+        <sphereGeometry args={[0.16, 10, 8]} />
+        <meshStandardMaterial color="#f5f5f5" />
+      </mesh>
+
+      {/* four floodlight towers */}
+      {[[-6.4, -4.9], [6.4, -4.9], [-6.4, 4.9], [6.4, 4.9]].map(([x, z], i) => (
+        <group key={i} position={[x, 0, z]}>
+          <mesh position={[0, 2.6, 0]}>
+            <boxGeometry args={[0.16, 5.2, 0.16]} />
+            <meshStandardMaterial color="#232e63" />
+          </mesh>
+          <mesh ref={(el) => (lights.current[i] = el)} position={[0, 5.35, 0]} rotation={[0.5, Math.atan2(-x, -z), 0]}>
+            <boxGeometry args={[0.9, 0.5, 0.12]} />
+            <meshStandardMaterial color="#fffbe6" emissive="#fffbe6" emissiveIntensity={0.9} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* the crowd */}
+      <Sparkles count={40} scale={[11, 2.2, 9]} position={[0, 2.2, 0]} size={1.6} speed={0.15} color="#ffd93d" />
+
+      {/* name board facing the city */}
+      <mesh position={[0, 4.3, 5.9]}>
+        <boxGeometry args={[6.4, 1.0, 0.15]} />
+        <meshStandardMaterial color="#0b1026" />
+      </mesh>
+      <Html
+        transform
+        position={[0, 4.3, 6.0]}
+        distanceFactor={7}
+        style={{ pointerEvents: 'none' }}
+        zIndexRange={[5, 0]}
+      >
+        <div className="w-[240px] select-none text-center">
+          <p className="font-pixel text-[13px] tracking-wide">
+            <span style={{ color: '#004d98' }}>CAMP</span>{' '}
+            <span style={{ color: '#a50044' }}>NOU</span>
+          </p>
+          <p className="mt-0.5 font-pixel text-[7px] text-[#ffd93d]">⚽ BARCELONA · MÉS QUE UN CLUB</p>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
 /** Low-poly mountain range ringing the horizon, hazy in the fog. */
 function Mountains({ mobile }) {
   const peaks = useMemo(() => {
@@ -1085,6 +1190,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
           <River key={r.t1} t1={r.t1} t2={r.t2} bridgeU={r.bridgeU} />
         ))}
         <Garden />
+        <Stadium />
         <Nature mobile={mobile} />
         <Mountains mobile={mobile} />
         <SkyLife mobile={mobile} />

@@ -167,3 +167,11 @@
   RESULT:   PASS — production-ready for showcase
   GATE:     F3 refreshed; remaining opens are owner-action items (keys, device pass, launch post)
   DOCS:     README, D9, TASK-LOG
+
+[2026-07-17] TASK: V3.5 — Camp Nou (per Soyed)
+  ROLE:     3D + DESIGN
+  CHANGE:   ⚽ Voxel Camp Nou homage outside the loop at the Round-2 landing (u=0.5, r=43, faces the city): three oval blaugrana tiers (#004d98/#a50044) + dark outer shell, green pitch with halfway line, center circle, goals and a ball on the spot, four floodlight towers with pulsing heads, golden crowd sparkles, and a "CAMP NOU · BARCELONA · MÉS QUE UN CLUB" name board. Fan-tribute only: club colors + name, no crest/logo used (B4 posture: personal non-commercial homage).
+  VERIFY:   lint 0/0; 55/55; build ✓; placement checked clear of river band and road reach
+  RESULT:   PASS
+  GATE:     B4 note recorded
+  DOCS:     TASK-LOG
