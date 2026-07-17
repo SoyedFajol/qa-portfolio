@@ -274,6 +274,8 @@ function MiniCity({ mobile }) {
         </mesh>
       </group>
 
+      <CityBillboard />
+
       {cars.map((cfg, i) => (
         <group key={cfg.key} ref={(el) => (carRefs.current[i] = el)}>
           <mesh>
@@ -290,6 +292,74 @@ function MiniCity({ mobile }) {
           </mesh>
         </group>
       ))}
+    </group>
+  )
+}
+
+/** The city-center billboard: tells every visitor what this world IS.
+ * Front face greets the spawn point; the back face winks at Round 2. */
+function CityBillboard() {
+  const glow = useRef()
+  useFrame((state) => {
+    if (glow.current) {
+      glow.current.material.emissiveIntensity = 0.18 + (Math.sin(state.clock.elapsedTime * 1.6) + 1) * 0.08
+    }
+  })
+  return (
+    <group position={[LOOP_CENTER.x, 0, LOOP_CENTER.z]}>
+      {/* support struts off the beacon tower */}
+      {[-2.6, 2.6].map((x) => (
+        <mesh key={x} position={[x, 3.1, 0.9]}>
+          <boxGeometry args={[0.18, 6.2, 0.18]} />
+          <meshStandardMaterial color="#232e63" />
+        </mesh>
+      ))}
+      {/* panel frame + glowing screen */}
+      <mesh position={[0, 4.7, 1.0]}>
+        <boxGeometry args={[7.6, 3.6, 0.24]} />
+        <meshStandardMaterial color="#141b3c" />
+      </mesh>
+      <mesh ref={glow} position={[0, 4.7, 1.14]}>
+        <boxGeometry args={[7.15, 3.15, 0.02]} />
+        <meshStandardMaterial color="#0b1026" emissive="#39ff88" emissiveIntensity={0.2} />
+      </mesh>
+
+      {/* front: the pitch, facing the starting line */}
+      <Html
+        transform
+        position={[0, 4.7, 1.18]}
+        distanceFactor={5.5}
+        style={{ pointerEvents: 'none' }}
+        zIndexRange={[5, 0]}
+      >
+        <div className="w-[300px] select-none text-center">
+          <p className="font-pixel text-[9px] tracking-wider text-[#39ff88]">— WELCOME TO —</p>
+          <p className="mt-1.5 font-pixel text-[15px] leading-snug text-[#ffd93d]">SOYED SOLAMAN&apos;S</p>
+          <p className="font-pixel text-[11px] text-[#e6e9ff]">PORTFOLIO CITY</p>
+          <p className="mt-2 font-body text-[11px] leading-snug text-[#9aa3d1]">
+            Software Engineer · SQA @ BRAC IT — this whole world is my resume.
+          </p>
+          <p className="mt-1 font-pixel text-[8px] text-[#a06bff]">SCROLL THE ROAD · OPEN THE CRYSTALS · EARN XP</p>
+        </div>
+      </Html>
+
+      {/* back: a wink for the Round-2 half of the loop */}
+      <Html
+        transform
+        position={[0, 4.7, 0.82]}
+        rotation={[0, Math.PI, 0]}
+        distanceFactor={5.5}
+        style={{ pointerEvents: 'none' }}
+        zIndexRange={[5, 0]}
+      >
+        <div className="w-[300px] select-none text-center">
+          <p className="font-pixel text-[13px] text-[#a06bff]">ROUND 2</p>
+          <p className="mt-1.5 font-body text-[11px] leading-snug text-[#9aa3d1]">
+            Learning game · question dungeon · live job quests · company codex
+          </p>
+          <p className="mt-1.5 font-pixel text-[8px] text-[#39ff88]">HIRE THE PLAYER 🐞 · TESTED LIKE PRODUCTION</p>
+        </div>
+      </Html>
     </group>
   )
 }

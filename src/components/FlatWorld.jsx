@@ -62,6 +62,10 @@ export default function FlatWorld() {
       </section>
 
       <footer className="mt-10 text-center font-body text-xs text-ink-dim">
+        <a className="underline hover:text-ink" href="/resume">Resume</a>
+        {' · '}
+        <a className="underline hover:text-ink" href="https://github.com/SoyedFajol/qa-portfolio" target="_blank" rel="noreferrer">Source</a>
+        {' · '}
         <a className="underline hover:text-ink" href="/privacy">Privacy</a>
         {' · '}
         <a className="underline hover:text-ink" href="/terms">Terms</a>

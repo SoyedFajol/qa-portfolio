@@ -159,3 +159,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V3.4 FINAL — showcase polish (per Soyed: billboard in the middle, clean, informative, production-ready)
+  ROLE:     DESIGN + DEV + PM + BA
+  CHANGE:   CITY BILLBOARD: double-sided glowing billboard mounted on the beacon tower — front (faces the starting line): "WELCOME TO SOYED SOLAMAN'S PORTFOLIO CITY — this whole world is my resume · scroll the road, open the crystals, earn XP"; back (faces Round 2): playground pitch + "HIRE THE PLAYER 🐞 · TESTED LIKE PRODUCTION"; pulsing screen glow, crisp Html-transform text. ANALYSIS/CLEANUP: stale "Talk to Bugsy" line on the intro fixed (chat removed 07-08); intro copy now explains the game in one breath; end-of-path + menu + 2D footers gained Resume and Source(GitHub) links + a build credit line; index.html meta description rewritten around the city/rounds/resume; README intro rewritten to describe v3 accurately; D9 got a "Final version analysis" section (what shipped vs plan, quality position, open owner items).
+  VERIFY:   lint 0/0; 55/55 tests; build ✓
+  RESULT:   PASS — production-ready for showcase
+  GATE:     F3 refreshed; remaining opens are owner-action items (keys, device pass, launch post)
+  DOCS:     README, D9, TASK-LOG

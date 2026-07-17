@@ -73,8 +73,9 @@ export default function IntroScreen() {
       </motion.button>
 
       <p className="max-w-sm font-body text-xs text-ink-dim">
-        Scroll to walk through my world. Open the glowing checkpoints. Talk to
-        Bugsy. Earn XP. Find bugs (please report them 🐞).
+        An interactive 3D portfolio: scroll to walk a winding road around my
+        city, open the glowing crystals, jump the gap, collect coins, poke
+        Bugsy — and find bugs (please report them 🐞).
       </p>
     </motion.div>
   )

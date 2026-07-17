@@ -111,6 +111,12 @@ function GameWorld() {
         <footer className="pointer-events-auto absolute inset-x-0 bottom-12 z-10 px-4 text-center font-body text-xs text-ink-dim">
           <p className="font-pixel text-[9px] text-neon">— END OF PATH · THANKS FOR PLAYING —</p>
           <p className="mt-3">
+            <a className="underline hover:text-ink" href="/resume">Resume</a>
+            {' · '}
+            <a className="underline hover:text-ink" href="https://github.com/SoyedFajol/qa-portfolio" target="_blank" rel="noreferrer">
+              Source ⭐
+            </a>
+            {' · '}
             <a className="underline hover:text-ink" href="/privacy">Privacy</a>
             {' · '}
             <a className="underline hover:text-ink" href="/terms">Terms</a>
@@ -118,6 +124,9 @@ function GameWorld() {
             <a className="underline hover:text-ink" href="mailto:soyedmdsolemanfajul@gmail.com?subject=🐞 Bug report — qa-portfolio">
               🐞 Report a bug
             </a>
+          </p>
+          <p className="mt-2 font-pixel text-[8px] text-ink-dim">
+            built & QA-tested by Soyed Solaman · React + Three.js · 55 unit tests, CI, and one cliff
           </p>
         </footer>
       </div>

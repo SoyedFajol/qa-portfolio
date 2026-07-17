@@ -33,3 +33,25 @@ To be filled ~2 weeks post-launch from Vercel Analytics (targets in D8).
 3. Playwright E2E smoke suite in CI (fits the brand; gate H6 automation).
 4. More dungeon content + difficulty filter.
 5. Bangla language toggle for local recruiters.
+
+
+## Final version analysis (v3.4 — 2026-07-17, showcase-ready)
+
+**What the product is now:** an endless-loop 3D city world. Compared to the
+Master Prompt v4 baseline, the shipped product ADDS: rounds structure with a
+gap-jump and cliff-respawn loop, a living mini city (billboard, towers,
+traffic, citizens, birds, two rivers, gardens, mountains), a winding road,
+camera zoom, a world-map-first UX, a company codex (26 real BD companies), a
+print-ready in-site resume, jump/head-tracking hero controls, a synthesized
+chiptune sound engine, and a 105-question offline quiz bank. It REMOVED one
+planned feature deliberately: the AI chatbot (owner decision, 2026-07-08).
+
+**Quality position at ship:** 55 unit tests green in CI on every push;
+serverless endpoints validated + rate-limited + fallback-tested; instanced
+rendering keeps the scene ~150 draw calls; accessibility fallback (2D mode,
+reduced motion, keyboard, focus traps) intact; privacy rule (no phone/street
+address) enforced by tests and honored on the resume page.
+
+**Still open (needs the owner):** GEMINI_API_KEY + RAPIDAPI_KEY env vars,
+WEB3FORMS_ACCESS_KEY + CALENDLY_URL constants, real-device mobile perf pass
+(H1/H2), Search Console/Bing submission (F1/F2), launch post approval (F5).

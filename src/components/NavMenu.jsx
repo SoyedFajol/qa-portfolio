@@ -95,6 +95,10 @@ export default function NavMenu() {
 
             <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-4 border-panel-2 pt-3">
               <div className="font-body text-xs text-ink-dim">
+                <a className="underline hover:text-ink" href="/resume">Resume</a>
+                {' · '}
+                <a className="underline hover:text-ink" href="https://github.com/SoyedFajol/qa-portfolio" target="_blank" rel="noreferrer">Source</a>
+                {' · '}
                 <a className="underline hover:text-ink" href="/privacy">Privacy</a>
                 {' · '}
                 <a className="underline hover:text-ink" href="/terms">Terms</a>
