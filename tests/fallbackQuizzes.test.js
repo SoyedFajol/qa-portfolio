@@ -4,7 +4,7 @@ import { validateQuiz } from '../lib/validateQuiz.js'
 
 describe('fallback quiz bank — the AI safety net (gate A1)', () => {
   it('covers every Learning Game topic with at least 15 questions each', () => {
-    expect(TOPICS.length).toBe(7)
+    expect(TOPICS.length).toBe(9)
     for (const id of TOPIC_IDS) {
       expect(FALLBACK_QUIZZES[id], `missing fallback for topic "${id}"`).toBeDefined()
       expect(

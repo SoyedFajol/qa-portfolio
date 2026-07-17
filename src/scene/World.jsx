@@ -1416,6 +1416,84 @@ function BangladeshLandmarks({ mobile }) {
   )
 }
 
+/** 🚆 The elevated train line: a viaduct ring OUTSIDE the city (over the
+ * suburbs, rivers and beach edge) with a green train forever circling. */
+const RAIL_R = 41
+const RAIL_Y = 2.75
+
+function TrainLine({ mobile }) {
+  const cars = useMemo(
+    () => [
+      { len: 2.3, color: '#2fae62', engine: true }, // Bangladesh Railway green
+      { len: 2.1, color: '#e8e2d4' },
+      { len: 2.1, color: '#2fae62' },
+      { len: 2.1, color: '#e8e2d4' },
+    ],
+    []
+  )
+  const carRefs = useRef([])
+
+  const pillars = useMemo(() => {
+    const list = []
+    const count = mobile ? 20 : 30
+    for (let i = 0; i < count; i++) {
+      const p = circlePoint(i / count, RAIL_R)
+      list.push({ pos: [p.x, RAIL_Y / 2, p.z], scale: [0.38, RAIL_Y, 0.38], color: '#1d2650' })
+    }
+    return list
+  }, [mobile])
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime
+    const head = (t / 55) % 1 // one lap ≈ 55s
+    const gap = 2.55 / (TAU * RAIL_R) // car spacing along the arc
+    carRefs.current.forEach((c, i) => {
+      if (!c) return
+      const p = circlePoint(head - i * gap, RAIL_R)
+      c.position.set(p.x, RAIL_Y + 0.62, p.z)
+      c.rotation.y = p.yaw
+    })
+  })
+
+  return (
+    <group>
+      {/* track bed + twin rails (full rings, 3 draw calls) */}
+      <mesh position={[LOOP_CENTER.x, RAIL_Y, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[RAIL_R - 0.75, RAIL_R + 0.75, 96]} />
+        <meshStandardMaterial color="#1d2650" side={2} />
+      </mesh>
+      {[RAIL_R - 0.35, RAIL_R + 0.35].map((r) => (
+        <mesh key={r} position={[LOOP_CENTER.x, RAIL_Y + 0.05, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[r - 0.07, r + 0.07, 96]} />
+          <meshStandardMaterial color="#c0c6e8" emissive="#c0c6e8" emissiveIntensity={0.25} side={2} />
+        </mesh>
+      ))}
+      <Boxes items={pillars} />
+
+      {/* the train */}
+      {cars.map((cfg, i) => (
+        <group key={i} ref={(el) => (carRefs.current[i] = el)}>
+          <mesh castShadow>
+            <boxGeometry args={[0.85, 0.85, cfg.len]} />
+            <meshStandardMaterial color={cfg.color} />
+          </mesh>
+          {/* window band */}
+          <mesh position={[0, 0.12, 0]}>
+            <boxGeometry args={[0.87, 0.28, cfg.len * 0.82]} />
+            <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.5} />
+          </mesh>
+          {cfg.engine && (
+            <mesh position={[0, -0.1, cfg.len / 2 + 0.02]}>
+              <boxGeometry args={[0.5, 0.2, 0.05]} />
+              <meshStandardMaterial color="#fffbe6" emissive="#fffbe6" emissiveIntensity={1.2} />
+            </mesh>
+          )}
+        </group>
+      ))}
+    </group>
+  )
+}
+
 /** Sky: a few clouds drifting over the city (white by day, dim by night). */
 function SkyLife({ mobile, cloudColor, cloudOpacity }) {
   const cloudGroup = useRef()
@@ -1713,6 +1791,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <Beach />
         <Stadium />
         <Nature mobile={mobile} />
+        <TrainLine mobile={mobile} />
         <BangladeshLandmarks mobile={mobile} />
         <SkyLife mobile={mobile} cloudColor={T.cloud} cloudOpacity={T.cloudOpacity} />
         <Coins tRef={tRef} mobile={mobile} />

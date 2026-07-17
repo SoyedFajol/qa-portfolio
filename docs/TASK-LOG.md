@@ -255,3 +255,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.9 — 15-question sessions, 2 new topics, the train (per Soyed)
+  ROLE:     DEV + BA + 3D
+  CHANGE:   LEARNING GAME: sessions now serve the FULL 15 questions (was 5) — AI path requests count 15 (API cap 3→15, output budget 6144 tokens), offline path shuffles the complete bank per run; pass threshold stays 70% (11/15 clears a topic). TWO NEW TOPICS with 15 hand-written questions each: 🔐 Security Testing (OWASP, XSS, SQLi, IDOR, CSRF, hashing, least privilege, responsible disclosure…) and 🌀 Agile/Scrum (roles, rituals, DoD, story points, WIP limits, velocity anti-patterns, QA-in-sprint…) → 9 topics, 165 questions total. 🚆 TRAIN LINE: elevated viaduct ring OUTSIDE the city (r 41, above suburbs, bridging both rivers and the beach edge) — track bed + twin glowing rails (3 draws) + 30 instanced pillars (1 draw) + a 4-car Bangladesh-Railway-green train with lit windows and a headlight circling forever (~55s/lap).
+  VERIFY:   lint 0/0; 55/55 tests (topic-count + ≥15 guards re-verified on 9 topics); build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG

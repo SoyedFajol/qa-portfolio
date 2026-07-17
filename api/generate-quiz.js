@@ -42,11 +42,11 @@ export default async function handler(req, res) {
   const body = req.body ?? {}
   const topic = typeof body.topic === 'string' ? body.topic : ''
   const difficulty = typeof body.difficulty === 'string' ? body.difficulty : 'easy'
-  const count = Number.isInteger(body.count) ? body.count : 4
+  const count = Number.isInteger(body.count) ? body.count : 15
 
   if (!TOPIC_IDS.includes(topic)) return res.status(400).json({ error: 'Unknown topic' })
   if (!DIFFICULTIES.includes(difficulty)) return res.status(400).json({ error: 'Unknown difficulty' })
-  if (count < 3 || count > 5) return res.status(400).json({ error: 'count must be 3-5' })
+  if (count < 3 || count > 15) return res.status(400).json({ error: 'count must be 3-15' })
 
   const prompt = buildPrompt(topic, difficulty, count)
 
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         messages: [{ role: 'user', content: prompt }],
         json: true,
         temperature: attempt === 0 ? 0.8 : 0.4, // retry more conservatively
-        maxOutputTokens: 2048,
+        maxOutputTokens: 6144, // room for a full 15-question quiz
       })
       const quiz = validateQuiz(extractJson(text))
       if (quiz) {

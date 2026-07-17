@@ -20,7 +20,7 @@ async function fetchQuiz(topic, difficulty) {
   const res = await fetch('/api/generate-quiz', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic, difficulty, count: 5 }),
+    body: JSON.stringify({ topic, difficulty, count: 15 }),
   })
   if (!res.ok) throw new Error(`quiz api ${res.status}`)
   const data = await res.json()
@@ -61,8 +61,8 @@ export default function LearningGame() {
       setSource(src)
     } catch {
       // Network or validation failure — the game must never break (gate A1).
-      // Sample 5 of the topic's 15-question bank so every replay differs.
-      setQuiz(sampleFallbackQuiz(t.id, 5))
+      // The full 15-question bank, shuffled fresh for every run.
+      setQuiz(sampleFallbackQuiz(t.id, 15))
       setSource('fallback')
     }
     setPhase('lesson')
