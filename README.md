@@ -2,7 +2,7 @@
 
 **Live: https://soyed-solaman.vercel.app**
 
-A pixel/retro RPG portfolio rendered in 3D for **Soyed Md. Solaman Fajul (Soyed Solaman)** — Software Engineer & SQA @ BRAC IT Services Ltd., Dhaka. The visitor is a player: scroll to walk a voxel hero along a winding (আঁকাবাঁকা) loop road around a living neon mini city — lit towers, a central billboard, driving cars, citizens, birds, two rivers, gardens and mountains on the horizon.
+A pixel/retro RPG portfolio rendered in 3D for **Soyed Md. Solaman Fajul (Soyed Solaman)** — Software Engineer & SQA @ BRAC IT Services Ltd., Dhaka. The visitor is a player: scroll to walk a voxel hero along a winding (আঁকাবাঁকা) loop road around a living neon mini city — lit towers, a central billboard, driving cars, citizens, birds, two rivers, gardens, a beach, Camp Nou — and seven Bangladeshi landmarks on the horizon (Shahjalal Airport, Jatiya Sangsad, Choto Sona Mosque, Jatiyo Smriti Soudho, Shaheed Minar, AIUB, Harimohan Govt. High School).
 
 **Round 1 — The Portfolio:** journey, skills inventory, projects arcade, achievement hall, roadmap, print-ready resume & contact. Then the road breaks — jump the gap — into **Round 2 — The Playground:** interview question dungeon, AI learning game (15+ questions per topic), live Bangladesh job quest board, a 26-company codex, and a booking/contact hub. At the end of the lap the hero falls off a cliff and respawns: the road is a circle. XP, ranks, achievements, coins, chiptune soundtrack, camera zoom (Ctrl+scroll), full 2D accessibility fallback — all tested and shipped through CI.
 

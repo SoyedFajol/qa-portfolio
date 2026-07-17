@@ -215,3 +215,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.4 — Bangladesh on the horizon (per Soyed's reference photos)
+  ROLE:     3D + DESIGN + BA
+  CHANGE:   Mountains REMOVED; in their ring stand seven voxel Bangladeshi landmarks, each separated on its own arc with a name label (labels skipped on mobile): ✈️ Hazrat Shahjalal Int'l Airport T3 (glass terminal, column canopy, parked plane), 🏛️ Jatiya Sangsad Bhaban (octagonal drum + towers on its lake), 🕌 Choto Sona Mosque · Chapainawabganj (dark stone, 8 golden domes, corner turrets — the hometown landmark), 🗼 Jatiyo Smriti Soudho (nested triangular shards rising to the spire), 🌅 Shaheed Minar (white columns, bowing center, red sun, Bangla label), 🎓 AIUB (the glass sphere + garden-balcony building + football field — "my university"), 🏫 Harimohan Govt. High School (red-brick verandah arches + Bangladesh flag — "my school"). All face the city; README updated.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     README, TASK-LOG

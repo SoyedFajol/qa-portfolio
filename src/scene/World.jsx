@@ -1081,42 +1081,264 @@ function Stadium() {
   )
 }
 
-/** Low-poly mountain range ringing the horizon, hazy in the fog. */
-function Mountains({ mobile }) {
-  const peaks = useMemo(() => {
-    const list = []
-    const count = mobile ? 8 : 13
-    for (let i = 0; i < count; i++) {
-      const ang = (i / count + seeded(i + 200) * 0.04) * TAU
-      const rad = 70 + seeded(i + 201) * 18
-      const h = 9 + seeded(i + 202) * 12
-      list.push({
-        key: i,
-        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
-        h,
-        w: 8 + seeded(i + 203) * 9,
-        color: ['#151b3d', '#1a2148', '#202a58'][i % 3],
-        snow: h > 12,
-      })
-    }
-    return list
-  }, [mobile])
+/** 🇧🇩 The horizon belongs to Bangladesh: seven voxel landmarks ring the
+ * world where the mountains used to be — each on its own stretch of sky. */
+function Landmark({ u, radius, label, children, mobile }) {
+  const p = circlePoint(u, radius)
+  const faceCity = Math.atan2(LOOP_CENTER.x - p.x, LOOP_CENTER.z - p.z)
+  return (
+    <group position={[p.x, 0, p.z]} rotation={[0, faceCity, 0]}>
+      {children}
+      {!mobile && (
+        <Html center position={[0, 11, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[8, 0]}>
+          <span className="whitespace-nowrap border-2 border-panel-2 bg-night/90 px-2 py-1 font-pixel text-[8px] text-ink">
+            {label}
+          </span>
+        </Html>
+      )}
+    </group>
+  )
+}
+
+function BangladeshLandmarks({ mobile }) {
+  const S = 1.6 // landmark scale
   return (
     <group>
-      {peaks.map((m) => (
-        <group key={m.key} position={m.pos}>
-          <mesh position={[0, m.h / 2, 0]}>
-            <coneGeometry args={[m.w, m.h, 5]} />
-            <meshStandardMaterial color={m.color} flatShading />
+      {/* ✈️ Hazrat Shahjalal International Airport — Terminal 3 */}
+      <Landmark u={0.04} radius={76} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
+        <group scale={[S, S, S]}>
+          <mesh position={[0, 1.6, 0]}>
+            <boxGeometry args={[14, 3, 4]} />
+            <meshStandardMaterial color="#1d3a5f" emissive="#4db3ff" emissiveIntensity={0.18} />
           </mesh>
-          {m.snow && (
-            <mesh position={[0, m.h - m.h * 0.11, 0]}>
-              <coneGeometry args={[m.w * 0.24, m.h * 0.24, 5]} />
-              <meshStandardMaterial color="#dfe6ff" flatShading />
+          <mesh position={[0, 3.4, 0.4]}>
+            <boxGeometry args={[16.5, 0.55, 5.6]} />
+            <meshStandardMaterial color="#d9d2c2" />
+          </mesh>
+          {[-6, -3, 0, 3, 6].map((x) => (
+            <mesh key={x} position={[x, 1.4, 2.35]}>
+              <boxGeometry args={[0.45, 2.8, 0.45]} />
+              <meshStandardMaterial color="#e8e2d4" />
             </mesh>
-          )}
+          ))}
+          {/* a plane on the apron */}
+          <group position={[9.5, 0.5, 1]} rotation={[0, 0.6, 0]}>
+            <mesh>
+              <boxGeometry args={[0.5, 0.5, 2.6]} />
+              <meshStandardMaterial color="#f2f4ff" />
+            </mesh>
+            <mesh>
+              <boxGeometry args={[2.6, 0.08, 0.5]} />
+              <meshStandardMaterial color="#c9cede" />
+            </mesh>
+            <mesh position={[0, 0.35, -1.15]}>
+              <boxGeometry args={[0.08, 0.7, 0.5]} />
+              <meshStandardMaterial color="#ff5d5d" />
+            </mesh>
+          </group>
         </group>
-      ))}
+      </Landmark>
+
+      {/* 🏛️ Jatiya Sangsad Bhaban — Louis Kahn's parliament on its lake */}
+      <Landmark u={0.18} radius={74} label="🏛️ Jatiya Sangsad Bhaban" mobile={mobile}>
+        <group scale={[S, S, S]}>
+          <mesh position={[0, 0.06, 0]}>
+            <cylinderGeometry args={[8, 8, 0.12, 24]} />
+            <meshStandardMaterial color="#1d4e89" emissive="#4db3ff" emissiveIntensity={0.15} />
+          </mesh>
+          <mesh position={[0, 2.6, 0]}>
+            <cylinderGeometry args={[2.4, 2.4, 5.2, 8]} />
+            <meshStandardMaterial color="#b8ac96" flatShading />
+          </mesh>
+          {[0, 1, 2, 3].map((i) => {
+            const a = (i / 4) * TAU + Math.PI / 4
+            return (
+              <mesh key={i} position={[Math.sin(a) * 3.6, 2, Math.cos(a) * 3.6]}>
+                <cylinderGeometry args={[1.3, 1.3, 4, 10]} />
+                <meshStandardMaterial color="#a99d88" flatShading />
+              </mesh>
+            )
+          })}
+          {[0, 1, 2, 3].map((i) => {
+            const a = (i / 4) * TAU
+            return (
+              <mesh key={i} position={[Math.sin(a) * 3.8, 1.8, Math.cos(a) * 3.8]}>
+                <boxGeometry args={[2.4, 3.6, 2.4]} />
+                <meshStandardMaterial color="#b8ac96" />
+              </mesh>
+            )
+          })}
+          {/* the great circular openings */}
+          <mesh position={[0, 2.4, 3.95]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.9, 0.9, 0.1, 16]} />
+            <meshStandardMaterial color="#181c33" />
+          </mesh>
+        </group>
+      </Landmark>
+
+      {/* 🕌 Choto Sona Mosque — the pride of Chapainawabganj */}
+      <Landmark u={0.32} radius={74} label="🕌 Choto Sona Mosque · Chapainawabganj" mobile={mobile}>
+        <group scale={[S, S, S]}>
+          <mesh position={[0, 0.15, 0]}>
+            <boxGeometry args={[9.5, 0.3, 7]} />
+            <meshStandardMaterial color="#d8c9a8" />
+          </mesh>
+          <mesh position={[0, 1.5, 0]}>
+            <boxGeometry args={[7, 2.6, 4.6]} />
+            <meshStandardMaterial color="#4a4a52" />
+          </mesh>
+          {/* golden domes, 2×4 */}
+          {[0, 1, 2, 3].map((c) =>
+            [0, 1].map((r) => (
+              <mesh key={`${c}-${r}`} position={[-2.4 + c * 1.6, 2.9, -0.9 + r * 1.8]}>
+                <sphereGeometry args={[0.62, 10, 8]} />
+                <meshStandardMaterial color="#b58a6a" flatShading />
+              </mesh>
+            ))
+          )}
+          {/* corner turrets */}
+          {[[-3.5, -2.3], [3.5, -2.3], [-3.5, 2.3], [3.5, 2.3]].map(([x, z], i) => (
+            <mesh key={i} position={[x, 1.7, z]}>
+              <cylinderGeometry args={[0.32, 0.38, 3.4, 8]} />
+              <meshStandardMaterial color="#3d3d45" />
+            </mesh>
+          ))}
+          {/* arched doorways */}
+          {[-1.6, 0, 1.6].map((x) => (
+            <mesh key={x} position={[x, 1.1, 2.32]}>
+              <boxGeometry args={[0.8, 1.7, 0.06]} />
+              <meshStandardMaterial color="#181c33" />
+            </mesh>
+          ))}
+        </group>
+      </Landmark>
+
+      {/* 🗼 Jatiyo Smriti Soudho — the Martyrs' Memorial spire */}
+      <Landmark u={0.46} radius={78} label="🗼 Jatiyo Smriti Soudho · Savar" mobile={mobile}>
+        <group scale={[S, S, S]}>
+          <mesh position={[0, 0.2, 0]}>
+            <boxGeometry args={[10, 0.4, 8]} />
+            <meshStandardMaterial color="#a5442f" />
+          </mesh>
+          {[
+            { h: 3.5, z: 2.4 },
+            { h: 5.5, z: 1.5 },
+            { h: 7.5, z: 0.6 },
+            { h: 10, z: -0.5 },
+          ].map((t, i) => (
+            <mesh key={i} position={[0, t.h / 2 + 0.4, t.z]} scale={[1, 1, 0.16]}>
+              <coneGeometry args={[t.h * 0.42, t.h, 4]} />
+              <meshStandardMaterial color="#cfd2d8" flatShading />
+            </mesh>
+          ))}
+        </group>
+      </Landmark>
+
+      {/* 🌅 Shaheed Minar — the Language Martyrs' Memorial */}
+      <Landmark u={0.62} radius={80} label="🌅 Shaheed Minar · ২১শে ফেব্রুয়ারি" mobile={mobile}>
+        <group scale={[S, S, S]}>
+          <mesh position={[0, 0.25, 0]}>
+            <boxGeometry args={[10, 0.5, 6]} />
+            <meshStandardMaterial color="#e8e2d4" />
+          </mesh>
+          {/* the red sun */}
+          <mesh position={[0, 3.6, -1.2]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[1.7, 1.7, 0.12, 20]} />
+            <meshStandardMaterial color="#f42a41" emissive="#f42a41" emissiveIntensity={0.4} />
+          </mesh>
+          {/* outer columns */}
+          {[[-3.6, 2.6], [-1.9, 3.3], [1.9, 3.3], [3.6, 2.6]].map(([x, h], i) => (
+            <mesh key={i} position={[x, h / 2 + 0.5, 0]}>
+              <boxGeometry args={[0.9, h, 0.35]} />
+              <meshStandardMaterial color="#f4f6ff" />
+            </mesh>
+          ))}
+          {/* the bowing mother — center column with tilted head */}
+          <mesh position={[0, 2.5, 0]}>
+            <boxGeometry args={[1.1, 4, 0.35]} />
+            <meshStandardMaterial color="#f4f6ff" />
+          </mesh>
+          <mesh position={[0, 4.6, 0.4]} rotation={[0.5, 0, 0]}>
+            <boxGeometry args={[1.1, 1.6, 0.3]} />
+            <meshStandardMaterial color="#f4f6ff" />
+          </mesh>
+        </group>
+      </Landmark>
+
+      {/* 🎓 AIUB — the glass sphere where the coding began */}
+      <Landmark u={0.76} radius={78} label="🎓 AIUB — my university" mobile={mobile}>
+        <group scale={[S, S, S]}>
+          <mesh position={[0, 0.1, 0]}>
+            <boxGeometry args={[12, 0.2, 8]} />
+            <meshStandardMaterial color="#1e5c38" />
+          </mesh>
+          {/* the sphere */}
+          <mesh position={[-3, 2.5, 0.5]}>
+            <sphereGeometry args={[2.3, 16, 12]} />
+            <meshStandardMaterial color="#6fb0dd" emissive="#4db3ff" emissiveIntensity={0.3} flatShading />
+          </mesh>
+          <mesh position={[-3, 0.6, 0.5]}>
+            <cylinderGeometry args={[1.2, 1.5, 1.2, 10]} />
+            <meshStandardMaterial color="#c9cede" />
+          </mesh>
+          {/* the academic building with garden balconies */}
+          <mesh position={[2.8, 2.1, -0.5]}>
+            <boxGeometry args={[5.5, 4, 3]} />
+            <meshStandardMaterial color="#3b5a8f" emissive="#4db3ff" emissiveIntensity={0.12} />
+          </mesh>
+          {[0.8, 2, 3.2].map((y) => (
+            <mesh key={y} position={[2.8, y, 1.05]}>
+              <boxGeometry args={[5.5, 0.18, 0.15]} />
+              <meshStandardMaterial color="#2fae62" />
+            </mesh>
+          ))}
+          {/* the football field out front */}
+          <mesh position={[1.5, 0.22, 2.6]}>
+            <boxGeometry args={[4.5, 0.06, 2.4]} />
+            <meshStandardMaterial color="#1e7d3c" />
+          </mesh>
+        </group>
+      </Landmark>
+
+      {/* 🏫 Harimohan Government High School — est. 1895 */}
+      <Landmark u={0.9} radius={74} label="🏫 Harimohan Govt. High School — my school" mobile={mobile}>
+        <group scale={[S, S, S]}>
+          <mesh position={[0, 0.15, 0]}>
+            <boxGeometry args={[11, 0.3, 6]} />
+            <meshStandardMaterial color="#d8c9a8" />
+          </mesh>
+          <mesh position={[0, 1.5, 0]}>
+            <boxGeometry args={[9, 2.4, 3]} />
+            <meshStandardMaterial color="#a5442f" />
+          </mesh>
+          <mesh position={[0, 2.9, 0]}>
+            <boxGeometry args={[9.6, 0.5, 3.6]} />
+            <meshStandardMaterial color="#6e2c1d" />
+          </mesh>
+          {/* arched white verandah */}
+          {[-3.2, -1.6, 0, 1.6, 3.2].map((x) => (
+            <mesh key={x} position={[x, 1.2, 1.55]}>
+              <boxGeometry args={[0.9, 1.8, 0.1]} />
+              <meshStandardMaterial color="#f4f6ff" />
+            </mesh>
+          ))}
+          {/* flag of Bangladesh */}
+          <group position={[5.2, 0, 1.5]}>
+            <mesh position={[0, 2.2, 0]}>
+              <cylinderGeometry args={[0.05, 0.05, 4.4, 6]} />
+              <meshStandardMaterial color="#c9cede" />
+            </mesh>
+            <mesh position={[0.55, 3.9, 0]}>
+              <boxGeometry args={[1.1, 0.7, 0.04]} />
+              <meshStandardMaterial color="#006a4e" />
+            </mesh>
+            <mesh position={[0.5, 3.9, 0.03]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.22, 0.22, 0.03, 14]} />
+              <meshStandardMaterial color="#f42a41" />
+            </mesh>
+          </group>
+        </group>
+      </Landmark>
     </group>
   )
 }
@@ -1422,7 +1644,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <Beach />
         <Stadium />
         <Nature mobile={mobile} />
-        <Mountains mobile={mobile} />
+        <BangladeshLandmarks mobile={mobile} />
         <SkyLife mobile={mobile} cloudColor={T.cloud} cloudOpacity={T.cloudOpacity} />
         <Coins tRef={tRef} mobile={mobile} />
         <ClickPing />
