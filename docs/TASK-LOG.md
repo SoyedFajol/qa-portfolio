@@ -239,3 +239,11 @@
   RESULT:   PASS
   GATE:     H1 unaffected (instanced)
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.7 — urban master plan: monuments move INSIDE the city (per Soyed)
+  ROLE:     3D + DESIGN ("urban engineer")
+  CHANGE:   The city is now zoned like a planned capital: (1) DOWNTOWN CORE — all 11 towers cluster around the beacon/billboard (r 4–10); the middle band they used to clutter is cleared. (2) MONUMENT BOULEVARD — the seven Bangladeshi landmarks moved from the far horizon (r 74–80) into the city on a wide two-tier ring (r 18.5 / 23), staggered so nothing crowds, still in life order (school → mosque → AIUB → Sangsad → Airport → Smriti Soudho → Shaheed Minar), each now FACING the road so the walker meets them front-on; landmark scale trimmed to fit (airport narrower). (3) Garden and Park districts unchanged. (4) OUTSKIRTS — suburbs (homes), Camp Nou and the beach stay outside the ring road, as real cities do. Horizon is now clean open voxel plain to the fog.
+  VERIFY:   lint 0/0; 55/55; build ✓; clearances checked (street ≤11.7 < 12.6; tier 23 + depth < road inner reach 27.7)
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG
