@@ -68,7 +68,7 @@ export default function ResumePage() {
         <section aria-label="Skills">
           <h2 className="resume-h">SKILLS</h2>
           <ul className="list-inside list-disc space-y-1 text-ink-dim">
-            <li><strong className="text-ink">Programming:</strong> C++, JavaScript, TypeScript, Python, Java</li>
+            <li><strong className="text-ink">Programming:</strong> C++, JavaScript, TypeScript, Python, Java (also C, C#, PHP, Dart, Flutter)</li>
             <li><strong className="text-ink">Testing:</strong> Manual, API, Automation, Database Testing, Security Testing, UAT</li>
             <li><strong className="text-ink">Test Automation:</strong> Playwright, Selenium, n8n</li>
             <li><strong className="text-ink">Frontend:</strong> HTML, CSS, React, Next.js</li>
@@ -81,11 +81,12 @@ export default function ResumePage() {
         </section>
 
         <section aria-label="Extracurricular">
-          <h2 className="resume-h">EXTRACURRICULAR</h2>
+          <h2 className="resume-h">EXTRACURRICULAR & SPORTS</h2>
           <ul className="list-inside list-disc space-y-1 text-ink-dim">
             {PROFILE.extras.map((e) => (
               <li key={e}>{e}</li>
             ))}
+            <li>Semi-professional cricket and football player; U-14 national cricket team captain; marathon runner and multi-sport athlete</li>
           </ul>
         </section>
 

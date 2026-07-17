@@ -141,6 +141,7 @@ export default function SkillsSection() {
       <section className="space-y-4" aria-label="Stacks, databases, tools and APIs">
         <ChipRow title="FRONTEND GEAR" icon="🎨" items={s.frontend} />
         <ChipRow title="BACKEND FORGE" icon="⚙️" items={s.backend} />
+        <ChipRow title="SIDE SPELLBOOK" icon="📖" items={s.alsoCode} />
         <ChipRow title="DATABASE RUNES" icon="🗄️" items={s.databases} />
         <ChipRow title="TOOL BELT" icon="🧰" items={s.tools} />
         <ChipRow title="AI COMPANIONS" icon="🤖" items={s.aiStack} />
