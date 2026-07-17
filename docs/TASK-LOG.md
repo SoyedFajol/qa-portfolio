@@ -151,3 +151,11 @@
   RESULT:   PASS
   GATE:     H1 — this pass exists to close it; re-check on real device
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V3.3 — আঁকাবাঁকা winding road, mountains, camera zoom (per Soyed)
+  ROLE:     3D + DEV
+  CHANGE:   ROAD: no longer a plain circle — pathPoint() now wobbles the radius ±2.5 over 5 bends per lap (proper derivative-based tangent/normal so hero heading, camera, checkpoints, coins, gates all follow the bends); road drawn with a new PathRibbon custom BufferGeometry (exact-fit triangle strip along the curve, 1 draw call per arc) replacing the circular RingArc road. Collision re-pass for the wavy edge: sidewalk walkers → R+5.4, trees → R+5.6 min, homes → R+5.6 slots, roadside flowers now placed RELATIVE to the winding road (hug the bends, never on asphalt). MOUNTAINS: 13 low-poly flat-shaded peaks (3 shades, snow caps on the tall ones) ringing the horizon at r=52–66, hazy in the fog. ZOOM: uiStore zoom (0.55–2.4) eased in the camera rig — HUD 🔍+/🔍− buttons + Ctrl/Cmd+scroll (plain scroll still walks); map legend updated.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG

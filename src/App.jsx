@@ -81,6 +81,18 @@ function GameWorld() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [flatMode])
 
+  // Ctrl/Cmd + scroll = camera zoom (plain scroll keeps walking the hero)
+  useEffect(() => {
+    if (flatMode) return
+    function onWheel(e) {
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      useUiStore.getState().zoomBy(e.deltaY > 0 ? 0.12 : -0.12)
+    }
+    window.addEventListener('wheel', onWheel, { passive: false })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [flatMode])
+
   if (flatMode) return <FlatWorld />
 
   return (

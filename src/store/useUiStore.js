@@ -12,6 +12,7 @@ export const useUiStore = create((set, get) => ({
   mapOpen: false,          // world-map popup (auto-opens once after start)
   flatMode: false,         // true = no-3D fallback (WebGL missing, reduced motion, or user choice)
   flatModeReason: null,    // 'webgl' | 'motion' | 'user' | null
+  zoom: 1,                 // camera zoom factor (0.55 close … 2.4 bird's-eye)
   toasts: [],              // { id, icon, title, desc }
   levelUpTo: null,         // level number while the LEVEL UP! burst is showing
 
@@ -22,6 +23,9 @@ export const useUiStore = create((set, get) => ({
 
   setNavOpen: (navOpen) => set({ navOpen }),
   setMapOpen: (mapOpen) => set({ mapOpen }),
+
+  zoomBy: (delta) =>
+    set({ zoom: Math.min(2.4, Math.max(0.55, get().zoom + delta)) }),
 
   setFlatMode: (flatMode, reason = 'user') =>
     set({ flatMode, flatModeReason: flatMode ? reason : null }),

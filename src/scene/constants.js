@@ -14,18 +14,30 @@ export const GAP_END = 0.425
 // the cliff at the end of the lap — walk off, fall, respawn at start
 export const CLIFF_T = 0.982
 
-/** Point on the loop at progress t: position, outward normal, and the yaw
- * that makes a group's local +z face the direction of travel. */
+// the road is NOT a plain circle: it snakes আঁকাবাঁকা (left-right) around
+// the circular city — radius wobbles ±WAVE_AMP over WAVES bends per lap
+export const WAVE_AMP = 2.5
+export const WAVES = 5
+
+/** Point on the winding loop at progress t: position, outward unit normal
+ * (perpendicular to travel), and the yaw that makes a group's local +z face
+ * the direction of travel. */
 export function pathPoint(t) {
   const a = t * Math.PI * 2
-  const x = LOOP_CENTER.x + Math.sin(a) * LOOP_RADIUS
-  const z = LOOP_CENTER.z + Math.cos(a) * LOOP_RADIUS
+  const r = LOOP_RADIUS + WAVE_AMP * Math.sin(WAVES * a)
+  const dr = WAVE_AMP * WAVES * Math.cos(WAVES * a) // dr/da
+  const x = LOOP_CENTER.x + Math.sin(a) * r
+  const z = LOOP_CENTER.z + Math.cos(a) * r
+  // travel direction = d(pos)/da
+  const dx = Math.cos(a) * r + Math.sin(a) * dr
+  const dz = -Math.sin(a) * r + Math.cos(a) * dr
+  const len = Math.hypot(dx, dz) || 1
   return {
     x,
     z,
-    nx: Math.sin(a), // outward normal (unit)
-    nz: Math.cos(a),
-    yaw: Math.atan2(Math.cos(a), -Math.sin(a)),
+    nx: -dz / len, // outward normal (unit), rotate travel dir −90°
+    nz: dx / len,
+    yaw: Math.atan2(dx, dz),
   }
 }
 

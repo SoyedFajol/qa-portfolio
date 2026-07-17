@@ -70,6 +70,44 @@ function circlePoint(u, radius) {
   }
 }
 
+/** A flat ribbon that follows the winding path exactly between t1..t2 —
+ * one draw call, built once. This is how the আঁকাবাঁকা road gets drawn. */
+function PathRibbon({ t1, t2, halfWidth, y = 0, color = '#2a356e', emissive, emissiveIntensity = 0.3 }) {
+  const geometry = useMemo(() => {
+    const N = Math.max(12, Math.round((t2 - t1) * 220))
+    const positions = new Float32Array((N + 1) * 2 * 3)
+    const normals = new Float32Array((N + 1) * 2 * 3)
+    const indices = []
+    for (let i = 0; i <= N; i++) {
+      const t = t1 + ((t2 - t1) * i) / N
+      const p = pathPoint(t)
+      const o = i * 6
+      positions.set([p.x - p.nx * halfWidth, y, p.z - p.nz * halfWidth], o)
+      positions.set([p.x + p.nx * halfWidth, y, p.z + p.nz * halfWidth], o + 3)
+      normals.set([0, 1, 0, 0, 1, 0], o)
+      if (i < N) {
+        const k = i * 2
+        indices.push(k, k + 1, k + 2, k + 1, k + 3, k + 2)
+      }
+    }
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    g.setAttribute('normal', new THREE.BufferAttribute(normals, 3))
+    g.setIndex(indices)
+    return g
+  }, [t1, t2, halfWidth, y])
+  return (
+    <mesh geometry={geometry}>
+      <meshStandardMaterial
+        color={color}
+        emissive={emissive ?? '#000000'}
+        emissiveIntensity={emissive ? emissiveIntensity : 0}
+        side={2}
+      />
+    </mesh>
+  )
+}
+
 /** One instancedMesh of unit boxes: pass [{pos, scale, color?}]. 1 draw call. */
 function Boxes({ items, color, emissive, emissiveIntensity = 0 }) {
   const ref = useRef()
@@ -114,10 +152,10 @@ function RingRoad() {
   )
   return (
     <group>
-      <RingArc t1={0} t2={GAP_START} inner={LOOP_RADIUS - 1.8} outer={LOOP_RADIUS + 1.8} />
-      <RingArc t1={GAP_END} t2={CLIFF_T} inner={LOOP_RADIUS - 1.8} outer={LOOP_RADIUS + 1.8} />
-      <RingArc t1={0} t2={GAP_START} inner={LOOP_RADIUS - 0.22} outer={LOOP_RADIUS + 0.22} y={0.02} color="#39ff88" emissive="#39ff88" />
-      <RingArc t1={GAP_END} t2={CLIFF_T} inner={LOOP_RADIUS - 0.22} outer={LOOP_RADIUS + 0.22} y={0.02} color="#a06bff" emissive="#a06bff" />
+      <PathRibbon t1={0} t2={GAP_START} halfWidth={1.8} />
+      <PathRibbon t1={GAP_END} t2={CLIFF_T} halfWidth={1.8} />
+      <PathRibbon t1={0} t2={GAP_START} halfWidth={0.22} y={0.02} color="#39ff88" emissive="#39ff88" />
+      <PathRibbon t1={GAP_END} t2={CLIFF_T} halfWidth={0.22} y={0.02} color="#a06bff" emissive="#a06bff" />
 
       <group position={[gapSign.x + gapSign.nx * 2.4, 0, gapSign.z + gapSign.nz * 2.4]}>
         <mesh position={[0, 0.6, 0]}>
@@ -263,7 +301,7 @@ function Homes({ mobile }) {
     const list = []
     const count = mobile ? 4 : 7
     for (let i = 0; i < count; i++) {
-      const p = circlePoint(HOME_SLOTS[i % HOME_SLOTS.length], LOOP_RADIUS + 5 + seeded(i + 22) * 3)
+      const p = circlePoint(HOME_SLOTS[i % HOME_SLOTS.length], LOOP_RADIUS + 5.6 + seeded(i + 22) * 2.6)
       list.push({
         key: i,
         pos: [p.x, 0, p.z],
@@ -315,9 +353,9 @@ function People({ mobile }) {
       const sidewalk = i % 2 === 0
       list.push({
         key: i,
-        // sidewalk radius clears the checkpoints (±2.7); plaza ring sits
-        // between the inner towers (≤8) and the street (≥10.1)
-        radius: sidewalk ? LOOP_RADIUS + 4.1 : 9.4,
+        // sidewalk radius clears the winding road (outer reach R+4.3) and
+        // checkpoints; plaza ring sits between towers (≤8) and street (≥10.1)
+        radius: sidewalk ? LOOP_RADIUS + 5.4 : 9.4,
         speed: (0.005 + seeded(i + 32) * 0.006) * (i % 3 === 0 ? -1 : 1),
         offset: seeded(i + 33),
         shirt: SHIRTS[i % SHIRTS.length],
@@ -494,7 +532,7 @@ function Nature({ mobile }) {
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 13 + 2) * TAU
       const u = ang / TAU
-      const rad = inAnyRiver(u, 0.035) ? RIVER_OUTER + 2 + seeded(i + 61) * 3 : LOOP_RADIUS + 3.5 + seeded(i + 60) * 6
+      const rad = inAnyRiver(u, 0.035) ? RIVER_OUTER + 2 + seeded(i + 61) * 3 : LOOP_RADIUS + 5.6 + seeded(i + 60) * 4
       list.push({
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
         h: 1 + seeded(i + 70) * 0.9,
@@ -506,17 +544,24 @@ function Nature({ mobile }) {
 
   const flowers = useMemo(() => {
     const list = []
-    // wild flowers: roadside strips clear of homes (homes sit at R+5..R+8)
+    // wild flowers: roadside strips PLACED RELATIVE TO THE WINDING ROAD so
+    // they hug its bends without ever sitting on the asphalt
     const wildCount = mobile ? 30 : 66
     for (let i = 0; i < wildCount; i++) {
-      const ang = seeded(i * 17 + 3) * TAU
-      const u = ang / TAU
+      const u = seeded(i * 17 + 3)
       const inside = i % 3 === 0
-      let rad
-      if (inside) rad = 17 + seeded(i + 80) * 6
-      else rad = inAnyRiver(u) ? LOOP_RADIUS + 2.2 + seeded(i + 80) * 2 : LOOP_RADIUS + 2.3 + seeded(i + 80) * 2.2
+      let pos
+      if (inside) {
+        const ang = u * TAU
+        const rad = 17 + seeded(i + 80) * 4.5
+        pos = [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad]
+      } else {
+        const p = pathPoint(u)
+        const off = 2.3 + seeded(i + 80) * 1.4 // just off the road's edge (1.8)
+        pos = [p.x + p.nx * off, 0, p.z + p.nz * off]
+      }
       list.push({
-        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
+        pos,
         color: ['#ffd93d', '#ff8a3d', '#ff8fb0', '#a06bff', '#e6e9ff'][i % 5],
         s: 0.12 + seeded(i + 90) * 0.1,
       })
@@ -531,7 +576,7 @@ function Nature({ mobile }) {
     }
     // home garden plots
     HOME_SLOTS.slice(0, mobile ? 4 : 7).forEach((slot, i) => {
-      const hp = circlePoint(slot, LOOP_RADIUS + 5 + seeded(i + 22) * 3)
+      const hp = circlePoint(slot, LOOP_RADIUS + 5.6 + seeded(i + 22) * 2.6)
       for (let f = 0; f < 4; f++) {
         list.push({
           pos: [hp.x + 1.3 + (f % 2) * 0.5, 0, hp.z - 0.3 + Math.floor(f / 2) * 0.5],
@@ -602,6 +647,46 @@ function Nature({ mobile }) {
             <boxGeometry args={[0.36, 0.02, 0.18]} />
             <meshStandardMaterial color="#c0c6e8" />
           </mesh>
+        </group>
+      ))}
+    </group>
+  )
+}
+
+/** Low-poly mountain range ringing the horizon, hazy in the fog. */
+function Mountains({ mobile }) {
+  const peaks = useMemo(() => {
+    const list = []
+    const count = mobile ? 8 : 13
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count + seeded(i + 200) * 0.04) * TAU
+      const rad = 52 + seeded(i + 201) * 14
+      const h = 7 + seeded(i + 202) * 9
+      list.push({
+        key: i,
+        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
+        h,
+        w: 6 + seeded(i + 203) * 7,
+        color: ['#151b3d', '#1a2148', '#202a58'][i % 3],
+        snow: h > 12,
+      })
+    }
+    return list
+  }, [mobile])
+  return (
+    <group>
+      {peaks.map((m) => (
+        <group key={m.key} position={m.pos}>
+          <mesh position={[0, m.h / 2, 0]}>
+            <coneGeometry args={[m.w, m.h, 5]} />
+            <meshStandardMaterial color={m.color} flatShading />
+          </mesh>
+          {m.snow && (
+            <mesh position={[0, m.h - m.h * 0.11, 0]}>
+              <coneGeometry args={[m.w * 0.24, m.h * 0.24, 5]} />
+              <meshStandardMaterial color="#dfe6ff" flatShading />
+            </mesh>
+          )}
         </group>
       ))}
     </group>
@@ -846,11 +931,13 @@ function RespawnController({ tRef }) {
   return null
 }
 
-/** Camera: zoomed-out chase view — higher, further back, wider FOV. */
+/** Camera: zoomed-out chase view — higher, further back, wider FOV. The
+ * player's zoom level (HUD 🔍 buttons / Ctrl+scroll) scales the whole rig. */
 function Rig({ progressRef, tRef, speedRef }) {
   const { camera } = useThree()
   const smoothed = useRef(0)
   const fov = useRef(55)
+  const zoomSmooth = useRef(1)
 
   useFrame((state, delta) => {
     const target = progressRef.current
@@ -860,14 +947,19 @@ function Rig({ progressRef, tRef, speedRef }) {
     speedRef.current = (smoothed.current - prev) * PATH_LENGTH * 0.6
     tRef.current = smoothed.current
 
+    // ease toward the requested zoom
+    const zoomTarget = useUiStore.getState().zoom
+    zoomSmooth.current += (zoomTarget - zoomSmooth.current) * (1 - Math.exp(-delta * 6))
+    const zoom = zoomSmooth.current
+
     const hero = pathPoint(smoothed.current)
-    const cam = pathPoint(Math.max(0, smoothed.current - 0.052))
+    const cam = pathPoint(Math.max(0, smoothed.current - Math.max(0.028, 0.052 * zoom)))
     const time = state.clock.elapsedTime
 
     camera.position.set(
-      cam.x + cam.nx * 4.6 + Math.sin(time * 0.32) * 0.3,
-      6.2 + Math.sin(time * 0.45) * 0.25,
-      cam.z + cam.nz * 4.6
+      cam.x + cam.nx * 4.6 * zoom + Math.sin(time * 0.32) * 0.3,
+      Math.max(3.2, 6.2 * zoom) + Math.sin(time * 0.45) * 0.25,
+      cam.z + cam.nz * 4.6 * zoom
     )
     // look a touch past the hero so more of the world stays in frame
     const ahead = pathPoint(Math.min(1, smoothed.current + 0.012))
@@ -924,6 +1016,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         ))}
         <Garden />
         <Nature mobile={mobile} />
+        <Mountains mobile={mobile} />
         <SkyLife mobile={mobile} />
         <ShootingStar />
         <Coins tRef={tRef} mobile={mobile} />

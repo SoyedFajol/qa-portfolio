@@ -7,7 +7,7 @@ import { sfx } from '../game/sfx'
 /** Persistent game HUD: rank, XP bar, sound, render mode, level select. */
 export default function Hud() {
   const { xp, level, mute, toggleMute } = useGameStore()
-  const { flatMode, setFlatMode, flatModeReason, setNavOpen, setMapOpen } = useUiStore()
+  const { flatMode, setFlatMode, flatModeReason, setNavOpen, setMapOpen, zoomBy } = useUiStore()
   const rank = rankForLevel(level)
   const { pct, next } = progressToNext(xp)
 
@@ -44,6 +44,32 @@ export default function Hud() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.45 }}
       >
+        {!flatMode && (
+          <>
+            <button
+              className="pixel-btn hidden !px-3 !py-2 !text-[10px] sm:inline-block"
+              onClick={() => {
+                sfx.blip()
+                zoomBy(-0.25)
+              }}
+              aria-label="Zoom in"
+              title="Zoom in (Ctrl+scroll)"
+            >
+              🔍+
+            </button>
+            <button
+              className="pixel-btn hidden !px-3 !py-2 !text-[10px] sm:inline-block"
+              onClick={() => {
+                sfx.blip()
+                zoomBy(0.25)
+              }}
+              aria-label="Zoom out"
+              title="Zoom out (Ctrl+scroll)"
+            >
+              🔍−
+            </button>
+          </>
+        )}
         <button
           className="pixel-btn !border-pix-yellow !px-3 !py-2 !text-[10px]"
           onClick={() => {
