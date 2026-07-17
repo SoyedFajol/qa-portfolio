@@ -191,3 +191,11 @@
   RESULT:   PASS
   GATE:     H1 improved again (fewer draws than v3.2 despite bigger world)
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.1 — full-name identity + the whole journey from Chapainawabganj (per Soyed)
+  ROLE:     BA + DEV
+  CHANGE:   START SCREEN: types the WHOLE name "SOYED MD. SOLAMAN FAJUL"; tagline no longer mentions the employer — new headline "Software Engineer · SQA · AI Engineer · Gamer · Sportsperson" + "from Chapainawabganj 🥭"; same treatment in 2D mode; the city billboard subtitle updated to match (company remains, correctly, in the Journey/Resume content). JOURNEY: story arc extended 6→9 chapters starting from the beginning — 🏡 born & brought up in Chapainawabganj → 🏫 Green View High School (GPA 5 + General Grade Scholarship) → 🎖️ Harimohan Govt. High School (21st among thousands in admission) → 🎓 AIUB → (existing arc); education panel now lists both schools + hometown; PROFILE gains hometown + schooling[]; 9 signposts now line Round 1. Meta description updated to the five-role identity. Test updated: story-arc assertions now cover hometown→today ordering.
+  VERIFY:   lint 0/0; 55/55 tests; build ✓
+  RESULT:   PASS
+  GATE:     B7 unaffected (hometown is a district, not a home address)
+  DOCS:     TASK-LOG

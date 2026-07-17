@@ -410,7 +410,7 @@ function CityBillboard() {
           <p className="mt-1.5 font-pixel text-[15px] leading-snug text-[#ffd93d]">SOYED SOLAMAN&apos;S</p>
           <p className="font-pixel text-[11px] text-[#e6e9ff]">PORTFOLIO CITY</p>
           <p className="mt-2 font-body text-[11px] leading-snug text-[#9aa3d1]">
-            Software Engineer · SQA @ BRAC IT — this whole world is my resume.
+            Software Engineer · SQA · AI Engineer — this whole world is my resume.
           </p>
           <p className="mt-1 font-pixel text-[8px] text-[#a06bff]">SCROLL THE ROAD · OPEN THE CRYSTALS · EARN XP</p>
         </div>

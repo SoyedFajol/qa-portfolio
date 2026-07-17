@@ -27,10 +27,13 @@ describe('profile facts — the site must use REAL data', () => {
     expect(PROFILE.linkedin).toContain('linkedin.com/in/soyed-md-solaman-fajul')
   })
 
-  it('keeps the six-milestone story arc in order', () => {
-    expect(PROFILE.story).toHaveLength(6)
-    expect(PROFILE.story[0].title).toContain('AIUB')
-    expect(PROFILE.story[3].title).toContain('BRAC IT')
+  it('keeps the story arc in order, from hometown to today', () => {
+    expect(PROFILE.story).toHaveLength(9)
+    expect(PROFILE.story[0].title).toContain('Chapainawabganj')
+    expect(PROFILE.story[1].title).toContain('Green View')
+    expect(PROFILE.story[2].title).toContain('Harimohan')
+    expect(PROFILE.story[3].title).toContain('AIUB')
+    expect(PROFILE.story[6].title).toContain('BRAC IT')
   })
 
   it('keeps skill levels honest (1=learning, 2=working, 3=strong)', () => {

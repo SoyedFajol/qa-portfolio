@@ -45,9 +45,9 @@ export default function IntroScreen() {
       >
         🐞
       </motion.p>
-      <div>
-        <h1 className="text-base leading-relaxed text-pix-yellow sm:text-2xl">
-          <Typewriter text={PROFILE.displayName.toUpperCase()} speed={55} onDone={() => setNameDone(true)} />
+      <div className="max-w-2xl">
+        <h1 className="text-sm leading-relaxed text-pix-yellow sm:text-xl">
+          <Typewriter text={PROFILE.name.toUpperCase()} speed={40} onDone={() => setNameDone(true)} />
         </h1>
         {nameDone && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -55,7 +55,7 @@ export default function IntroScreen() {
               {PROFILE.headline}
             </p>
             <p className="mt-2 font-body text-xs text-ink-dim">
-              {PROFILE.name} · Builder of fun things
+              Builder of fun things · from {PROFILE.hometown.split(',')[0]} 🥭
             </p>
           </motion.div>
         )}
