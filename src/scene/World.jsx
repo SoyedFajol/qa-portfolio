@@ -1142,7 +1142,7 @@ function Stadium() {
 
 /** 🇧🇩 Seven Bangladeshi landmarks stand OUTSIDE the ring road like the
  * stadium does — spaced around the outskirts, each facing the city. */
-function Landmark({ u, radius, label, children, mobile, s = 1.3 }) {
+function Landmark({ u, radius, label, children, mobile, s = 1.0 }) {
   const p = circlePoint(u, radius)
   const faceCity = Math.atan2(LOOP_CENTER.x - p.x, LOOP_CENTER.z - p.z)
   return (
@@ -1164,7 +1164,7 @@ function BangladeshLandmarks({ mobile }) {
   return (
     <group>
       {/* ✈️ Hazrat Shahjalal International Airport — Terminal 3 */}
-      <Landmark u={0.40} radius={52} s={1.1} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
+      <Landmark u={0.40} radius={52} s={0.9} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 1.6, 0]}>
             <boxGeometry args={[14, 3, 4]} />

@@ -11,6 +11,7 @@ function Gate({ round }) {
   const c = COLORS[round.id]
   const trim = useRef()
   const beams = useRef([])
+  const board = useRef()
 
   useFrame((state) => {
     const t = state.clock.elapsedTime + round.id * 2
@@ -44,7 +45,7 @@ function Gate({ round }) {
       ))}
 
       {/* the sign board — the name is WRITTEN on it, letters lit like neon */}
-      <mesh position={[0, 4.1, 0]} castShadow>
+      <mesh ref={board} position={[0, 4.1, 0]} castShadow>
         <boxGeometry args={[6.6, 1.5, 0.55]} />
         <meshStandardMaterial color="#131936" emissive={c} emissiveIntensity={0.08} />
       </mesh>
@@ -53,9 +54,11 @@ function Gate({ round }) {
         <meshStandardMaterial color={c} emissive={c} emissiveIntensity={0.9} />
       </mesh>
 
-      {/* lit letters, mounted on the board (front) */}
+      {/* lit letters, mounted on the board — ONE side only; the board
+          occludes them so they never ghost through from behind */}
       <Html
         transform
+        occlude={[board]}
         position={[0, 4.1, 0.3]}
         distanceFactor={6}
         style={{ pointerEvents: 'none' }}
@@ -69,19 +72,6 @@ function Gate({ round }) {
             {subtitle}
           </p>
         </div>
-      </Html>
-      {/* and on the back, for the walk home */}
-      <Html
-        transform
-        position={[0, 4.1, -0.3]}
-        rotation={[0, Math.PI, 0]}
-        distanceFactor={6}
-        style={{ pointerEvents: 'none' }}
-        zIndexRange={[9, 0]}
-      >
-        <p className="select-none font-pixel text-[22px]" style={{ color: c, textShadow: glow }}>
-          {title}
-        </p>
       </Html>
 
       {/* glowing start line across the road */}
