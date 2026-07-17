@@ -1,6 +1,7 @@
-import { useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Stars, Sparkles, Html } from '@react-three/drei'
+import * as THREE from 'three'
 import Hero from './Hero'
 import BugsyNpc from './BugsyNpc'
 import Checkpoints from './Checkpoints'
@@ -14,14 +15,29 @@ import { sfx } from '../game/sfx'
 
 const TAU = Math.PI * 2
 
-// the river occupies this slice of the garden stretch, outside the loop
-const RIVER_T1 = 0.56
-const RIVER_T2 = 0.84
-const RIVER_INNER = LOOP_RADIUS + 5
-const RIVER_OUTER = LOOP_RADIUS + 8.5
+// two rivers, both OUTSIDE the loop so nothing collides with the road:
+// one across the Round-1 countryside, one across the Round-2 garden stretch
+const RIVERS = [
+  { t1: 0.07, t2: 0.23, bridgeU: 0.15 },
+  { t1: 0.56, t2: 0.84, bridgeU: 0.7 },
+]
+const RIVER_INNER = LOOP_RADIUS + 6
+const RIVER_OUTER = LOOP_RADIUS + 9.5
+
+// the formal garden occupies this sector INSIDE the ring (buildings keep out)
+const GARDEN_U1 = 0.56
+const GARDEN_U2 = 0.74
 
 const SKIN_TONES = ['#e8b17e', '#c68642', '#8d5524', '#f1c27d']
 const SHIRTS = ['#ff5d5d', '#39ff88', '#ffd93d', '#a06bff', '#4db3ff', '#ff8fb0']
+
+// river-free arcs where the homes stand (their garden flowers are placed
+// by Nature's instanced pass using the same slots)
+const HOME_SLOTS = [0.88, 0.93, 0.98, 0.28, 0.34, 0.4, 0.46]
+
+function inAnyRiver(u, pad = 0.02) {
+  return RIVERS.some((r) => u > r.t1 - pad && u < r.t2 + pad)
+}
 
 /** Flat arc between progress t1..t2 (one draw call).
  * Mapping: mesh rotated x:-π/2 puts ring angle φ at world (cos φ, −sin φ)
@@ -30,7 +46,7 @@ function RingArc({ t1, t2, inner, outer, y = 0, color = '#2a356e', emissive, emi
   const thetaStart = TAU * t1 - Math.PI / 2
   const thetaLength = TAU * (t2 - t1)
   return (
-    <mesh position={[LOOP_CENTER.x, y, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh position={[LOOP_CENTER.x, y, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[inner, outer, segments, 1, thetaStart, thetaLength]} />
       <meshStandardMaterial
         color={color}
@@ -54,8 +70,36 @@ function circlePoint(u, radius) {
   }
 }
 
-/** The loop road: two arcs (Round 1 → gap, gap → cliff), neon stripe, gap
- * warning, cliff edge rubble and the finish flag. */
+/** One instancedMesh of unit boxes: pass [{pos, scale, color?}]. 1 draw call. */
+function Boxes({ items, color, emissive, emissiveIntensity = 0 }) {
+  const ref = useRef()
+  useLayoutEffect(() => {
+    if (!ref.current) return
+    const m = new THREE.Matrix4()
+    const q = new THREE.Quaternion()
+    const e = new THREE.Euler()
+    items.forEach((it, i) => {
+      q.setFromEuler(it.rot ? e.set(...it.rot) : e.set(0, 0, 0))
+      m.compose(new THREE.Vector3(...it.pos), q, new THREE.Vector3(...it.scale))
+      ref.current.setMatrixAt(i, m)
+      if (it.color) ref.current.setColorAt(i, new THREE.Color(it.color))
+    })
+    ref.current.instanceMatrix.needsUpdate = true
+    if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true
+  }, [items])
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, items.length]} frustumCulled={false}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial
+        color={color ?? '#ffffff'}
+        emissive={emissive ?? '#000000'}
+        emissiveIntensity={emissiveIntensity}
+      />
+    </instancedMesh>
+  )
+}
+
+/** The loop road: two arcs, neon stripes, gap warning, cliff rubble, flag. */
 function RingRoad() {
   const gapSign = pathPoint(0.395)
   const finish = pathPoint(0.965)
@@ -63,7 +107,8 @@ function RingRoad() {
     () =>
       [0, 1, 2].map((i) => {
         const p = pathPoint(CLIFF_T - 0.004 + i * 0.002)
-        return { key: i, pos: [p.x + (seeded(i) - 0.5) * 2, 0.12 + seeded(i + 9) * 0.1, p.z], size: 0.3 + seeded(i + 5) * 0.35 }
+        const s = 0.3 + seeded(i + 5) * 0.35
+        return { pos: [p.x + (seeded(i) - 0.5) * 2, 0.12, p.z], scale: [s, s, s], rot: [seeded(i) * 0.8, seeded(i + 3) * 2, 0], color: '#1d2650' }
       }),
     []
   )
@@ -74,7 +119,6 @@ function RingRoad() {
       <RingArc t1={0} t2={GAP_START} inner={LOOP_RADIUS - 0.22} outer={LOOP_RADIUS + 0.22} y={0.02} color="#39ff88" emissive="#39ff88" />
       <RingArc t1={GAP_END} t2={CLIFF_T} inner={LOOP_RADIUS - 0.22} outer={LOOP_RADIUS + 0.22} y={0.02} color="#a06bff" emissive="#a06bff" />
 
-      {/* JUMP! warning before the gap */}
       <group position={[gapSign.x + gapSign.nx * 2.4, 0, gapSign.z + gapSign.nz * 2.4]}>
         <mesh position={[0, 0.6, 0]}>
           <boxGeometry args={[0.1, 1.2, 0.1]} />
@@ -89,7 +133,6 @@ function RingRoad() {
         </Html>
       </group>
 
-      {/* finish flag before the cliff */}
       <group position={[finish.x + finish.nx * 2.3, 0, finish.z + finish.nz * 2.3]}>
         <mesh position={[0, 1.1, 0]}>
           <boxGeometry args={[0.08, 2.2, 0.08]} />
@@ -106,31 +149,27 @@ function RingRoad() {
         </Html>
       </group>
 
-      {rubble.map((r) => (
-        <mesh key={r.key} position={r.pos} rotation={[seeded(r.key) * 0.8, seeded(r.key + 3) * 2, 0]}>
-          <boxGeometry args={[r.size, r.size, r.size]} />
-          <meshStandardMaterial color="#1d2650" />
-        </mesh>
-      ))}
+      <Boxes items={rubble} />
     </group>
   )
 }
 
-/** The mini city inside the loop: voxel towers, a beacon, an inner street
- * with cars and a van circling it. */
+/** City towers (3 instanced draws for 20 buildings) + beacon + traffic. */
 function MiniCity({ mobile }) {
   const buildings = useMemo(() => {
     const list = []
     const count = mobile ? 12 : 20
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 7 + 1) * TAU
-      const rad = i % 3 === 0 ? 3.5 + seeded(i + 20) * 4.5 : 13 + seeded(i + 30) * 4.5
+      const u = ang / TAU
+      // keep the garden sector clear
+      if (u > GARDEN_U1 - 0.02 && u < GARDEN_U2 + 0.02 && i % 3 !== 0) continue
+      const rad = i % 3 === 0 ? 3.5 + seeded(i + 20) * 4.5 : 13.5 + seeded(i + 30) * 5
       const h = 1.6 + seeded(i + 40) * 5.2
+      const w = 1.1 + seeded(i + 50) * 1.5
       list.push({
-        key: i,
+        ang, rad, h, w,
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, h / 2, LOOP_CENTER.z + Math.cos(ang) * rad],
-        w: 1.1 + seeded(i + 50) * 1.5,
-        h,
         color: ['#141b3c', '#1d2650', '#232e63'][i % 3],
         glow: ['#39ff88', '#ffd93d', '#a06bff', '#ff8a3d'][i % 4],
       })
@@ -138,12 +177,27 @@ function MiniCity({ mobile }) {
     return list
   }, [mobile])
 
+  const bodies = useMemo(() => buildings.map((b) => ({ pos: b.pos, scale: [b.w, b.h, b.w], color: b.color })), [buildings])
+  const windows = useMemo(
+    () =>
+      buildings.map((b) => ({
+        pos: [b.pos[0], b.h * 0.55, b.pos[2] + b.w / 2 + 0.02],
+        scale: [b.w * 0.55, b.h * 0.6, 0.02],
+        color: b.glow,
+      })),
+    [buildings]
+  )
+  const roofLights = useMemo(
+    () => buildings.map((b) => ({ pos: [b.pos[0], b.h + 0.1, b.pos[2]], scale: [0.14, 0.16, 0.14], color: b.glow })),
+    [buildings]
+  )
+
   const cars = useMemo(
     () => [
       { key: 0, radius: 11, speed: 0.05, offset: 0, color: '#ff5d5d', len: 0.9 },
       { key: 1, radius: 11, speed: 0.05, offset: 0.32, color: '#ffd93d', len: 0.9 },
       { key: 2, radius: 11, speed: 0.038, offset: 0.6, color: '#4db3ff', len: 0.9 },
-      { key: 3, radius: 11, speed: 0.032, offset: 0.85, color: '#39ff88', len: 1.6 }, // the van
+      { key: 3, radius: 11, speed: 0.032, offset: 0.85, color: '#39ff88', len: 1.6 },
     ],
     []
   )
@@ -162,32 +216,17 @@ function MiniCity({ mobile }) {
 
   return (
     <group>
-      {/* inner street */}
       <mesh position={[LOOP_CENTER.x, 0.005, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[10.1, 11.9, 64]} />
         <meshStandardMaterial color="#181f45" side={2} />
       </mesh>
 
-      {buildings.map((b) => (
-        <group key={b.key} position={b.pos}>
-          <mesh castShadow>
-            <boxGeometry args={[b.w, b.h, b.w]} />
-            <meshStandardMaterial color={b.color} />
-          </mesh>
-          <mesh position={[0, b.h * 0.1, b.w / 2 + 0.01]}>
-            <boxGeometry args={[b.w * 0.55, b.h * 0.6, 0.02]} />
-            <meshStandardMaterial color={b.glow} emissive={b.glow} emissiveIntensity={0.5} transparent opacity={0.85} />
-          </mesh>
-          <mesh position={[0, b.h / 2 + 0.08, 0]}>
-            <boxGeometry args={[0.14, 0.16, 0.14]} />
-            <meshStandardMaterial color={b.glow} emissive={b.glow} emissiveIntensity={1} />
-          </mesh>
-        </group>
-      ))}
+      <Boxes items={bodies} />
+      <Boxes items={windows} emissive="#ffffff" emissiveIntensity={0.35} />
+      <Boxes items={roofLights} emissive="#ffffff" emissiveIntensity={0.8} />
 
-      {/* central beacon tower */}
       <group position={[LOOP_CENTER.x, 0, LOOP_CENTER.z]}>
-        <mesh position={[0, 3.4, 0]} castShadow>
+        <mesh position={[0, 3.4, 0]}>
           <boxGeometry args={[1.6, 6.8, 1.6]} />
           <meshStandardMaterial color="#1d2650" />
         </mesh>
@@ -197,10 +236,9 @@ function MiniCity({ mobile }) {
         </mesh>
       </group>
 
-      {/* traffic */}
       {cars.map((cfg, i) => (
         <group key={cfg.key} ref={(el) => (carRefs.current[i] = el)}>
-          <mesh castShadow>
+          <mesh>
             <boxGeometry args={[0.55, 0.3, cfg.len]} />
             <meshStandardMaterial color={cfg.color} />
           </mesh>
@@ -218,15 +256,14 @@ function MiniCity({ mobile }) {
   )
 }
 
-/** Cozy voxel homes outside the loop, each with its own little garden. */
+/** Cozy voxel homes outside the loop (clear of both rivers), each with a
+ * garden plot; the plot flowers ride the global instanced flower pass. */
 function Homes({ mobile }) {
   const homes = useMemo(() => {
     const list = []
     const count = mobile ? 4 : 7
     for (let i = 0; i < count; i++) {
-      // keep homes on the non-river half of the outside
-      const u = 0.88 + (i / count) * 0.62 // wraps through the start area
-      const p = circlePoint(u % 1, LOOP_RADIUS + 4.5 + seeded(i + 22) * 4)
+      const p = circlePoint(HOME_SLOTS[i % HOME_SLOTS.length], LOOP_RADIUS + 5 + seeded(i + 22) * 3)
       list.push({
         key: i,
         pos: [p.x, 0, p.z],
@@ -242,17 +279,14 @@ function Homes({ mobile }) {
     <group>
       {homes.map((h) => (
         <group key={h.key} position={h.pos} rotation={[0, h.yaw, 0]}>
-          {/* house */}
-          <mesh position={[0, 0.55, 0]} castShadow>
+          <mesh position={[0, 0.55, 0]}>
             <boxGeometry args={[1.7, 1.1, 1.5]} />
             <meshStandardMaterial color={h.wall} />
           </mesh>
-          {/* pyramid roof */}
-          <mesh position={[0, 1.45, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+          <mesh position={[0, 1.45, 0]} rotation={[0, Math.PI / 4, 0]}>
             <coneGeometry args={[1.35, 0.75, 4]} />
             <meshStandardMaterial color={h.roof} />
           </mesh>
-          {/* door + warm window */}
           <mesh position={[0.35, 0.4, 0.76]}>
             <boxGeometry args={[0.34, 0.7, 0.03]} />
             <meshStandardMaterial color="#6b4f2a" />
@@ -261,52 +295,30 @@ function Homes({ mobile }) {
             <boxGeometry args={[0.4, 0.36, 0.03]} />
             <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.7} />
           </mesh>
-          {/* chimney */}
-          <mesh position={[0.5, 1.6, -0.3]}>
-            <boxGeometry args={[0.2, 0.5, 0.2]} />
-            <meshStandardMaterial color="#1d2650" />
+          <mesh position={[1.6, 0.03, 0.2]}>
+            <boxGeometry args={[1.5, 0.06, 1.1]} />
+            <meshStandardMaterial color="#1e5c38" />
           </mesh>
-          {/* home garden plot with flowers */}
-          <group position={[1.6, 0, 0.2]}>
-            <mesh position={[0, 0.03, 0]}>
-              <boxGeometry args={[1.5, 0.06, 1.1]} />
-              <meshStandardMaterial color="#1e5c38" />
-            </mesh>
-            {[0, 1, 2, 3].map((f) => (
-              <group key={f} position={[-0.45 + (f % 2) * 0.9, 0, -0.25 + Math.floor(f / 2) * 0.5]}>
-                <mesh position={[0, 0.15, 0]}>
-                  <boxGeometry args={[0.04, 0.24, 0.04]} />
-                  <meshStandardMaterial color="#2fae62" />
-                </mesh>
-                <mesh position={[0, 0.3, 0]}>
-                  <boxGeometry args={[0.14, 0.14, 0.14]} />
-                  <meshStandardMaterial
-                    color={['#ffd93d', '#ff8fb0', '#e6e9ff', '#ff8a3d'][(h.key + f) % 4]}
-                    emissive={['#ffd93d', '#ff8fb0', '#e6e9ff', '#ff8a3d'][(h.key + f) % 4]}
-                    emissiveIntensity={0.3}
-                  />
-                </mesh>
-              </group>
-            ))}
-          </group>
         </group>
       ))}
     </group>
   )
 }
 
-/** Tiny voxel citizens: strolling the sidewalk, wandering the city, and one
- * greeter waving beside the starting line. */
+/** Tiny voxel citizens: sidewalk strollers (outside the checkpoints), plaza
+ * walkers between the towers and the inner street, and the waving greeter. */
 function People({ mobile }) {
   const walkers = useMemo(() => {
     const list = []
-    const count = mobile ? 3 : 6
+    const count = mobile ? 4 : 9
     for (let i = 0; i < count; i++) {
       const sidewalk = i % 2 === 0
       list.push({
         key: i,
-        radius: sidewalk ? LOOP_RADIUS + 2.6 : 7.5 + seeded(i + 31) * 1.5,
-        speed: (0.006 + seeded(i + 32) * 0.006) * (i % 3 === 0 ? -1 : 1),
+        // sidewalk radius clears the checkpoints (±2.7); plaza ring sits
+        // between the inner towers (≤8) and the street (≥10.1)
+        radius: sidewalk ? LOOP_RADIUS + 4.1 : 9.4,
+        speed: (0.005 + seeded(i + 32) * 0.006) * (i % 3 === 0 ? -1 : 1),
         offset: seeded(i + 33),
         shirt: SHIRTS[i % SHIRTS.length],
         skin: SKIN_TONES[i % SKIN_TONES.length],
@@ -316,10 +328,7 @@ function People({ mobile }) {
   }, [mobile])
   const refs = useRef([])
   const greeter = useRef()
-  const greetP = useMemo(() => {
-    const p = pathPoint(0.015)
-    return p
-  }, [])
+  const greetP = useMemo(() => pathPoint(0.015), [])
 
   useFrame((state) => {
     const time = state.clock.elapsedTime
@@ -329,20 +338,18 @@ function People({ mobile }) {
       const p = circlePoint(time * cfg.speed + cfg.offset, cfg.radius)
       g.position.set(p.x, 0, p.z)
       g.rotation.y = cfg.speed >= 0 ? p.yaw : p.yaw + Math.PI
-      // little leg swings
       const swing = Math.sin(time * 6 + i) * 0.4
       g.children[0].rotation.x = swing
       g.children[1].rotation.x = -swing
     })
     if (greeter.current) {
-      // the greeter waves at the hero forever
       greeter.current.children[3].rotation.z = 2.4 + Math.sin(time * 5) * 0.35
     }
   })
 
-  function Person({ shirt, skin, refFn, position, rotation }) {
+  function PersonBody({ shirt, skin }) {
     return (
-      <group ref={refFn} position={position} rotation={rotation}>
+      <>
         <group position={[-0.09, 0.34, 0]}>
           <mesh position={[0, -0.17, 0]}>
             <boxGeometry args={[0.13, 0.34, 0.15]} />
@@ -355,58 +362,35 @@ function People({ mobile }) {
             <meshStandardMaterial color="#22306e" />
           </mesh>
         </group>
-        <mesh position={[0, 0.62, 0]} castShadow>
+        <mesh position={[0, 0.62, 0]}>
           <boxGeometry args={[0.42, 0.5, 0.26]} />
           <meshStandardMaterial color={shirt} />
         </mesh>
-        {/* right arm (the greeter waves with this) */}
         <mesh position={[0.28, 0.72, 0]}>
           <boxGeometry args={[0.11, 0.4, 0.13]} />
           <meshStandardMaterial color={shirt} />
         </mesh>
-        <mesh position={[0, 1.05, 0]} castShadow>
+        <mesh position={[0, 1.05, 0]}>
           <boxGeometry args={[0.32, 0.32, 0.3]} />
           <meshStandardMaterial color={skin} />
         </mesh>
-      </group>
+      </>
     )
   }
 
   return (
     <group>
       {walkers.map((w, i) => (
-        <Person key={w.key} shirt={w.shirt} skin={w.skin} refFn={(el) => (refs.current[i] = el)} />
+        <group key={w.key} ref={(el) => (refs.current[i] = el)}>
+          <PersonBody shirt={w.shirt} skin={w.skin} />
+        </group>
       ))}
-      {/* the greeter by the starting line */}
       <group
         ref={greeter}
         position={[greetP.x - greetP.nx * 2.6, 0, greetP.z - greetP.nz * 2.6]}
-        rotation={[0, Math.atan2(-greetP.nx, -greetP.nz) + Math.PI, 0]}
+        rotation={[0, Math.atan2(greetP.nx, greetP.nz), 0]}
       >
-        <group position={[-0.09, 0.34, 0]}>
-          <mesh position={[0, -0.17, 0]}>
-            <boxGeometry args={[0.13, 0.34, 0.15]} />
-            <meshStandardMaterial color="#22306e" />
-          </mesh>
-        </group>
-        <group position={[0.09, 0.34, 0]}>
-          <mesh position={[0, -0.17, 0]}>
-            <boxGeometry args={[0.13, 0.34, 0.15]} />
-            <meshStandardMaterial color="#22306e" />
-          </mesh>
-        </group>
-        <mesh position={[0, 0.62, 0]} castShadow>
-          <boxGeometry args={[0.42, 0.5, 0.26]} />
-          <meshStandardMaterial color="#ffd93d" />
-        </mesh>
-        <mesh position={[0.3, 0.85, 0]} rotation={[0, 0, 2.4]}>
-          <boxGeometry args={[0.11, 0.42, 0.13]} />
-          <meshStandardMaterial color="#ffd93d" />
-        </mesh>
-        <mesh position={[0, 1.05, 0]} castShadow>
-          <boxGeometry args={[0.32, 0.32, 0.3]} />
-          <meshStandardMaterial color="#e8b17e" />
-        </mesh>
+        <PersonBody shirt="#ffd93d" skin="#e8b17e" />
         <Html center position={[0, 1.6, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
           <span className="whitespace-nowrap font-pixel text-[7px] text-ink-dim">hi! 👋</span>
         </Html>
@@ -415,44 +399,35 @@ function People({ mobile }) {
   )
 }
 
-/** The river: a glinting arc of water outside the garden stretch, with a
- * wooden footbridge and reeds. */
-function River() {
+/** A river arc outside the loop: banks, shimmering water, sparkles, a wooden
+ * footbridge and instanced reeds. */
+function River({ t1, t2, bridgeU }) {
   const water = useRef()
   useFrame((state) => {
     if (water.current) {
-      water.current.material.emissiveIntensity = 0.25 + Math.sin(state.clock.elapsedTime * 1.4) * 0.1
+      water.current.material.emissiveIntensity = 0.25 + Math.sin(state.clock.elapsedTime * 1.4 + t1 * 20) * 0.1
     }
   })
-  const bridge = circlePoint(0.7, (RIVER_INNER + RIVER_OUTER) / 2)
+  const bridge = circlePoint(bridgeU, (RIVER_INNER + RIVER_OUTER) / 2)
   const reeds = useMemo(
     () =>
-      [...Array(8)].map((_, i) => {
-        const u = RIVER_T1 + 0.02 + seeded(i + 77) * (RIVER_T2 - RIVER_T1 - 0.04)
+      [...Array(7)].map((_, i) => {
+        const u = t1 + 0.015 + seeded(i + 77 + t1 * 100) * (t2 - t1 - 0.03)
         const edge = i % 2 === 0 ? RIVER_INNER - 0.4 : RIVER_OUTER + 0.4
         const p = circlePoint(u, edge)
-        return { key: i, pos: [p.x, 0, p.z], h: 0.5 + seeded(i + 78) * 0.4 }
+        const h = 0.5 + seeded(i + 78) * 0.4
+        return { pos: [p.x, h / 2, p.z], scale: [0.06, h, 0.06], color: '#2fae62' }
       }),
-    []
+    [t1, t2]
   )
   return (
     <group>
-      {/* banks then water */}
-      <RingArc t1={RIVER_T1 - 0.015} t2={RIVER_T2 + 0.015} inner={RIVER_INNER - 0.8} outer={RIVER_OUTER + 0.8} y={-0.04} color="#1a2a4f" />
+      <RingArc t1={t1 - 0.015} t2={t2 + 0.015} inner={RIVER_INNER - 0.8} outer={RIVER_OUTER + 0.8} y={-0.04} color="#1a2a4f" />
       <mesh ref={water} position={[LOOP_CENTER.x, -0.02, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[RIVER_INNER, RIVER_OUTER, 96, 1, TAU * RIVER_T1 - Math.PI / 2, TAU * (RIVER_T2 - RIVER_T1)]} />
+        <ringGeometry args={[RIVER_INNER, RIVER_OUTER, 96, 1, TAU * t1 - Math.PI / 2, TAU * (t2 - t1)]} />
         <meshStandardMaterial color="#1d4e89" emissive="#4db3ff" emissiveIntensity={0.3} transparent opacity={0.9} side={2} />
       </mesh>
-      {/* sparkle on the water */}
-      <Sparkles
-        count={30}
-        scale={[10, 0.6, 10]}
-        position={[bridge.x, 0.3, bridge.z]}
-        size={1.6}
-        speed={0.2}
-        color="#bfe3ff"
-      />
-      {/* wooden footbridge across the river */}
+      <Sparkles count={22} scale={[10, 0.6, 10]} position={[bridge.x, 0.3, bridge.z]} size={1.6} speed={0.2} color="#bfe3ff" />
       <group position={[bridge.x, 0, bridge.z]} rotation={[0, bridge.yaw + Math.PI / 2, 0]}>
         <mesh position={[0, 0.32, 0]}>
           <boxGeometry args={[1.2, 0.1, RIVER_OUTER - RIVER_INNER + 1.6]} />
@@ -465,29 +440,62 @@ function River() {
           </mesh>
         ))}
       </group>
-      {reeds.map((r) => (
-        <mesh key={r.key} position={[r.pos[0], r.h / 2, r.pos[2]]}>
-          <boxGeometry args={[0.06, r.h, 0.06]} />
-          <meshStandardMaterial color="#2fae62" />
-        </mesh>
-      ))}
+      <Boxes items={reeds} />
     </group>
   )
 }
 
-/** Gardens: voxel trees + many flowers, and birds circling over the city. */
+/** The formal garden inside the ring: lawn, flower beds, hedges, fountain. */
+function Garden() {
+  const center = circlePoint((GARDEN_U1 + GARDEN_U2) / 2, 16.5)
+  const fountain = useRef()
+  useFrame((state) => {
+    if (fountain.current) {
+      fountain.current.material.emissiveIntensity = 0.5 + Math.sin(state.clock.elapsedTime * 2.2) * 0.25
+      fountain.current.position.y = 0.55 + Math.sin(state.clock.elapsedTime * 2.2) * 0.06
+    }
+  })
+  const hedges = useMemo(() => {
+    const list = []
+    for (let i = 0; i < 6; i++) {
+      const u = GARDEN_U1 + 0.015 + (i / 6) * (GARDEN_U2 - GARDEN_U1 - 0.03)
+      const p = circlePoint(u, 20.2)
+      list.push({ pos: [p.x, 0.3, p.z], scale: [1.6, 0.6, 0.7], rot: [0, p.yaw, 0], color: '#1e5c38' })
+    }
+    return list
+  }, [])
+  return (
+    <group>
+      {/* lawn */}
+      <RingArc t1={GARDEN_U1} t2={GARDEN_U2} inner={13.5} outer={20.8} y={-0.01} color="#143d27" />
+      {/* fountain */}
+      <group position={[center.x, 0, center.z]}>
+        <mesh position={[0, 0.2, 0]}>
+          <cylinderGeometry args={[1.2, 1.35, 0.4, 10]} />
+          <meshStandardMaterial color="#2a356e" />
+        </mesh>
+        <mesh ref={fountain} position={[0, 0.55, 0]}>
+          <cylinderGeometry args={[0.9, 0.9, 0.25, 10]} />
+          <meshStandardMaterial color="#1d4e89" emissive="#4db3ff" emissiveIntensity={0.5} />
+        </mesh>
+        <Sparkles count={16} scale={[2.2, 1.6, 2.2]} position={[0, 1.2, 0]} size={1.4} speed={0.5} color="#bfe3ff" />
+      </group>
+      <Boxes items={hedges} />
+    </group>
+  )
+}
+
+/** All greenery in a handful of instanced draws: trunks, canopies, flower
+ * stems, flower heads (garden beds + home plots + wild ones). Plus birds. */
 function Nature({ mobile }) {
   const trees = useMemo(() => {
     const list = []
-    const count = mobile ? 8 : 16
+    const count = mobile ? 9 : 18
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 13 + 2) * TAU
       const u = ang / TAU
-      // keep trees off the river
-      const inRiver = u > RIVER_T1 - 0.03 && u < RIVER_T2 + 0.03
-      const rad = inRiver ? LOOP_RADIUS + 10.5 + seeded(i + 61) * 3 : LOOP_RADIUS + 3.5 + seeded(i + 60) * 6
+      const rad = inAnyRiver(u, 0.035) ? RIVER_OUTER + 2 + seeded(i + 61) * 3 : LOOP_RADIUS + 3.5 + seeded(i + 60) * 6
       list.push({
-        key: i,
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
         h: 1 + seeded(i + 70) * 0.9,
         leaf: i % 4 === 0 ? '#ff8fb0' : '#2fae62',
@@ -498,34 +506,54 @@ function Nature({ mobile }) {
 
   const flowers = useMemo(() => {
     const list = []
-    const count = mobile ? 26 : 60
-    for (let i = 0; i < count; i++) {
+    // wild flowers: roadside strips clear of homes (homes sit at R+5..R+8)
+    const wildCount = mobile ? 30 : 66
+    for (let i = 0; i < wildCount; i++) {
       const ang = seeded(i * 17 + 3) * TAU
       const u = ang / TAU
       const inside = i % 3 === 0
       let rad
-      if (inside) {
-        rad = 17 + seeded(i + 80) * 6 // between outer buildings and the road
-      } else {
-        const inRiver = u > RIVER_T1 - 0.02 && u < RIVER_T2 + 0.02
-        rad = inRiver ? LOOP_RADIUS + 2.2 + seeded(i + 80) * 2.2 : LOOP_RADIUS + 2.4 + seeded(i + 80) * 6.5
-      }
+      if (inside) rad = 17 + seeded(i + 80) * 6
+      else rad = inAnyRiver(u) ? LOOP_RADIUS + 2.2 + seeded(i + 80) * 2 : LOOP_RADIUS + 2.3 + seeded(i + 80) * 2.2
       list.push({
-        key: i,
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
         color: ['#ffd93d', '#ff8a3d', '#ff8fb0', '#a06bff', '#e6e9ff'][i % 5],
         s: 0.12 + seeded(i + 90) * 0.1,
       })
     }
+    // garden beds: neat rows flanking the fountain
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 8; c++) {
+        const u = GARDEN_U1 + 0.02 + (c / 8) * (GARDEN_U2 - GARDEN_U1 - 0.04)
+        const p = circlePoint(u, 14.4 + r * 1.1)
+        list.push({ pos: [p.x, 0, p.z], color: ['#ff8fb0', '#ffd93d', '#e6e9ff'][r], s: 0.15 })
+      }
+    }
+    // home garden plots
+    HOME_SLOTS.slice(0, mobile ? 4 : 7).forEach((slot, i) => {
+      const hp = circlePoint(slot, LOOP_RADIUS + 5 + seeded(i + 22) * 3)
+      for (let f = 0; f < 4; f++) {
+        list.push({
+          pos: [hp.x + 1.3 + (f % 2) * 0.5, 0, hp.z - 0.3 + Math.floor(f / 2) * 0.5],
+          color: ['#ffd93d', '#ff8fb0', '#e6e9ff', '#ff8a3d'][f],
+          s: 0.13,
+        })
+      }
+    })
     return list
   }, [mobile])
 
+  const stems = useMemo(() => flowers.map((f) => ({ pos: [f.pos[0], 0.14, f.pos[2]], scale: [0.04, 0.28, 0.04], color: '#2fae62' })), [flowers])
+  const heads = useMemo(() => flowers.map((f) => ({ pos: [f.pos[0], 0.32, f.pos[2]], scale: [f.s, f.s, f.s], color: f.color })), [flowers])
+  const trunks = useMemo(() => trees.map((t) => ({ pos: [t.pos[0], t.h / 2, t.pos[2]], scale: [0.22, t.h, 0.22], color: '#6b4f2a' })), [trees])
+  const canopies = useMemo(() => trees.map((t) => ({ pos: [t.pos[0], t.h + 0.55, t.pos[2]], scale: [1.05, 1.05, 1.05], color: t.leaf })), [trees])
+
   const birds = useMemo(
     () =>
-      [...Array(mobile ? 3 : 7)].map((_, i) => ({
+      [...Array(mobile ? 4 : 10)].map((_, i) => ({
         key: i,
-        radius: 6 + seeded(i + 11) * 14,
-        height: 6.5 + seeded(i + 12) * 4.5,
+        radius: 6 + seeded(i + 11) * 22,
+        height: 6.5 + seeded(i + 12) * 5.5,
         speed: 0.05 + seeded(i + 13) * 0.05,
         offset: seeded(i + 14),
         dir: i % 2 === 0 ? 1 : -1,
@@ -555,35 +583,10 @@ function Nature({ mobile }) {
 
   return (
     <group>
-      {trees.map((tr) => (
-        <group key={tr.key} position={tr.pos}>
-          <mesh position={[0, tr.h / 2, 0]} castShadow>
-            <boxGeometry args={[0.22, tr.h, 0.22]} />
-            <meshStandardMaterial color="#6b4f2a" />
-          </mesh>
-          <mesh position={[0, tr.h + 0.45, 0]} castShadow>
-            <boxGeometry args={[1.0, 0.9, 1.0]} />
-            <meshStandardMaterial color={tr.leaf} />
-          </mesh>
-          <mesh position={[0.25, tr.h + 1.0, 0.15]}>
-            <boxGeometry args={[0.55, 0.45, 0.55]} />
-            <meshStandardMaterial color={tr.leaf} />
-          </mesh>
-        </group>
-      ))}
-
-      {flowers.map((f) => (
-        <group key={f.key} position={f.pos}>
-          <mesh position={[0, 0.14, 0]}>
-            <boxGeometry args={[0.04, 0.28, 0.04]} />
-            <meshStandardMaterial color="#2fae62" />
-          </mesh>
-          <mesh position={[0, 0.32, 0]}>
-            <boxGeometry args={[f.s, f.s, f.s]} />
-            <meshStandardMaterial color={f.color} emissive={f.color} emissiveIntensity={0.25} />
-          </mesh>
-        </group>
-      ))}
+      <Boxes items={trunks} />
+      <Boxes items={canopies} />
+      <Boxes items={stems} />
+      <Boxes items={heads} emissive="#ffffff" emissiveIntensity={0.15} />
 
       {birds.map((cfg, i) => (
         <group key={cfg.key} ref={(el) => (birdRefs.current[i] = el)}>
@@ -612,13 +615,13 @@ function SkyLife({ mobile }) {
 
   const floaters = useMemo(() => {
     const cubes = []
-    const count = mobile ? 8 : 16
+    const count = mobile ? 6 : 12
     for (let i = 0; i < count; i++) {
       const ang = seeded(i + 500) * TAU
       const rad = seeded(i + 550) * (LOOP_RADIUS + 8)
       cubes.push({
         key: i,
-        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 3 + seeded(i + 600) * 6, LOOP_CENTER.z + Math.cos(ang) * rad],
+        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 3.5 + seeded(i + 600) * 6, LOOP_CENTER.z + Math.cos(ang) * rad],
         size: 0.25 + seeded(i + 800) * 0.5,
         color: ['#39ff88', '#a06bff', '#ffd93d', '#ff8a3d'][i % 4],
         speed: 0.4 + seeded(i + 900) * 0.9,
@@ -629,11 +632,11 @@ function SkyLife({ mobile }) {
 
   const clouds = useMemo(() => {
     const list = []
-    const count = mobile ? 4 : 7
+    const count = mobile ? 3 : 6
     for (let i = 0; i < count; i++) {
       list.push({
         key: i,
-        pos: [0, 10 + seeded(i + 41) * 4, LOOP_CENTER.z + (seeded(i + 42) - 0.5) * 48],
+        pos: [0, 11 + seeded(i + 41) * 4, LOOP_CENTER.z + (seeded(i + 42) - 0.5) * 52],
         w: 3 + seeded(i + 43) * 4,
         speed: 0.15 + seeded(i + 44) * 0.25,
       })
@@ -651,7 +654,7 @@ function SkyLife({ mobile }) {
     })
     cloudGroup.current?.children.forEach((c, i) => {
       const cl = clouds[i]
-      c.position.x = ((cl.pos[0] + t * cl.speed + 30) % 60) - 30
+      c.position.x = ((cl.pos[0] + t * cl.speed + 32) % 64) - 32
     })
   })
 
@@ -693,7 +696,7 @@ function ShootingStar() {
     if (t < 1.1) {
       const p = t / 1.1
       ref.current.visible = true
-      ref.current.position.set(-24 + p * 48, 14 - p * 4, LOOP_CENTER.z - 16)
+      ref.current.position.set(-24 + p * 48, 15 - p * 4, LOOP_CENTER.z - 18)
       ref.current.material.opacity = Math.sin(p * Math.PI) * 0.9
     } else {
       ref.current.visible = false
@@ -707,9 +710,9 @@ function ShootingStar() {
   )
 }
 
-/** Spinning XP coins hovering over the road — walk through to collect. */
+/** XP coins as ONE instanced mesh — spin, bob, collect, respawn per lap. */
 function Coins({ tRef, mobile }) {
-  const group = useRef()
+  const inst = useRef()
   const coins = useMemo(() => {
     const list = []
     const step = mobile ? 0.05 : 0.033
@@ -717,42 +720,43 @@ function Coins({ tRef, mobile }) {
       if (t > GAP_START - 0.02 && t < GAP_END + 0.01) continue
       const p = pathPoint(t)
       const off = (seeded(Math.round(t * 1000)) - 0.5) * 1.6
-      list.push({ t, pos: [p.x + p.nx * off, 1.1, p.z + p.nz * off] })
+      list.push({ t, x: p.x + p.nx * off, z: p.z + p.nz * off })
     }
     return list
   }, [mobile])
   const collected = useRef(new Set())
+  const m = useMemo(() => new THREE.Matrix4(), [])
+  const q = useMemo(() => new THREE.Quaternion(), [])
+  const e = useMemo(() => new THREE.Euler(), [])
+  const v = useMemo(() => new THREE.Vector3(), [])
+  const one = useMemo(() => new THREE.Vector3(0.32, 0.05, 0.32), [])
+  const zero = useMemo(() => new THREE.Vector3(0, 0, 0), [])
 
   useFrame((state) => {
-    if (!group.current) return
+    if (!inst.current) return
     const time = state.clock.elapsedTime
     const heroT = tRef.current
-    group.current.children.forEach((c, i) => {
-      if (collected.current.has(i)) return
-      c.rotation.y = time * 3
-      c.position.y = 1.1 + Math.sin(time * 2 + i) * 0.1
-      if (Math.abs(coins[i].t - heroT) < 0.005) {
+    if (heroT < 0.015 && collected.current.size > 10) collected.current.clear()
+    coins.forEach((c, i) => {
+      const got = collected.current.has(i)
+      if (!got && Math.abs(c.t - heroT) < 0.005) {
         collected.current.add(i)
-        c.visible = false
         sfx.coin()
         gainXp(2, { silent: true })
       }
+      q.setFromEuler(e.set(0, time * 3 + i, 0))
+      v.set(c.x, 1.1 + Math.sin(time * 2 + i) * 0.1, c.z)
+      m.compose(v, q, got ? zero : one)
+      inst.current.setMatrixAt(i, m)
     })
-    if (heroT < 0.015 && collected.current.size > 10) {
-      collected.current.clear()
-      group.current.children.forEach((c) => (c.visible = true))
-    }
+    inst.current.instanceMatrix.needsUpdate = true
   })
 
   return (
-    <group ref={group}>
-      {coins.map((c, i) => (
-        <mesh key={i} position={c.pos}>
-          <cylinderGeometry args={[0.16, 0.16, 0.05, 12]} />
-          <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.6} />
-        </mesh>
-      ))}
-    </group>
+    <instancedMesh ref={inst} args={[undefined, undefined, coins.length]} frustumCulled={false}>
+      <cylinderGeometry args={[0.5, 0.5, 1, 12]} />
+      <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.6} />
+    </instancedMesh>
   )
 }
 
@@ -792,7 +796,7 @@ function ClickPing() {
           sfx.hover()
         }}
       >
-        <planeGeometry args={[86, 86]} />
+        <planeGeometry args={[95, 95]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
@@ -842,11 +846,11 @@ function RespawnController({ tRef }) {
   return null
 }
 
-/** Camera: follows behind the hero around the loop, FOV widening with speed. */
+/** Camera: zoomed-out chase view — higher, further back, wider FOV. */
 function Rig({ progressRef, tRef, speedRef }) {
   const { camera } = useThree()
   const smoothed = useRef(0)
-  const fov = useRef(50)
+  const fov = useRef(55)
 
   useFrame((state, delta) => {
     const target = progressRef.current
@@ -857,17 +861,19 @@ function Rig({ progressRef, tRef, speedRef }) {
     tRef.current = smoothed.current
 
     const hero = pathPoint(smoothed.current)
-    const cam = pathPoint(Math.max(0, smoothed.current - 0.038))
+    const cam = pathPoint(Math.max(0, smoothed.current - 0.052))
     const time = state.clock.elapsedTime
 
     camera.position.set(
-      cam.x + cam.nx * 2.6 + Math.sin(time * 0.32) * 0.3,
-      3.9 + Math.sin(time * 0.45) * 0.2,
-      cam.z + cam.nz * 2.6
+      cam.x + cam.nx * 4.6 + Math.sin(time * 0.32) * 0.3,
+      6.2 + Math.sin(time * 0.45) * 0.25,
+      cam.z + cam.nz * 4.6
     )
-    camera.lookAt(hero.x, 1.3, hero.z)
+    // look a touch past the hero so more of the world stays in frame
+    const ahead = pathPoint(Math.min(1, smoothed.current + 0.012))
+    camera.lookAt((hero.x + ahead.x) / 2, 1.1, (hero.z + ahead.z) / 2)
 
-    const targetFov = 50 + Math.min(1, Math.abs(speedRef.current) * 3) * 9
+    const targetFov = 55 + Math.min(1, Math.abs(speedRef.current) * 3) * 8
     fov.current += (targetFov - fov.current) * (1 - Math.exp(-delta * 4))
     if (Math.abs(camera.fov - fov.current) > 0.05) {
       camera.fov = fov.current
@@ -878,9 +884,9 @@ function Rig({ progressRef, tRef, speedRef }) {
 }
 
 /**
- * The 3D mini-city world: a circular loop road through gardens, homes and a
- * river — Round 1 (portfolio) → gap jump → Round 2 (playground) → cliff →
- * respawn. Rendered fixed behind the scroll container.
+ * The 3D mini-city world: a circular loop road through gardens, homes and
+ * two rivers. Heavy repetition (flowers, trees, coins, hedges, reeds,
+ * buildings) is GPU-instanced and shadows are off — smoothness first.
  */
 export default function World({ progressRef, visitedIds, onOpenSection }) {
   const tRef = useRef(0)
@@ -890,30 +896,22 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
   return (
     <div className="fixed inset-0 z-0" aria-hidden="true">
       <Canvas
-        dpr={[1, mobile ? 1.5 : 1.75]}
-        camera={{ fov: 50, near: 0.1, far: 130, position: [0, 3.9, 8] }}
-        shadows={!mobile}
+        dpr={[1, mobile ? 1.25 : 1.5]}
+        camera={{ fov: 55, near: 0.1, far: 140, position: [0, 6.2, 10] }}
         gl={{ antialias: !mobile, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#0b1026']} />
-        <fog attach="fog" args={['#0b1026', 18, mobile ? 50 : 70]} />
+        <fog attach="fog" args={['#0b1026', 22, mobile ? 58 : 80]} />
 
-        <ambientLight intensity={0.55} />
-        <directionalLight
-          position={[10, 16, 8]}
-          intensity={1.1}
-          castShadow={!mobile}
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-        />
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[10, 16, 8]} intensity={1.05} />
         <pointLight position={[LOOP_CENTER.x, 9, LOOP_CENTER.z]} intensity={22} color="#a06bff" />
 
-        <Stars radius={90} depth={45} count={mobile ? 1100 : 2600} factor={3.2} saturation={0.4} fade speed={0.9} />
-        <Sparkles count={mobile ? 40 : 100} scale={[62, 10, 62]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2.2} speed={0.35} color="#39ff88" />
-        <Sparkles count={mobile ? 25 : 60} scale={[56, 12, 56]} position={[LOOP_CENTER.x, 6, LOOP_CENTER.z]} size={2.6} speed={0.25} color="#a06bff" />
+        <Stars radius={95} depth={45} count={mobile ? 900 : 2000} factor={3.2} saturation={0.4} fade speed={0.9} />
+        <Sparkles count={mobile ? 30 : 80} scale={[66, 10, 66]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2.2} speed={0.35} color="#39ff88" />
 
         <gridHelper
-          args={[80, 56, '#3a4fa0', '#1d2650']}
+          args={[90, 60, '#3a4fa0', '#1d2650']}
           position={[LOOP_CENTER.x, -0.06, LOOP_CENTER.z]}
         />
 
@@ -921,7 +919,10 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <MiniCity mobile={mobile} />
         <Homes mobile={mobile} />
         <People mobile={mobile} />
-        <River />
+        {RIVERS.map((r) => (
+          <River key={r.t1} t1={r.t1} t2={r.t2} bridgeU={r.bridgeU} />
+        ))}
+        <Garden />
         <Nature mobile={mobile} />
         <SkyLife mobile={mobile} />
         <ShootingStar />

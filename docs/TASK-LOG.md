@@ -143,3 +143,11 @@
   RESULT:   PASS
   GATE:     H1 watch stands — desktop fine, real-device mobile pass recommended
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V3.2 — performance pass + zoomed-out living world (per Soyed: "laggy feels, fix that; zoom out; rivers/birds/people; no collisions; a garden")
+  ROLE:     3D + DEV + QA (perf)
+  CHANGE:   PERFORMANCE (the lag fix): repeated geometry GPU-instanced via a reusable <Boxes> instancedMesh helper — flowers (~120 meshes→2 draws incl. garden beds + home plots), trees (→2), coins (→1, animated matrices, per-lap respawn kept), buildings (→3), hedges/reeds/rubble (→1 each); renderer shadows OFF; dpr capped 1.5 desktop/1.25 mobile; stars/sparkles/floaters trimmed. Est. ~500→~150 draw calls. CAMERA: zoomed out — higher (6.2), further back (0.052 arc), outward 4.6, base FOV 55, looks slightly ahead of the hero so more world is in frame. COLLISIONS FIXED: sidewalk walkers moved to R+4.1 (were sitting exactly on the checkpoint circle R+2.7), plaza walkers to r=9.4 (between towers ≤8 and street ≥10.1), homes pinned to river-free slots, trees/flowers river- and home-aware, buildings keep out of the garden sector. ADDED: second river across Round 1 (banks/bridge/reeds/sparkles), formal GARDEN sector inside the ring (lawn arc, 3 neat flower-bed rows, 6 hedges, animated fountain with spray sparkles), birds 7→10, people 6→9.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     H1 — this pass exists to close it; re-check on real device
+  DOCS:     TASK-LOG
