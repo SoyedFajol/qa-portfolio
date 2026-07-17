@@ -4,9 +4,9 @@ import { Html } from '@react-three/drei'
 import { pathPoint } from './constants'
 import { sfx } from '../game/sfx'
 
-const FUR = '#23263a' // tuxedo black (soft, so it reads at night)
-const FUR_DARK = '#15171f'
-const WHITE = '#f2f4ff'
+const FUR = '#f4f6ff' // white cat
+const FUR_DARK = '#c9cede' // soft gray for ears & shading so it still reads
+const WHITE = '#ffffff'
 
 /**
  * The hero's cat: trots along the inner side of the road (opposite Bugsy),
