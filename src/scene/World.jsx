@@ -283,9 +283,8 @@ function MiniCity({ mobile, windowGlow = 0.35 }) {
       list.push({
         ang, rad, h, w,
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, h / 2, LOOP_CENTER.z + Math.cos(ang) * rad],
-        // a vibrant skyline: teal, indigo, magenta, coral, violet, sea-blue
-        color: ['#1f8a70', '#2a5da8', '#a83a7e', '#c2603a', '#6b3fa8', '#1f6e8a'][i % 6],
-        glow: ['#39ff88', '#ffd93d', '#a06bff', '#ff8a3d', '#4db3ff'][i % 5],
+        color: ['#141b3c', '#1d2650', '#232e63'][i % 3],
+        glow: ['#39ff88', '#ffd93d', '#a06bff', '#ff8a3d'][i % 4],
       })
     }
     return list
