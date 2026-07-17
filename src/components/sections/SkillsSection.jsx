@@ -11,12 +11,16 @@ const FLAVOR = {
   'Manual Testing': { emoji: '🗡️', flavor: 'Trusty main-hand blade. Test cases, exploratory charters, bug reports — swung daily at BRAC IT against enterprise microservices.' },
   'API Testing': { emoji: '🏹', flavor: 'Precision longbow. Postman quivers, Swagger scopes, status-code arrows: 200s confirmed, 400s provoked on purpose, 500s reported with stack-trace evidence.' },
   'Automation Testing': { emoji: '🛡️', flavor: 'Enchanted shield, still being forged. Contributes automation at work while grinding the Playwright/Selenium skill tree.' },
+  'Database Testing': { emoji: '🗄️', flavor: 'Truth-seeking lantern. SELECTs behind every UI claim: duplicates, orphans, silent truncation — the database never lies to a tester who asks.' },
   'Security Testing': { emoji: '🗝️', flavor: 'Mysterious key found in a dungeon. Just started turning it: input validation, auth edge cases, OWASP scrolls on the reading list.' },
   Playwright: { emoji: '🎭', flavor: 'Modern spellbook. Auto-waiting incantations, web-first assertions, trace-viewer scrying — the current main quest.' },
   Selenium: { emoji: '⚗️', flavor: 'Classic alchemy set. WebDriverWaits, page objects, and the patience of a thousand explicit waits.' },
   Java: { emoji: '☕', flavor: 'Legendary brew, +3 to backend comprehension. Spring Boot microservices shipped at CMED Health; reads production stack traces without flinching.' },
   Python: { emoji: '🐍', flavor: 'Faithful familiar. Scripts, Playwright bindings, ML notebooks — summoned whenever a task needs quick automation.' },
   'C++ (competitive programming)': { emoji: '⚡', flavor: 'Tournament rapier. 200+ Codeforces duels won, ICPC Dhaka regional survived. Grants passive skill: edge-case sense.' },
+  JavaScript: { emoji: '🟨', flavor: 'City-building toolkit. The world you are standing in right now runs on it — React, Three.js, and a lot of glowing boxes.' },
+  TypeScript: { emoji: '🟦', flavor: 'JavaScript with armor equipped. NestJS and Next.js side quests (HouseRentBD) cleared with types on.' },
+  'n8n (workflow automation)': { emoji: '🔗', flavor: 'Automation loom. Wires APIs and workflows together so machines do the boring quests.' },
 }
 
 const CHIP_COLORS = ['var(--neon)', 'var(--pix-purple)', 'var(--pix-yellow)', 'var(--pix-orange)']
@@ -134,10 +138,14 @@ export default function SkillsSection() {
         </section>
       ))}
 
-      <section className="space-y-4" aria-label="Databases, tools and APIs">
+      <section className="space-y-4" aria-label="Stacks, databases, tools and APIs">
+        <ChipRow title="FRONTEND GEAR" icon="🎨" items={s.frontend} />
+        <ChipRow title="BACKEND FORGE" icon="⚙️" items={s.backend} />
         <ChipRow title="DATABASE RUNES" icon="🗄️" items={s.databases} />
         <ChipRow title="TOOL BELT" icon="🧰" items={s.tools} />
+        <ChipRow title="AI COMPANIONS" icon="🤖" items={s.aiStack} />
         <ChipRow title="API ARTIFACTS" icon="🔌" items={s.apis} />
+        <ChipRow title="SPOKEN TONGUES" icon="🗣️" items={s.languages} />
       </section>
 
       <motion.section
