@@ -4,6 +4,7 @@ import { TOPICS, sampleFallbackQuiz } from '../../../lib/fallbackQuizzes'
 import { validateQuiz } from '../../../lib/validateQuiz'
 import { useGameStore } from '../../store/useGameStore'
 import { gainXp, recordQuizAnswer, completeTopic } from '../../game/rewards'
+import { trackEvent } from '../../game/analytics'
 import { sfx } from '../../game/sfx'
 import Typewriter from '../Typewriter'
 
@@ -49,6 +50,7 @@ export default function LearningGame() {
 
   async function startTopic(t) {
     sfx.blip()
+    trackEvent('quiz_started', { topic: t.id, difficulty })
     setTopic(t)
     setPhase('loading')
     setQIndex(0)
@@ -94,6 +96,7 @@ export default function LearningGame() {
       const passed = correctCount / quiz.questions.length >= PASS_RATIO
       if (passed) {
         completeTopic(topic.id, TOPICS.map((t) => t.id))
+        trackEvent('topic_cleared', { topic: topic.id })
       }
       setPhase('result')
     }

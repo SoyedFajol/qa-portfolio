@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { PROFILE } from '../data/profile'
+import { trackEvent } from '../game/analytics'
 
 /**
  * /resume — a clean, print-optimized resume built from the shared profile.
@@ -10,6 +12,10 @@ import { PROFILE } from '../data/profile'
  * full-detail PDF travels by email.
  */
 export default function ResumePage() {
+  // recruiters opening the resume is THE conversion signal
+  useEffect(() => {
+    trackEvent('resume_viewed')
+  }, [])
   return (
     <main className="resume-page mx-auto max-w-3xl px-4 py-10">
       <div className="print-hide mb-6 flex flex-wrap items-center justify-between gap-3">

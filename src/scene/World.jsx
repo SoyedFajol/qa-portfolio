@@ -13,6 +13,7 @@ import { look } from './lookState'
 import { SECTIONS } from '../data/sections'
 import { useUiStore } from '../store/useUiStore'
 import { gainXp } from '../game/rewards'
+import { trackEvent } from '../game/analytics'
 import { sfx } from '../game/sfx'
 
 const TAU = Math.PI * 2
@@ -1777,6 +1778,7 @@ function RespawnController({ tRef }) {
           desc: 'The road is a circle — respawning at Round 1. +25 XP lap bonus.',
         })
         gainXp(25, { silent: true })
+        trackEvent('loop_completed')
         window.scrollTo({ top: 0, behavior: 'instant' })
       }, 1400)
     }
