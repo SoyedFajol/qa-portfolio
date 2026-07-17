@@ -4,9 +4,9 @@ import { Html } from '@react-three/drei'
 import { pathPoint } from './constants'
 import { sfx } from '../game/sfx'
 
-const FUR = '#e8913a' // orange tabby
-const FUR_DARK = '#c9742a'
-const CHEST = '#fff3e0'
+const FUR = '#23263a' // tuxedo black (soft, so it reads at night)
+const FUR_DARK = '#15171f'
+const WHITE = '#f2f4ff'
 
 /**
  * The hero's cat: trots along the inner side of the road (opposite Bugsy),
@@ -81,12 +81,16 @@ export default function Cat({ tRef, speedRef }) {
         document.body.style.cursor = 'auto'
       }}
     >
-      {/* legs */}
+      {/* legs with little white socks */}
       {[[-0.11, 0.17], [0.11, 0.17], [-0.11, -0.15], [0.11, -0.15]].map(([x, z], i) => (
         <group key={i} position={[x, 0.2, z]} ref={(el) => (legs.current[i] = el)}>
-          <mesh position={[0, -0.1, 0]}>
-            <boxGeometry args={[0.08, 0.2, 0.08]} />
-            <meshStandardMaterial color={FUR_DARK} />
+          <mesh position={[0, -0.07, 0]}>
+            <boxGeometry args={[0.08, 0.14, 0.08]} />
+            <meshStandardMaterial color={FUR} />
+          </mesh>
+          <mesh position={[0, -0.17, 0]}>
+            <boxGeometry args={[0.085, 0.07, 0.085]} />
+            <meshStandardMaterial color={WHITE} />
           </mesh>
         </group>
       ))}
@@ -97,18 +101,16 @@ export default function Cat({ tRef, speedRef }) {
           <boxGeometry args={[0.3, 0.24, 0.52]} />
           <meshStandardMaterial color={FUR} />
         </mesh>
-        {/* chest patch */}
-        <mesh position={[0, -0.02, 0.24]}>
-          <boxGeometry args={[0.18, 0.16, 0.05]} />
-          <meshStandardMaterial color={CHEST} />
+        {/* tuxedo chest bib */}
+        <mesh position={[0, -0.03, 0.24]}>
+          <boxGeometry args={[0.2, 0.19, 0.05]} />
+          <meshStandardMaterial color={WHITE} />
         </mesh>
-        {/* tabby stripes */}
-        {[-0.08, 0.06].map((z) => (
-          <mesh key={z} position={[0, 0.11, z]}>
-            <boxGeometry args={[0.31, 0.03, 0.07]} />
-            <meshStandardMaterial color={FUR_DARK} />
-          </mesh>
-        ))}
+        {/* white belly */}
+        <mesh position={[0, -0.11, 0.05]}>
+          <boxGeometry args={[0.22, 0.04, 0.34]} />
+          <meshStandardMaterial color={WHITE} />
+        </mesh>
 
         {/* head */}
         <group ref={head} position={[0, 0.16, 0.3]}>
@@ -134,8 +136,13 @@ export default function Cat({ tRef, speedRef }) {
             <boxGeometry args={[0.045, 0.045, 0.01]} />
             <meshStandardMaterial color="#39ff88" emissive="#39ff88" emissiveIntensity={hover ? 1 : 0.6} />
           </mesh>
+          {/* white muzzle */}
+          <mesh position={[0, -0.055, 0.112]}>
+            <boxGeometry args={[0.13, 0.09, 0.015]} />
+            <meshStandardMaterial color={WHITE} />
+          </mesh>
           {/* nose */}
-          <mesh position={[0, -0.05, 0.115]}>
+          <mesh position={[0, -0.04, 0.122]}>
             <boxGeometry args={[0.05, 0.035, 0.01]} />
             <meshStandardMaterial color="#ff8fb0" />
           </mesh>
@@ -147,9 +154,10 @@ export default function Cat({ tRef, speedRef }) {
             <boxGeometry args={[0.06, 0.34, 0.06]} />
             <meshStandardMaterial color={FUR} />
           </mesh>
+          {/* white tail tip */}
           <mesh position={[0, 0.3, -0.14]} rotation={[0.5, 0, 0]}>
             <boxGeometry args={[0.055, 0.1, 0.055]} />
-            <meshStandardMaterial color={FUR_DARK} />
+            <meshStandardMaterial color={WHITE} />
           </mesh>
         </group>
       </group>

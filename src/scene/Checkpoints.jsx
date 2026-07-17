@@ -7,6 +7,8 @@ import { sfx } from '../game/sfx'
 
 function Checkpoint({ section, side, visited, onOpen }) {
   const crystal = useRef()
+  const orbit = useRef()
+  const disc = useRef()
   const [hover, setHover] = useState(false)
   const p = pathPoint(section.at)
   const x = p.x + p.nx * side * 2.7
@@ -16,13 +18,25 @@ function Checkpoint({ section, side, visited, onOpen }) {
     if (!crystal.current) return
     const t = state.clock.elapsedTime + section.at * 20
     crystal.current.rotation.y = t * 0.8
-    crystal.current.position.y = 1.15 + Math.sin(t * 1.8) * 0.12
+    crystal.current.position.y = 1.35 + Math.sin(t * 1.8) * 0.12
+    if (orbit.current) {
+      orbit.current.rotation.z = t * 1.4
+      orbit.current.position.y = crystal.current.position.y
+    }
+    if (disc.current) {
+      disc.current.material.emissiveIntensity = 0.35 + (Math.sin(t * 2.2) + 1) * 0.2
+    }
   })
 
   const color = visited ? '#39ff88' : '#a06bff'
 
   return (
     <group position={[x, 0, z]} rotation={[0, p.yaw, 0]}>
+      {/* pulsing floor marker — spot the level from far away */}
+      <mesh ref={disc} position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.0, 1.55, 24]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.4} transparent opacity={0.85} side={2} />
+      </mesh>
       {/* pedestal */}
       <mesh position={[0, 0.3, 0]} castShadow>
         <boxGeometry args={[1.15, 0.6, 1.15]} />
@@ -52,27 +66,40 @@ function Checkpoint({ section, side, visited, onOpen }) {
         }}
         castShadow
       >
-        <octahedronGeometry args={[0.62, 0]} />
+        <octahedronGeometry args={[0.72, 0]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={hover ? 1.1 : 0.45}
+          emissiveIntensity={hover ? 1.2 : 0.6}
           transparent
-          opacity={0.92}
+          opacity={0.94}
         />
+      </mesh>
+      {/* orbiting ring drawing the eye */}
+      <mesh ref={orbit} position={[0, 1.35, 0]} rotation={[Math.PI / 2.4, 0, 0]}>
+        <torusGeometry args={[1.0, 0.035, 6, 28]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.7} transparent opacity={0.8} />
       </mesh>
 
       {/* label — the portfolio is the point; make it unmissable */}
-      <Html center position={[0, 2.5, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
-        <button
-          tabIndex={-1}
+      <Html center position={[0, 2.85, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
+        <div
           aria-hidden="true"
-          className={`checkpoint-glow whitespace-nowrap border-2 bg-night/95 px-2.5 py-1.5 font-pixel text-[10px] ${
-            hover ? 'border-pix-yellow text-pix-yellow' : 'border-panel-2 text-ink'
-          }`}
+          className="checkpoint-glow whitespace-nowrap border-[3px] bg-[#0b1026] px-3 py-2 text-center"
+          style={{
+            borderColor: hover ? '#ffd93d' : color,
+            boxShadow: `0 0 14px 2px ${hover ? 'rgba(255,217,61,0.5)' : 'rgba(57,255,136,0.35)'}, 4px 4px 0 rgba(0,0,0,0.6)`,
+            transform: hover ? 'scale(1.1)' : 'scale(1)',
+            transition: 'transform 120ms',
+          }}
         >
-          {section.icon} {section.label} {visited ? '✓' : ''}
-        </button>
+          <p className="font-pixel text-[12px]" style={{ color: hover ? '#ffd93d' : '#ffffff' }}>
+            {section.icon} {section.label} {visited ? '✓' : ''}
+          </p>
+          <p className="mt-1 font-pixel text-[7px]" style={{ color }}>
+            {hover ? '▶ OPEN' : 'CLICK TO OPEN'}
+          </p>
+        </div>
       </Html>
     </group>
   )

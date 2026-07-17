@@ -207,3 +207,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.3 — tuxedo cat + checkpoint visibility boost (per Soyed's screenshot)
+  ROLE:     3D + DESIGN
+  CHANGE:   CAT: recolored to black & white tuxedo — soft-black coat (reads at night), white chest bib, belly, muzzle, four sock paws and tail tip; pink nose and green glowing eyes stay. CHECKPOINTS (the portfolio IS the product): crystal 0.62→0.72 with stronger glow, NEW pulsing colored floor ring anchoring each level to the ground, NEW orbiting halo ring around every crystal, and a redesigned two-line label — 12px white title on solid night background with a colored 3px border, neon glow shadow, and a persistent "CLICK TO OPEN" hint that flips to "▶ OPEN" and scales up on hover.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG
