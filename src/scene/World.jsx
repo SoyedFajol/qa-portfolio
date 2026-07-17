@@ -42,23 +42,26 @@ const THEMES = {
   },
 }
 
-/** The sun (day) or the moon (night), hanging over the mountains. */
+/** The SQUARE sun (day) or moon (night) — Minecraft skies don't do circles. */
 function Celestial({ theme }) {
   const ref = useRef()
   useFrame((state) => {
-    if (ref.current) ref.current.position.y = 34 + Math.sin(state.clock.elapsedTime * 0.12) * 1.2
+    if (ref.current) {
+      ref.current.position.y = 34 + Math.sin(state.clock.elapsedTime * 0.12) * 1.2
+      ref.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.05) * 0.1
+    }
   })
   const pos = [LOOP_CENTER.x + 46, 34, LOOP_CENTER.z - 66]
   if (theme === 'day') {
     return (
       <group ref={ref} position={pos}>
         <mesh>
-          <sphereGeometry args={[5, 20, 16]} />
+          <boxGeometry args={[8, 8, 0.6]} />
           <meshBasicMaterial color="#ffdf6b" toneMapped={false} />
         </mesh>
         <mesh>
-          <sphereGeometry args={[6.6, 20, 16]} />
-          <meshBasicMaterial color="#ffdf6b" transparent opacity={0.18} toneMapped={false} />
+          <boxGeometry args={[10.5, 10.5, 0.4]} />
+          <meshBasicMaterial color="#ffdf6b" transparent opacity={0.16} toneMapped={false} />
         </mesh>
       </group>
     )
@@ -66,17 +69,65 @@ function Celestial({ theme }) {
   return (
     <group ref={ref} position={pos}>
       <mesh>
-        <sphereGeometry args={[3.6, 20, 16]} />
+        <boxGeometry args={[6.5, 6.5, 0.6]} />
         <meshStandardMaterial color="#e9edff" emissive="#cdd6ff" emissiveIntensity={0.7} />
       </mesh>
-      <mesh position={[-1.1, 0.8, 2.9]}>
-        <sphereGeometry args={[0.55, 8, 6]} />
+      {/* pixel craters */}
+      <mesh position={[-1.4, 1.2, 0.32]}>
+        <boxGeometry args={[1.3, 1.3, 0.1]} />
         <meshStandardMaterial color="#c3cbe8" />
       </mesh>
-      <mesh position={[1.2, -0.9, 2.9]}>
-        <sphereGeometry args={[0.38, 8, 6]} />
+      <mesh position={[1.5, -1.1, 0.32]}>
+        <boxGeometry args={[0.9, 0.9, 0.1]} />
         <meshStandardMaterial color="#c3cbe8" />
       </mesh>
+    </group>
+  )
+}
+
+/** Minecraft-style voxel terrain: a field of grass-capped dirt blocks with
+ * per-block color jitter, in TWO instanced draw calls. Holes are left under
+ * the gap and the cliff so there is still somewhere to fall. */
+function VoxelTerrain({ mobile, theme }) {
+  const { caps, dirt } = useMemo(() => {
+    const B = mobile ? 3.6 : 3
+    const RADIUS = mobile ? 46 : 58
+    const capItems = []
+    const dirtItems = []
+    const grass = theme === 'day' ? [76, 155, 80] : [40, 105, 62]
+    const soil = theme === 'day' ? [107, 74, 46] : [70, 50, 32]
+    let n = 0
+    for (let x = -RADIUS; x <= RADIUS; x += B) {
+      for (let z = -RADIUS; z <= RADIUS; z += B) {
+        const wx = LOOP_CENTER.x + x
+        const wz = LOOP_CENTER.z + z
+        const d = Math.hypot(x, z)
+        if (d > RADIUS) continue
+        // leave the void under the jump gap and the cliff
+        const u = ((Math.atan2(x, z) / TAU) + 1) % 1
+        const nearRoad = d > LOOP_RADIUS - 7 && d < LOOP_RADIUS + 8
+        if (nearRoad && ((u > GAP_START - 0.006 && u < GAP_END + 0.006) || u > CLIFF_T - 0.002)) continue
+        n += 1
+        const j = seeded(n) * 24 - 12 // color jitter, the Minecraft signature
+        const jy = seeded(n + 9000) * 0.06
+        capItems.push({
+          pos: [wx, -0.3 - jy, wz],
+          scale: [B, 0.36, B],
+          color: `rgb(${grass[0] + j | 0},${grass[1] + j | 0},${grass[2] + (j / 2) | 0})`,
+        })
+        dirtItems.push({
+          pos: [wx, -1.25 - jy, wz],
+          scale: [B, 1.55, B],
+          color: `rgb(${soil[0] + j | 0},${soil[1] + (j / 2) | 0},${soil[2] + (j / 2) | 0})`,
+        })
+      }
+    }
+    return { caps: capItems, dirt: dirtItems }
+  }, [mobile, theme])
+  return (
+    <group>
+      <Boxes items={dirt} />
+      <Boxes items={caps} />
     </group>
   )
 }
@@ -659,14 +710,14 @@ function Garden() {
     <group>
       {/* lawn */}
       <RingArc t1={GARDEN_U1} t2={GARDEN_U2} inner={16.5} outer={25.8} y={-0.01} color="#143d27" />
-      {/* fountain */}
+      {/* fountain — block-built, of course */}
       <group position={[center.x, 0, center.z]}>
         <mesh position={[0, 0.2, 0]}>
-          <cylinderGeometry args={[1.2, 1.35, 0.4, 10]} />
+          <boxGeometry args={[2.6, 0.4, 2.6]} />
           <meshStandardMaterial color="#2a356e" />
         </mesh>
         <mesh ref={fountain} position={[0, 0.55, 0]}>
-          <cylinderGeometry args={[0.9, 0.9, 0.25, 10]} />
+          <boxGeometry args={[1.9, 0.25, 1.9]} />
           <meshStandardMaterial color="#1d4e89" emissive="#4db3ff" emissiveIntensity={0.5} />
         </mesh>
         <Sparkles count={16} scale={[2.2, 1.6, 2.2]} position={[0, 1.2, 0]} size={1.4} speed={0.5} color="#bfe3ff" />
@@ -1649,11 +1700,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <Celestial theme={theme} />
         <Sparkles count={mobile ? 20 : 40} scale={[78, 10, 78]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2} speed={0.3} color={theme === 'night' ? '#39ff88' : '#ffffff'} />
 
-        <gridHelper
-          key={theme}
-          args={[112, 64, T.gridA, T.gridB]}
-          position={[LOOP_CENTER.x, -0.06, LOOP_CENTER.z]}
-        />
+        <VoxelTerrain mobile={mobile} theme={theme} />
 
         <RingRoad />
         <MiniCity mobile={mobile} windowGlow={T.windowGlow} />

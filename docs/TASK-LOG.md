@@ -231,3 +231,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.6 — Minecraft-style upgrade (per Soyed)
+  ROLE:     3D + DESIGN
+  CHANGE:   VOXEL TERRAIN: the flat grid floor is gone — the whole world now stands on a field of grass-capped dirt BLOCKS (~1100 desktop / ~450 mobile) with per-block color jitter (the Minecraft grass signature) and per-block height wobble, day/night grass+soil palettes, rendered in just TWO instanced draw calls; holes are carved in the terrain under the jump gap and the cliff so the void (and the fall) survive. SQUARE SUN & MOON: spheres replaced with the iconic blocky square sun (glowing halo slab) and pixel-cratered square moon, both slowly tilting. Garden fountain rebuilt from blocks. gridHelper removed.
+  VERIFY:   lint 0/0; 55/55; build ✓ (terrain = +2 draw calls total)
+  RESULT:   PASS
+  GATE:     H1 unaffected (instanced)
+  DOCS:     TASK-LOG
