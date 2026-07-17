@@ -83,7 +83,7 @@ function SkillCard({ name, level, index }) {
             </motion.p>
           )}
         </AnimatePresence>
-        {!open && <p className="mt-1.5 text-right font-pixel text-[7px] text-ink-dim">tap to inspect ▸</p>}
+        {!open && <p className="mt-1.5 text-right font-pixel text-[8px] text-ink-dim">tap to inspect ▸</p>}
       </motion.button>
     </motion.li>
   )

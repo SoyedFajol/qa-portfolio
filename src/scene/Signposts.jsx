@@ -37,7 +37,7 @@ export default function Signposts({ onOpen, mobile = false }) {
             </mesh>
             {!mobile && (
               <Html center position={[0, 1.05, 0.08]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
-                <span className="block w-32 whitespace-normal text-center font-pixel text-[7px] leading-relaxed text-[#2a1c08]">
+                <span className="block w-32 whitespace-normal text-center font-pixel text-[8px] leading-relaxed text-[#2a1c08]">
                   {m.icon} {m.title}
                 </span>
               </Html>

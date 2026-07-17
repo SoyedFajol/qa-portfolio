@@ -96,7 +96,7 @@ function Checkpoint({ section, side, visited, onOpen }) {
           <p className="font-pixel text-[12px]" style={{ color: hover ? '#ffd93d' : '#ffffff' }}>
             {section.icon} {section.label} {visited ? '✓' : ''}
           </p>
-          <p className="mt-1 font-pixel text-[7px]" style={{ color }}>
+          <p className="mt-1 font-pixel text-[9px]" style={{ color }}>
             {hover ? '▶ OPEN' : 'CLICK TO OPEN'}
           </p>
         </div>

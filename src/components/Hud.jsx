@@ -33,7 +33,7 @@ export default function Hud() {
         >
           <div className="xp-fill" style={{ width: `${pct * 100}%` }} />
         </div>
-        <p className="mt-1 font-pixel text-[8px] text-ink-dim">
+        <p className="mt-1 font-pixel text-[9px] text-ink-dim">
           {next === null ? `${xp} XP · MAX` : `${xp} / ${next} XP`}
         </p>
       </motion.div>

@@ -93,6 +93,19 @@ export default function NavMenu() {
               </section>
             ))}
 
+            <button
+              className="pixel-btn pixel-btn--warn mt-2 w-full !text-left !text-[10px]"
+              onClick={() => {
+                sfx.blip()
+                openSection('ask')
+              }}
+            >
+              💬 Feedback — tell me what to improve
+              <span className="mt-1 block font-body text-xs normal-case text-ink-dim">
+                Found a bug? Something confusing? An SQA engineer WANTS your bug reports 🐞
+              </span>
+            </button>
+
             <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-4 border-panel-2 pt-3">
               <div className="font-body text-xs text-ink-dim">
                 <a className="underline hover:text-ink" href="/resume">Resume</a>

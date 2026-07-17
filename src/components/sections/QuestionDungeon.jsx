@@ -15,12 +15,12 @@ function FlipCard({ item, flipped, onFlip, highlight }) {
         >
           <p className="font-pixel text-[8px] text-neon">❓ QUESTION</p>
           <p className="mt-2 font-body text-sm">{item.q}</p>
-          <p className="mt-2 font-pixel text-[8px] text-ink-dim">tap to reveal answer</p>
+          <p className="mt-2 font-pixel text-[9px] text-ink-dim">tap to reveal answer</p>
         </button>
         <div className="flip-back pixel-panel !border-neon" aria-hidden={!flipped}>
           <button className="w-full text-left" onClick={onFlip} aria-label="Hide answer">
             <p className="font-pixel text-[8px] text-pix-yellow">💡 MODEL ANSWER</p>
-            <p className="mt-2 whitespace-pre-line font-body text-xs text-ink-dim">{item.a}</p>
+            <p className="mt-2 whitespace-pre-line font-body text-sm leading-relaxed text-ink-dim">{item.a}</p>
           </button>
         </div>
       </div>

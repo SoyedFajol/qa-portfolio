@@ -1223,7 +1223,7 @@ function Landmark({ u, radius, label, children, mobile, s = 1.0 }) {
       {children}
       {!mobile && (
         <Html center position={[0, 9, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[8, 0]}>
-          <span className="whitespace-nowrap border-2 border-panel-2 bg-night/90 px-2 py-1 font-pixel text-[8px] text-ink">
+          <span className="whitespace-nowrap border-2 border-panel-2 bg-night/90 px-2 py-1 font-pixel text-[9px] text-ink">
             {label}
           </span>
         </Html>

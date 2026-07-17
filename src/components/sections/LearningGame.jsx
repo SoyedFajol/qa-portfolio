@@ -234,7 +234,7 @@ export default function LearningGame() {
                   ? `✅ CRITICAL HIT! +${XP_PER_CORRECT[difficulty]} XP`
                   : '❌ MISS! But every bug teaches…'}
               </p>
-              <p className="mt-2 font-body text-xs text-ink-dim">{q.explanation}</p>
+              <p className="mt-2 font-body text-sm leading-relaxed text-ink-dim">{q.explanation}</p>
               <button className="pixel-btn mt-3 !text-[10px]" onClick={nextQuestion}>
                 {qIndex + 1 < quiz.questions.length ? 'NEXT →' : 'FINISH QUEST →'}
               </button>

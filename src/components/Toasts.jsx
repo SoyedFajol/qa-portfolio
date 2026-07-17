@@ -18,7 +18,7 @@ export default function Toasts() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -80, opacity: 0 }}
           >
-            <p className="font-pixel text-[9px] text-pix-yellow">
+            <p className="font-pixel text-[10px] text-pix-yellow">
               <span aria-hidden="true">{t.icon} </span>
               {t.title}
             </p>

@@ -106,8 +106,11 @@ export default function WorldMap() {
             </div>
 
             <footer className="mt-5 border-t-4 border-panel-2 pt-3">
-              <p className="text-center font-body text-xs text-ink-dim">
-                🖱️ Scroll to walk · 💎 Click crystals · <kbd className="border border-panel-2 px-1 font-pixel text-[9px]">SPACE</kbd> or tap hero to jump · 🪙 Collect coins · 🐞 Poke Bugsy · 🔍 Ctrl+scroll / pinch to zoom · 👁️ drag to look around
+              <p className="text-center font-body text-xs leading-relaxed text-ink-dim">
+                🖱️ Scroll to walk · 💎 Click crystals to open levels ·{' '}
+                <kbd className="border border-panel-2 px-1 font-pixel text-[9px]">SPACE</kbd> / tap hero to jump
+                <br />
+                🪙 Walk through coins · 🐞 Poke Bugsy · 🔍 Pinch or Ctrl+scroll to zoom · 👁️ Drag to look around
               </p>
               <div className="mt-3 text-center">
                 <motion.button
