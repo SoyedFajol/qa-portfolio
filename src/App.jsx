@@ -93,6 +93,31 @@ function GameWorld() {
     return () => window.removeEventListener('wheel', onWheel)
   }, [flatMode])
 
+  // Two-finger pinch = camera zoom on touch (one finger still scrolls/walks)
+  useEffect(() => {
+    if (flatMode) return
+    let lastDist = 0
+    function onTouchMove(e) {
+      if (e.touches.length !== 2) return
+      e.preventDefault()
+      const d = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      )
+      if (lastDist) useUiStore.getState().zoomBy((lastDist - d) * 0.004)
+      lastDist = d
+    }
+    function onTouchEnd(e) {
+      if (e.touches.length < 2) lastDist = 0
+    }
+    window.addEventListener('touchmove', onTouchMove, { passive: false })
+    window.addEventListener('touchend', onTouchEnd)
+    return () => {
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [flatMode])
+
   if (flatMode) return <FlatWorld />
 
   return (
@@ -132,30 +157,53 @@ function GameWorld() {
       </div>
 
       <ScrollHint progressRef={progressRef} />
-      <JumpButton />
+      <TouchControls />
       <JourneyMap />
     </>
   )
 }
 
-/** Thumb-sized JUMP button for touch players (most visitors are on phones). */
-function JumpButton() {
+/** Touch controls for phone players (most visitors): zoom the city in/out
+ * and a thumb-sized JUMP — stacked in the right-thumb zone. */
+function TouchControls() {
   const isTouch =
     typeof window !== 'undefined' &&
     ('ontouchstart' in window || navigator.maxTouchPoints > 0)
   if (!isTouch) return null
   return (
-    <button
-      className="fixed bottom-24 right-3 z-20 flex h-16 w-16 items-center justify-center border-4 border-pix-yellow bg-panel/90 font-pixel text-[10px] text-pix-yellow shadow-[4px_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-1"
-      onTouchStart={(e) => {
-        e.preventDefault()
-        window.dispatchEvent(new Event('hero-jump'))
-      }}
-      onClick={() => window.dispatchEvent(new Event('hero-jump'))}
-      aria-label="Jump"
-    >
-      ⤒<br />JUMP
-    </button>
+    <div className="fixed bottom-24 right-3 z-20 flex flex-col items-end gap-2">
+      <button
+        className="flex h-11 w-11 items-center justify-center border-4 border-neon bg-panel/90 font-pixel text-[11px] text-neon shadow-[3px_3px_0_0_rgba(0,0,0,0.45)] active:translate-y-0.5"
+        onClick={() => {
+          sfx.blip()
+          useUiStore.getState().zoomBy(-0.3)
+        }}
+        aria-label="Zoom in"
+      >
+        🔍+
+      </button>
+      <button
+        className="flex h-11 w-11 items-center justify-center border-4 border-neon bg-panel/90 font-pixel text-[11px] text-neon shadow-[3px_3px_0_0_rgba(0,0,0,0.45)] active:translate-y-0.5"
+        onClick={() => {
+          sfx.blip()
+          useUiStore.getState().zoomBy(0.3)
+        }}
+        aria-label="Zoom out — see the whole city"
+      >
+        🔍−
+      </button>
+      <button
+        className="flex h-16 w-16 items-center justify-center border-4 border-pix-yellow bg-panel/90 font-pixel text-[10px] leading-tight text-pix-yellow shadow-[4px_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-1"
+        onTouchStart={(e) => {
+          e.preventDefault()
+          window.dispatchEvent(new Event('hero-jump'))
+        }}
+        onClick={() => window.dispatchEvent(new Event('hero-jump'))}
+        aria-label="Jump"
+      >
+        ⤒ JUMP
+      </button>
+    </div>
   )
 }
 
