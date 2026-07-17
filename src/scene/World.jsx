@@ -1493,15 +1493,11 @@ function BangladeshLandmarks({ mobile }) {
 const RAIL_R = 41
 const RAIL_Y = 2.75
 
-/** One car. Graffiti (if any) is sprayed on the city-facing side — the
- * car's local +x always points inward on the loop — and occluded by the
- * body so it never ghosts through from the far side. */
+/** One train car: body, lit window band, headlight on the engine. */
 function TrainCar({ cfg, carRef }) {
-  const body = useRef()
-  const spray = { textShadow: '1.5px 1.5px 0 #171d33, 0 0 6px rgba(255,255,255,0.35)' }
   return (
     <group ref={carRef}>
-      <mesh ref={body} castShadow>
+      <mesh castShadow>
         <boxGeometry args={[0.85, 0.85, cfg.len]} />
         <meshStandardMaterial color={cfg.color} />
       </mesh>
@@ -1515,29 +1511,6 @@ function TrainCar({ cfg, carRef }) {
           <meshStandardMaterial color="#fffbe6" emissive="#fffbe6" emissiveIntensity={1.2} />
         </mesh>
       )}
-      {cfg.graffiti && (
-        <Html
-          transform
-          occlude={[body]}
-          position={[0.45, -0.05, 0]}
-          rotation={[0, Math.PI / 2, 0]}
-          distanceFactor={1.5}
-          style={{ pointerEvents: 'none' }}
-          zIndexRange={[6, 0]}
-        >
-          <div className="select-none text-center leading-none" style={{ transform: 'rotate(-3deg)' }}>
-            <p className="font-pixel text-[13px]" style={{ color: cfg.graffiti.color, ...spray }}>
-              {cfg.graffiti.top}
-            </p>
-            <p
-              className="font-pixel text-[15px]"
-              style={{ color: cfg.graffiti.bottomColor ?? cfg.graffiti.color, ...spray }}
-            >
-              {cfg.graffiti.bottom}
-            </p>
-          </div>
-        </Html>
-      )}
     </group>
   )
 }
@@ -1546,18 +1519,9 @@ function TrainLine({ mobile }) {
   const cars = useMemo(
     () => [
       { len: 2.3, color: '#2fae62', engine: true }, // Bangladesh Railway green
-      {
-        len: 2.1, color: '#e8e2d4',
-        graffiti: { top: 'MESSI 🐐', bottom: '10', color: '#2a5da8' },
-      },
-      {
-        len: 2.1, color: '#2fae62',
-        graffiti: { top: 'ARGENTINA', bottom: '★★★★', color: '#f4f6ff', bottomColor: '#ffd93d' },
-      },
-      {
-        len: 2.1, color: '#e8e2d4',
-        graffiti: { top: 'WC26', bottom: 'HOMECOMING 🏆', color: '#75aadb' },
-      },
+      { len: 2.1, color: '#e8e2d4' },
+      { len: 2.1, color: '#2fae62' },
+      { len: 2.1, color: '#e8e2d4' },
     ],
     []
   )
