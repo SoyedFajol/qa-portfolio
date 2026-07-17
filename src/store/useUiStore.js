@@ -5,8 +5,34 @@ import { create } from 'zustand'
 
 let toastSeq = 0
 
+// Session flags survive same-tab navigation (e.g. /resume → back) so the
+// visitor isn't thrown back to PRESS START after every internal page hop.
+const session = {
+  get: (k) => {
+    try {
+      return window.sessionStorage.getItem(k)
+    } catch {
+      return null
+    }
+  },
+  set: (k, v) => {
+    try {
+      window.sessionStorage.setItem(k, v)
+    } catch {
+      /* private mode — in-memory behavior still works */
+    }
+  },
+  del: (k) => {
+    try {
+      window.sessionStorage.removeItem(k)
+    } catch {
+      /* ignore */
+    }
+  },
+}
+
 export const useUiStore = create((set, get) => ({
-  started: false,          // PRESS START pressed
+  started: session.get('qa-started') === '1', // PRESS START pressed (per tab)
   activeSection: null,     // section id or null (world view)
   navOpen: false,
   mapOpen: false,          // world-map popup (auto-opens once after start)
@@ -21,7 +47,10 @@ export const useUiStore = create((set, get) => ({
   toasts: [],              // { id, icon, title, desc }
   levelUpTo: null,         // level number while the LEVEL UP! burst is showing
 
-  start: () => set({ started: true }),
+  start: () => {
+    session.set('qa-started', '1')
+    set({ started: true })
+  },
 
   openSection: (id) => set({ activeSection: id, navOpen: false }),
   closeSection: () => set({ activeSection: null }),
@@ -35,7 +64,11 @@ export const useUiStore = create((set, get) => ({
   toggleTheme: () => set({ theme: get().theme === 'day' ? 'night' : 'day' }),
 
   /** Full restart: back to the PRESS START screen (used by RESET SAVE). */
-  restart: () => set({ started: false, activeSection: null, navOpen: false, mapOpen: false }),
+  restart: () => {
+    session.del('qa-started')
+    session.del('qa-map-seen')
+    set({ started: false, activeSection: null, navOpen: false, mapOpen: false })
+  },
 
   setFlatMode: (flatMode, reason = 'user') =>
     set({ flatMode, flatModeReason: flatMode ? reason : null }),

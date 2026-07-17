@@ -224,12 +224,18 @@ function Game() {
   const setFlatMode = useUiStore((s) => s.setFlatMode)
   const setMapOpen = useUiStore((s) => s.setMapOpen)
 
-  // The world greets you with the map (Soyed's sketch: "we start a page like map")
+  // The world greets you with the map — but only ONCE per tab session, so
+  // hopping to /resume and back doesn't re-pop it.
   useEffect(() => {
-    if (started) {
-      const t = setTimeout(() => setMapOpen(true), 700)
-      return () => clearTimeout(t)
+    if (!started) return
+    try {
+      if (window.sessionStorage.getItem('qa-map-seen') === '1') return
+      window.sessionStorage.setItem('qa-map-seen', '1')
+    } catch {
+      /* private mode: fall through, still show it */
     }
+    const t = setTimeout(() => setMapOpen(true), 700)
+    return () => clearTimeout(t)
   }, [started, setMapOpen])
 
   // Pick the right render mode before the game starts (gates H3, H4).
