@@ -1785,12 +1785,14 @@ function RespawnController({ tRef }) {
 }
 
 /** Camera: zoomed-out chase view — higher, further back, wider FOV. The
- * player's zoom level (HUD 🔍 buttons / Ctrl+scroll) scales the whole rig. */
-function Rig({ progressRef, tRef, speedRef }) {
-  const { camera } = useThree()
+ * player's zoom (HUD 🔍 / pinch / Ctrl+scroll) scales the whole rig, and
+ * the FOG LIFTS as you zoom out so the whole city becomes visible. */
+function Rig({ progressRef, tRef, speedRef, mobile }) {
+  const { camera, scene } = useThree()
   const smoothed = useRef(0)
   const fov = useRef(55)
   const zoomSmooth = useRef(1)
+  const fogBase = mobile ? 68 : 95
 
   useFrame((state, delta) => {
     const target = progressRef.current
@@ -1823,6 +1825,13 @@ function Rig({ progressRef, tRef, speedRef }) {
     if (Math.abs(camera.fov - fov.current) > 0.05) {
       camera.fov = fov.current
       camera.updateProjectionMatrix()
+    }
+
+    // lift the fog when zoomed out — the whole city deserves to be seen
+    if (scene.fog) {
+      const lift = Math.max(1, zoom)
+      scene.fog.far = fogBase * lift
+      scene.fog.near = 24 * lift
     }
   })
   return null
@@ -1892,7 +1901,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <Signposts onOpen={onOpenSection} mobile={mobile} />
         <RoundGates />
 
-        <Rig progressRef={progressRef} tRef={tRef} speedRef={speedRef} />
+        <Rig progressRef={progressRef} tRef={tRef} speedRef={speedRef} mobile={mobile} />
       </Canvas>
     </div>
   )

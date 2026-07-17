@@ -104,7 +104,7 @@ function GameWorld() {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       )
-      if (lastDist) useUiStore.getState().zoomBy((lastDist - d) * 0.004)
+      if (lastDist) useUiStore.getState().zoomBy((lastDist - d) * 0.006)
       lastDist = d
     }
     function onTouchEnd(e) {

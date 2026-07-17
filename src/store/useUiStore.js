@@ -59,7 +59,7 @@ export const useUiStore = create((set, get) => ({
   setMapOpen: (mapOpen) => set({ mapOpen }),
 
   zoomBy: (delta) =>
-    set({ zoom: Math.min(2.4, Math.max(0.55, get().zoom + delta)) }),
+    set({ zoom: Math.min(3.2, Math.max(0.5, get().zoom + delta)) }),
 
   toggleTheme: () => set({ theme: get().theme === 'day' ? 'night' : 'day' }),
 
