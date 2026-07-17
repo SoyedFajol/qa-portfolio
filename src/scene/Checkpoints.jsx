@@ -24,14 +24,14 @@ function Checkpoint({ section, side, visited, onOpen }) {
   return (
     <group position={[x, 0, z]} rotation={[0, p.yaw, 0]}>
       {/* pedestal */}
-      <mesh position={[0, 0.25, 0]} castShadow>
-        <boxGeometry args={[0.9, 0.5, 0.9]} />
+      <mesh position={[0, 0.3, 0]} castShadow>
+        <boxGeometry args={[1.15, 0.6, 1.15]} />
         <meshStandardMaterial color="#1d2650" />
       </mesh>
       {/* light beam rising into the sky */}
-      <mesh position={[0, 5.5, 0]}>
-        <cylinderGeometry args={[0.28, 0.42, 10, 8, 1, true]} />
-        <meshBasicMaterial color={color} transparent opacity={hover ? 0.16 : 0.07} depthWrite={false} />
+      <mesh position={[0, 6, 0]}>
+        <cylinderGeometry args={[0.36, 0.55, 11, 8, 1, true]} />
+        <meshBasicMaterial color={color} transparent opacity={hover ? 0.2 : 0.1} depthWrite={false} />
       </mesh>
       {/* floating crystal — the clickable "level" */}
       <mesh
@@ -52,7 +52,7 @@ function Checkpoint({ section, side, visited, onOpen }) {
         }}
         castShadow
       >
-        <octahedronGeometry args={[0.45, 0]} />
+        <octahedronGeometry args={[0.62, 0]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
@@ -62,12 +62,12 @@ function Checkpoint({ section, side, visited, onOpen }) {
         />
       </mesh>
 
-      {/* label */}
-      <Html center position={[0, 2.15, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
+      {/* label — the portfolio is the point; make it unmissable */}
+      <Html center position={[0, 2.5, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
         <button
           tabIndex={-1}
           aria-hidden="true"
-          className={`checkpoint-glow whitespace-nowrap border-2 bg-night/90 px-2 py-1 font-pixel text-[8px] ${
+          className={`checkpoint-glow whitespace-nowrap border-2 bg-night/95 px-2.5 py-1.5 font-pixel text-[10px] ${
             hover ? 'border-pix-yellow text-pix-yellow' : 'border-panel-2 text-ink'
           }`}
         >

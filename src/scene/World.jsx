@@ -15,6 +15,71 @@ import { sfx } from '../game/sfx'
 
 const TAU = Math.PI * 2
 
+// ── Day / Night ───────────────────────────────────────────────────────
+const THEMES = {
+  night: {
+    bg: '#0b1026',
+    ambient: 0.6,
+    dirColor: '#dfe6ff',
+    dirIntensity: 1.05,
+    gridA: '#3a4fa0',
+    gridB: '#1d2650',
+    cloud: '#2a356e',
+    cloudOpacity: 0.5,
+    windowGlow: 0.4,
+  },
+  day: {
+    bg: '#79b8e6',
+    ambient: 1.05,
+    dirColor: '#fff3d6',
+    dirIntensity: 1.6,
+    gridA: '#5f83c4',
+    gridB: '#4a6aa8',
+    cloud: '#f2f7ff',
+    cloudOpacity: 0.85,
+    windowGlow: 0.12,
+  },
+}
+
+/** The sun (day) or the moon (night), hanging over the mountains. */
+function Celestial({ theme }) {
+  const ref = useRef()
+  useFrame((state) => {
+    if (ref.current) ref.current.position.y = 34 + Math.sin(state.clock.elapsedTime * 0.12) * 1.2
+  })
+  const pos = [LOOP_CENTER.x + 46, 34, LOOP_CENTER.z - 66]
+  if (theme === 'day') {
+    return (
+      <group ref={ref} position={pos}>
+        <mesh>
+          <sphereGeometry args={[5, 20, 16]} />
+          <meshBasicMaterial color="#ffdf6b" toneMapped={false} />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[6.6, 20, 16]} />
+          <meshBasicMaterial color="#ffdf6b" transparent opacity={0.18} toneMapped={false} />
+        </mesh>
+      </group>
+    )
+  }
+  return (
+    <group ref={ref} position={pos}>
+      <mesh>
+        <sphereGeometry args={[3.6, 20, 16]} />
+        <meshStandardMaterial color="#e9edff" emissive="#cdd6ff" emissiveIntensity={0.7} />
+      </mesh>
+      <mesh position={[-1.1, 0.8, 2.9]}>
+        <sphereGeometry args={[0.55, 8, 6]} />
+        <meshStandardMaterial color="#c3cbe8" />
+      </mesh>
+      <mesh position={[1.2, -0.9, 2.9]}>
+        <sphereGeometry args={[0.38, 8, 6]} />
+        <meshStandardMaterial color="#c3cbe8" />
+      </mesh>
+    </group>
+  )
+}
+
 // two rivers, both OUTSIDE the loop so nothing collides with the road:
 // one across the Round-1 countryside, one across the Round-2 garden stretch
 const RIVERS = [
@@ -200,19 +265,20 @@ function RingRoad() {
   )
 }
 
-/** City towers (3 instanced draws for 20 buildings) + beacon + traffic. */
-function MiniCity({ mobile }) {
+/** City towers (3 instanced draws) + beacon + traffic. Fewer, taller,
+ * further apart — a skyline, not a shelf of clutter. */
+function MiniCity({ mobile, windowGlow = 0.35 }) {
   const buildings = useMemo(() => {
     const list = []
-    const count = mobile ? 12 : 20
+    const count = mobile ? 10 : 16
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 7 + 1) * TAU
       const u = ang / TAU
       // keep the garden and park sectors clear
       if (u > GARDEN_U1 - 0.02 && u < PARK_U2 + 0.02 && i % 3 !== 0) continue
-      const rad = i % 3 === 0 ? 3.5 + seeded(i + 20) * 4.5 : 13.5 + seeded(i + 30) * 5
-      const h = 1.6 + seeded(i + 40) * 5.2
-      const w = 1.1 + seeded(i + 50) * 1.5
+      const rad = i % 3 === 0 ? 4 + seeded(i + 20) * 5.5 : 17 + seeded(i + 30) * 6
+      const h = 2.2 + seeded(i + 40) * 6.5
+      const w = 1.4 + seeded(i + 50) * 1.8
       list.push({
         ang, rad, h, w,
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, h / 2, LOOP_CENTER.z + Math.cos(ang) * rad],
@@ -240,10 +306,9 @@ function MiniCity({ mobile }) {
 
   const cars = useMemo(
     () => [
-      { key: 0, radius: 11, speed: 0.05, offset: 0, color: '#ff5d5d', len: 0.9 },
-      { key: 1, radius: 11, speed: 0.05, offset: 0.32, color: '#ffd93d', len: 0.9 },
-      { key: 2, radius: 11, speed: 0.038, offset: 0.6, color: '#4db3ff', len: 0.9 },
-      { key: 3, radius: 11, speed: 0.032, offset: 0.85, color: '#39ff88', len: 1.6 },
+      { key: 0, radius: 13.5, speed: 0.05, offset: 0, color: '#ff5d5d', len: 0.9 },
+      { key: 1, radius: 13.5, speed: 0.05, offset: 0.32, color: '#ffd93d', len: 0.9 },
+      { key: 2, radius: 13.5, speed: 0.032, offset: 0.66, color: '#39ff88', len: 1.6 },
     ],
     []
   )
@@ -263,12 +328,12 @@ function MiniCity({ mobile }) {
   return (
     <group>
       <mesh position={[LOOP_CENTER.x, 0.005, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[10.1, 11.9, 64]} />
+        <ringGeometry args={[12.6, 14.4, 64]} />
         <meshStandardMaterial color="#181f45" side={2} />
       </mesh>
 
       <Boxes items={bodies} />
-      <Boxes items={windows} emissive="#ffffff" emissiveIntensity={0.35} />
+      <Boxes items={windows} emissive="#ffffff" emissiveIntensity={windowGlow} />
       <Boxes items={roofLights} emissive="#ffffff" emissiveIntensity={0.8} />
 
       <group position={[LOOP_CENTER.x, 0, LOOP_CENTER.z]}>
@@ -426,14 +491,14 @@ function Homes({ mobile }) {
 function People({ mobile }) {
   const walkers = useMemo(() => {
     const list = []
-    const count = mobile ? 4 : 9
+    const count = mobile ? 3 : 6
     for (let i = 0; i < count; i++) {
       const sidewalk = i % 2 === 0
       list.push({
         key: i,
         // sidewalk radius clears the winding road (outer reach R+4.3) and
-        // checkpoints; plaza ring sits between towers (≤8) and street (≥10.1)
-        radius: sidewalk ? LOOP_RADIUS + 5.4 : 9.4,
+        // checkpoints; plaza ring sits between towers (≤9.5) and street (≥12.6)
+        radius: sidewalk ? LOOP_RADIUS + 5.4 : 11.5,
         speed: (0.005 + seeded(i + 32) * 0.006) * (i % 3 === 0 ? -1 : 1),
         offset: seeded(i + 33),
         shirt: SHIRTS[i % SHIRTS.length],
@@ -563,7 +628,7 @@ function River({ t1, t2, bridgeU }) {
 
 /** The formal garden inside the ring: lawn, flower beds, hedges, fountain. */
 function Garden() {
-  const center = circlePoint((GARDEN_U1 + GARDEN_U2) / 2, 16.5)
+  const center = circlePoint((GARDEN_U1 + GARDEN_U2) / 2, 20.5)
   const fountain = useRef()
   useFrame((state) => {
     if (fountain.current) {
@@ -575,15 +640,15 @@ function Garden() {
     const list = []
     for (let i = 0; i < 6; i++) {
       const u = GARDEN_U1 + 0.015 + (i / 6) * (GARDEN_U2 - GARDEN_U1 - 0.03)
-      const p = circlePoint(u, 20.2)
-      list.push({ pos: [p.x, 0.3, p.z], scale: [1.6, 0.6, 0.7], rot: [0, p.yaw, 0], color: '#1e5c38' })
+      const p = circlePoint(u, 25)
+      list.push({ pos: [p.x, 0.3, p.z], scale: [1.8, 0.6, 0.7], rot: [0, p.yaw, 0], color: '#1e5c38' })
     }
     return list
   }, [])
   return (
     <group>
       {/* lawn */}
-      <RingArc t1={GARDEN_U1} t2={GARDEN_U2} inner={13.5} outer={20.8} y={-0.01} color="#143d27" />
+      <RingArc t1={GARDEN_U1} t2={GARDEN_U2} inner={16.5} outer={25.8} y={-0.01} color="#143d27" />
       {/* fountain */}
       <group position={[center.x, 0, center.z]}>
         <mesh position={[0, 0.2, 0]}>
@@ -606,7 +671,7 @@ function Garden() {
 function Nature({ mobile }) {
   const trees = useMemo(() => {
     const list = []
-    const count = mobile ? 9 : 18
+    const count = mobile ? 7 : 12
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 13 + 2) * TAU
       const u = ang / TAU
@@ -626,14 +691,14 @@ function Nature({ mobile }) {
     const list = []
     // wild flowers: roadside strips PLACED RELATIVE TO THE WINDING ROAD so
     // they hug its bends without ever sitting on the asphalt
-    const wildCount = mobile ? 30 : 66
+    const wildCount = mobile ? 20 : 40
     for (let i = 0; i < wildCount; i++) {
       const u = seeded(i * 17 + 3)
       const inside = i % 3 === 0
       let pos
       if (inside) {
         const ang = u * TAU
-        const rad = 17 + seeded(i + 80) * 4.5
+        const rad = 20 + seeded(i + 80) * 5.5
         pos = [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad]
       } else {
         const p = pathPoint(u)
@@ -650,7 +715,7 @@ function Nature({ mobile }) {
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 8; c++) {
         const u = GARDEN_U1 + 0.02 + (c / 8) * (GARDEN_U2 - GARDEN_U1 - 0.04)
-        const p = circlePoint(u, 14.4 + r * 1.1)
+        const p = circlePoint(u, 17.6 + r * 1.3)
         list.push({ pos: [p.x, 0, p.z], color: ['#ff8fb0', '#ffd93d', '#e6e9ff'][r], s: 0.15 })
       }
     }
@@ -675,10 +740,10 @@ function Nature({ mobile }) {
 
   const birds = useMemo(
     () =>
-      [...Array(mobile ? 4 : 10)].map((_, i) => ({
+      [...Array(mobile ? 3 : 6)].map((_, i) => ({
         key: i,
-        radius: 6 + seeded(i + 11) * 22,
-        height: 6.5 + seeded(i + 12) * 5.5,
+        radius: 8 + seeded(i + 11) * 26,
+        height: 7.5 + seeded(i + 12) * 6,
         speed: 0.05 + seeded(i + 13) * 0.05,
         offset: seeded(i + 14),
         dir: i % 2 === 0 ? 1 : -1,
@@ -747,23 +812,23 @@ function Beach() {
     () =>
       [...Array(5)].map((_, i) => {
         const u = BEACH_U1 + 0.02 + (i / 5) * (BEACH_U2 - BEACH_U1 - 0.04)
-        const p = circlePoint(u, 38.5 + seeded(i + 300) * 2.5)
+        const p = circlePoint(u, LOOP_RADIUS + 12 + seeded(i + 300) * 3)
         return { key: i, pos: [p.x, 0, p.z], lean: (seeded(i + 301) - 0.5) * 0.3, h: 2 + seeded(i + 302) * 0.8 }
       }),
     []
   )
-  const mid = circlePoint((BEACH_U1 + BEACH_U2) / 2, 39)
+  const mid = circlePoint((BEACH_U1 + BEACH_U2) / 2, LOOP_RADIUS + 13)
   return (
     <group>
       {/* sand */}
-      <RingArc t1={BEACH_U1} t2={BEACH_U2} inner={RIVER_OUTER + 0.9} outer={43} y={-0.03} color="#c9b47f" />
+      <RingArc t1={BEACH_U1} t2={BEACH_U2} inner={RIVER_OUTER + 0.9} outer={LOOP_RADIUS + 17} y={-0.03} color="#c9b47f" />
       {/* the sea */}
       <mesh ref={sea} position={[LOOP_CENTER.x, -0.06, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[43, 58, 96, 1, TAU * BEACH_U1 - Math.PI / 2, TAU * (BEACH_U2 - BEACH_U1)]} />
+        <ringGeometry args={[LOOP_RADIUS + 17, LOOP_RADIUS + 36, 96, 1, TAU * BEACH_U1 - Math.PI / 2, TAU * (BEACH_U2 - BEACH_U1)]} />
         <meshStandardMaterial color="#123f70" emissive="#4db3ff" emissiveIntensity={0.22} transparent opacity={0.95} side={2} />
       </mesh>
       {/* surf line */}
-      <RingArc t1={BEACH_U1 + 0.005} t2={BEACH_U2 - 0.005} inner={42.7} outer={43.15} y={-0.02} color="#bfe3ff" emissive="#bfe3ff" emissiveIntensity={0.35} />
+      <RingArc t1={BEACH_U1 + 0.005} t2={BEACH_U2 - 0.005} inner={LOOP_RADIUS + 16.7} outer={LOOP_RADIUS + 17.15} y={-0.02} color="#bfe3ff" emissive="#bfe3ff" emissiveIntensity={0.35} />
       <Sparkles count={26} scale={[16, 0.8, 16]} position={[mid.x, 0.3, mid.z]} size={1.5} speed={0.18} color="#bfe3ff" />
 
       {/* palms */}
@@ -820,14 +885,14 @@ function Park() {
     })
   })
   const at = (du, radius) => circlePoint(PARK_U1 + du * (PARK_U2 - PARK_U1), radius)
-  const benchSpots = [at(0.2, 19.2), at(0.8, 19.2)]
-  const lampSpots = [at(0.12, 15.2), at(0.5, 20), at(0.88, 15.2)]
-  const swingSpot = at(0.35, 16.2)
-  const slideSpot = at(0.68, 16.2)
+  const benchSpots = [at(0.2, 23.8), at(0.8, 23.8)]
+  const lampSpots = [at(0.12, 18.5), at(0.5, 24.8), at(0.88, 18.5)]
+  const swingSpot = at(0.35, 20.5)
+  const slideSpot = at(0.68, 20.5)
   return (
     <group>
       {/* lawn */}
-      <RingArc t1={PARK_U1} t2={PARK_U2} inner={13.8} outer={20.8} y={-0.01} color="#16482e" />
+      <RingArc t1={PARK_U1} t2={PARK_U2} inner={16.5} outer={25.8} y={-0.01} color="#16482e" />
 
       {/* benches */}
       {benchSpots.map((b, i) => (
@@ -914,7 +979,7 @@ function Park() {
  * standing outside the loop where Round 2 begins. Blaugrana tiers, green
  * pitch, four floodlight towers and a crowd of sparkles. */
 function Stadium() {
-  const spot = circlePoint(0.5, 43)
+  const spot = circlePoint(0.5, LOOP_RADIUS + 16)
   const faceCity = Math.atan2(LOOP_CENTER.x - spot.x, LOOP_CENTER.z - spot.z)
   const lights = useRef([])
 
@@ -1022,13 +1087,13 @@ function Mountains({ mobile }) {
     const count = mobile ? 8 : 13
     for (let i = 0; i < count; i++) {
       const ang = (i / count + seeded(i + 200) * 0.04) * TAU
-      const rad = 52 + seeded(i + 201) * 14
-      const h = 7 + seeded(i + 202) * 9
+      const rad = 70 + seeded(i + 201) * 18
+      const h = 9 + seeded(i + 202) * 12
       list.push({
         key: i,
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
         h,
-        w: 6 + seeded(i + 203) * 7,
+        w: 8 + seeded(i + 203) * 9,
         color: ['#151b3d', '#1a2148', '#202a58'][i % 3],
         snow: h > 12,
       })
@@ -1055,36 +1120,18 @@ function Mountains({ mobile }) {
   )
 }
 
-/** Sky: drifting clouds + floating neon cubes above the city. */
-function SkyLife({ mobile }) {
-  const floatGroup = useRef()
+/** Sky: a few clouds drifting over the city (white by day, dim by night). */
+function SkyLife({ mobile, cloudColor, cloudOpacity }) {
   const cloudGroup = useRef()
-
-  const floaters = useMemo(() => {
-    const cubes = []
-    const count = mobile ? 6 : 12
-    for (let i = 0; i < count; i++) {
-      const ang = seeded(i + 500) * TAU
-      const rad = seeded(i + 550) * (LOOP_RADIUS + 8)
-      cubes.push({
-        key: i,
-        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 3.5 + seeded(i + 600) * 6, LOOP_CENTER.z + Math.cos(ang) * rad],
-        size: 0.25 + seeded(i + 800) * 0.5,
-        color: ['#39ff88', '#a06bff', '#ffd93d', '#ff8a3d'][i % 4],
-        speed: 0.4 + seeded(i + 900) * 0.9,
-      })
-    }
-    return cubes
-  }, [mobile])
 
   const clouds = useMemo(() => {
     const list = []
-    const count = mobile ? 3 : 6
+    const count = mobile ? 3 : 5
     for (let i = 0; i < count; i++) {
       list.push({
         key: i,
-        pos: [0, 11 + seeded(i + 41) * 4, LOOP_CENTER.z + (seeded(i + 42) - 0.5) * 52],
-        w: 3 + seeded(i + 43) * 4,
+        pos: [0, 14 + seeded(i + 41) * 5, LOOP_CENTER.z + (seeded(i + 42) - 0.5) * 64],
+        w: 4 + seeded(i + 43) * 5,
         speed: 0.15 + seeded(i + 44) * 0.25,
       })
     }
@@ -1093,42 +1140,26 @@ function SkyLife({ mobile }) {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    floatGroup.current?.children.forEach((c, i) => {
-      const f = floaters[i]
-      c.position.y = f.pos[1] + Math.sin(t * f.speed + i) * 0.5
-      c.rotation.x = t * 0.25 * f.speed
-      c.rotation.y = t * 0.35 * f.speed
-    })
     cloudGroup.current?.children.forEach((c, i) => {
       const cl = clouds[i]
-      c.position.x = ((cl.pos[0] + t * cl.speed + 32) % 64) - 32
+      c.position.x = ((cl.pos[0] + t * cl.speed + 40) % 80) - 40
     })
   })
 
   return (
-    <group>
-      <group ref={floatGroup}>
-        {floaters.map((f) => (
-          <mesh key={f.key} position={f.pos}>
-            <boxGeometry args={[f.size, f.size, f.size]} />
-            <meshStandardMaterial color={f.color} emissive={f.color} emissiveIntensity={0.4} />
+    <group ref={cloudGroup}>
+      {clouds.map((cl) => (
+        <group key={cl.key} position={cl.pos}>
+          <mesh>
+            <boxGeometry args={[cl.w, 0.55, 1.6]} />
+            <meshStandardMaterial color={cloudColor} transparent opacity={cloudOpacity} />
           </mesh>
-        ))}
-      </group>
-      <group ref={cloudGroup}>
-        {clouds.map((cl) => (
-          <group key={cl.key} position={cl.pos}>
-            <mesh>
-              <boxGeometry args={[cl.w, 0.5, 1.4]} />
-              <meshStandardMaterial color="#2a356e" transparent opacity={0.5} />
-            </mesh>
-            <mesh position={[cl.w * 0.28, 0.35, 0]}>
-              <boxGeometry args={[cl.w * 0.5, 0.4, 1.1]} />
-              <meshStandardMaterial color="#324086" transparent opacity={0.5} />
-            </mesh>
-          </group>
-        ))}
-      </group>
+          <mesh position={[cl.w * 0.28, 0.4, 0]}>
+            <boxGeometry args={[cl.w * 0.5, 0.45, 1.2]} />
+            <meshStandardMaterial color={cloudColor} transparent opacity={cloudOpacity} />
+          </mesh>
+        </group>
+      ))}
     </group>
   )
 }
@@ -1162,7 +1193,7 @@ function Coins({ tRef, mobile }) {
   const inst = useRef()
   const coins = useMemo(() => {
     const list = []
-    const step = mobile ? 0.05 : 0.033
+    const step = mobile ? 0.055 : 0.04
     for (let t = 0.03; t < CLIFF_T - 0.01; t += step) {
       if (t > GAP_START - 0.02 && t < GAP_END + 0.01) continue
       const p = pathPoint(t)
@@ -1346,31 +1377,40 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
   const tRef = useRef(0)
   const speedRef = useRef(0)
   const mobile = typeof window !== 'undefined' && window.innerWidth < 640
+  const theme = useUiStore((s) => s.theme)
+  const T = THEMES[theme]
 
   return (
     <div className="fixed inset-0 z-0" aria-hidden="true">
       <Canvas
         dpr={[1, mobile ? 1.25 : 1.5]}
-        camera={{ fov: 55, near: 0.1, far: 140, position: [0, 6.2, 10] }}
+        camera={{ fov: 55, near: 0.1, far: 175, position: [0, 6.2, 10] }}
         gl={{ antialias: !mobile, powerPreference: 'high-performance' }}
       >
-        <color attach="background" args={['#0b1026']} />
-        <fog attach="fog" args={['#0b1026', 22, mobile ? 58 : 80]} />
+        <color attach="background" args={[T.bg]} />
+        <fog attach="fog" args={[T.bg, 24, mobile ? 68 : 95]} />
 
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[10, 16, 8]} intensity={1.05} />
-        <pointLight position={[LOOP_CENTER.x, 9, LOOP_CENTER.z]} intensity={22} color="#a06bff" />
+        <ambientLight intensity={T.ambient} />
+        <directionalLight position={[46, 34, -40]} color={T.dirColor} intensity={T.dirIntensity} />
+        {theme === 'night' && (
+          <pointLight position={[LOOP_CENTER.x, 10, LOOP_CENTER.z]} intensity={22} color="#a06bff" />
+        )}
 
-        <Stars radius={95} depth={45} count={mobile ? 900 : 2000} factor={3.2} saturation={0.4} fade speed={0.9} />
-        <Sparkles count={mobile ? 30 : 80} scale={[66, 10, 66]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2.2} speed={0.35} color="#39ff88" />
+        {theme === 'night' && (
+          <Stars radius={110} depth={50} count={mobile ? 800 : 1700} factor={3.4} saturation={0.4} fade speed={0.9} />
+        )}
+        {theme === 'night' && <ShootingStar />}
+        <Celestial theme={theme} />
+        <Sparkles count={mobile ? 20 : 40} scale={[78, 10, 78]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2} speed={0.3} color={theme === 'night' ? '#39ff88' : '#ffffff'} />
 
         <gridHelper
-          args={[90, 60, '#3a4fa0', '#1d2650']}
+          key={theme}
+          args={[112, 64, T.gridA, T.gridB]}
           position={[LOOP_CENTER.x, -0.06, LOOP_CENTER.z]}
         />
 
         <RingRoad />
-        <MiniCity mobile={mobile} />
+        <MiniCity mobile={mobile} windowGlow={T.windowGlow} />
         <Homes mobile={mobile} />
         <People mobile={mobile} />
         {RIVERS.map((r) => (
@@ -1382,8 +1422,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <Stadium />
         <Nature mobile={mobile} />
         <Mountains mobile={mobile} />
-        <SkyLife mobile={mobile} />
-        <ShootingStar />
+        <SkyLife mobile={mobile} cloudColor={T.cloud} cloudOpacity={T.cloudOpacity} />
         <Coins tRef={tRef} mobile={mobile} />
         <ClickPing />
         <CheckpointChimes tRef={tRef} />
@@ -1392,7 +1431,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <Hero speedRef={speedRef} tRef={tRef} />
         <BugsyNpc tRef={tRef} />
         <Checkpoints visitedIds={visitedIds} onOpen={onOpenSection} />
-        <Signposts onOpen={onOpenSection} />
+        <Signposts onOpen={onOpenSection} mobile={mobile} />
         <RoundGates />
 
         <Rig progressRef={progressRef} tRef={tRef} speedRef={speedRef} />

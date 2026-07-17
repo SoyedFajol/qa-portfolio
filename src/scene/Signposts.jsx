@@ -2,8 +2,9 @@ import { Html } from '@react-three/drei'
 import { PROFILE } from '../data/profile'
 import { pathPoint } from './constants'
 
-/** The 6 story-arc milestone signposts, planted along Round 1 of the loop. */
-export default function Signposts({ onOpen }) {
+/** The 6 story-arc milestone signposts, planted along Round 1 of the loop.
+ * Labels are skipped on mobile (fewer live DOM overlays = smoother). */
+export default function Signposts({ onOpen, mobile = false }) {
   return (
     <group>
       {PROFILE.story.map((m, i) => {
@@ -34,11 +35,13 @@ export default function Signposts({ onOpen }) {
               <boxGeometry args={[1.3, 0.55, 0.08]} />
               <meshStandardMaterial color="#8a6a3b" />
             </mesh>
-            <Html center position={[0, 1.05, 0.08]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
-              <span className="block w-32 whitespace-normal text-center font-pixel text-[7px] leading-relaxed text-[#2a1c08]">
-                {m.icon} {m.title}
-              </span>
-            </Html>
+            {!mobile && (
+              <Html center position={[0, 1.05, 0.08]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
+                <span className="block w-32 whitespace-normal text-center font-pixel text-[7px] leading-relaxed text-[#2a1c08]">
+                  {m.icon} {m.title}
+                </span>
+              </Html>
+            )}
           </group>
         )
       })}

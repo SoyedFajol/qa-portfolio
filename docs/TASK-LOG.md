@@ -183,3 +183,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.0 — day/night, bigger & cleaner world, portfolio focus, perf audit (per Soyed)
+  ROLE:     3D + DESIGN + DEV + QA
+  CHANGE:   DAY/NIGHT ☀️🌙: theme system (sky/fog/lighting/grid/cloud/window-glow per theme) with a SUN (glowing + halo) by day and a cratered MOON by night over the mountains; auto-picks by visitor's local time (06–18 = day), HUD toggle; stars + shooting star + purple city light are night-only. BIGGER, CLEANER: loop radius 26→32 (~23% more world), inner street/garden/park/beach/stadium/mountains/sea all rescaled outward; DECLUTTERED — floating neon cubes removed entirely, wild flowers 66→40, trees 18→12, birds 10→6, citizens 9→6, cars 4→3, coins thinned, ambient sparkles halved, clouds 6→5 but bigger; buildings fewer-but-taller (16, up to 8.7 units) for a skyline instead of clutter. PORTFOLIO FOCUS: checkpoint crystals +38% bigger with taller beams and larger, higher-contrast labels; story signpost DOM labels skipped on mobile (fewer live overlays). ANALYSIS: grep sweep for stale constants/dead references clean; all sector bands derived from LOOP_RADIUS where possible.
+  VERIFY:   lint 0/0; 55/55 tests; build ✓
+  RESULT:   PASS
+  GATE:     H1 improved again (fewer draws than v3.2 despite bigger world)
+  DOCS:     TASK-LOG

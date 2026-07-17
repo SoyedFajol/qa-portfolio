@@ -4,7 +4,7 @@
 // "round one finish jump to round 2, and at the end fall off the cliff and
 // start again"). Progress t (0..1) maps to a point on the ring.
 
-export const LOOP_RADIUS = 26
+export const LOOP_RADIUS = 32
 export const LOOP_CENTER = { x: 0, z: -LOOP_RADIUS } // start point stays at origin
 export const PATH_LENGTH = 2 * Math.PI * LOOP_RADIUS // ~132 world units walked per lap
 

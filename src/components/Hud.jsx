@@ -7,7 +7,7 @@ import { sfx } from '../game/sfx'
 /** Persistent game HUD: rank, XP bar, sound, render mode, level select. */
 export default function Hud() {
   const { xp, level, mute, toggleMute } = useGameStore()
-  const { flatMode, setFlatMode, flatModeReason, setNavOpen, setMapOpen, zoomBy } = useUiStore()
+  const { flatMode, setFlatMode, flatModeReason, setNavOpen, setMapOpen, zoomBy, theme, toggleTheme } = useUiStore()
   const rank = rankForLevel(level)
   const { pct, next } = progressToNext(xp)
 
@@ -69,6 +69,19 @@ export default function Hud() {
               🔍−
             </button>
           </>
+        )}
+        {!flatMode && (
+          <button
+            className="pixel-btn !px-3 !py-2 !text-[10px]"
+            onClick={() => {
+              sfx.blip()
+              toggleTheme()
+            }}
+            aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}
+            title={theme === 'day' ? 'Night mode' : 'Day mode'}
+          >
+            {theme === 'day' ? '🌙' : '☀️'}
+          </button>
         )}
         <button
           className="pixel-btn !border-pix-yellow !px-3 !py-2 !text-[10px]"
