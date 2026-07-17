@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Analytics } from '@vercel/analytics/react'
 
 import { SECTIONS, sectionById } from './data/sections'
+import { look } from './scene/lookState'
 import { sfx } from './game/sfx'
 import { useGameStore } from './store/useGameStore'
 import { useUiStore } from './store/useUiStore'
@@ -93,28 +94,101 @@ function GameWorld() {
     return () => window.removeEventListener('wheel', onWheel)
   }, [flatMode])
 
-  // Two-finger pinch = camera zoom on touch (one finger still scrolls/walks)
+  // Touch gestures: two-finger pinch zooms; a HORIZONTAL one-finger drag
+  // looks left/right around the hero (vertical drags still scroll/walk).
   useEffect(() => {
     if (flatMode) return
     let lastDist = 0
+    let start = null
+    let mode = null // null | 'look'
+    let yaw0 = 0
+    let pitch0 = 0
+
+    function onTouchStart(e) {
+      if (e.touches.length === 1) {
+        start = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        mode = null
+        yaw0 = look.yaw
+        pitch0 = look.pitch
+      }
+    }
     function onTouchMove(e) {
-      if (e.touches.length !== 2) return
-      e.preventDefault()
-      const d = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      )
-      if (lastDist) useUiStore.getState().zoomBy((lastDist - d) * 0.006)
-      lastDist = d
+      if (e.touches.length === 2) {
+        e.preventDefault()
+        const d = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        if (lastDist) useUiStore.getState().zoomBy((lastDist - d) * 0.006)
+        lastDist = d
+        return
+      }
+      if (e.touches.length !== 1 || !start) return
+      const dx = e.touches[0].clientX - start.x
+      const dy = e.touches[0].clientY - start.y
+      // decide the gesture once: sideways = look, upright = scroll
+      if (mode === null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
+        mode = Math.abs(dx) > Math.abs(dy) ? 'look' : 'scroll'
+      }
+      if (mode === 'look') {
+        e.preventDefault()
+        look.active = true
+        look.yaw = Math.max(-2.8, Math.min(2.8, yaw0 + dx * 0.008))
+        look.pitch = Math.max(-0.5, Math.min(0.5, pitch0 + dy * 0.003))
+      }
     }
     function onTouchEnd(e) {
       if (e.touches.length < 2) lastDist = 0
+      if (e.touches.length === 0) {
+        start = null
+        mode = null
+        look.active = false // rig eases the view back behind the hero
+      }
     }
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, { passive: false })
     window.addEventListener('touchend', onTouchEnd)
     return () => {
+      window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [flatMode])
+
+  // Mouse: click-hold and drag to look around (release to snap back)
+  useEffect(() => {
+    if (flatMode) return
+    let start = null
+    let yaw0 = 0
+    let pitch0 = 0
+    function onDown(e) {
+      if (e.button !== 0) return
+      // ignore drags starting on UI (buttons, overlays, links)
+      if (e.target.closest('button, a, input, textarea, [role="dialog"]')) return
+      start = { x: e.clientX, y: e.clientY }
+      yaw0 = look.yaw
+      pitch0 = look.pitch
+    }
+    function onMove(e) {
+      if (!start) return
+      const dx = e.clientX - start.x
+      const dy = e.clientY - start.y
+      if (!look.active && Math.abs(dx) < 5 && Math.abs(dy) < 5) return // still a click
+      look.active = true
+      look.yaw = Math.max(-2.8, Math.min(2.8, yaw0 + dx * 0.006))
+      look.pitch = Math.max(-0.5, Math.min(0.5, pitch0 + dy * 0.0025))
+    }
+    function onUp() {
+      start = null
+      look.active = false
+    }
+    window.addEventListener('pointerdown', onDown)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    return () => {
+      window.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
     }
   }, [flatMode])
 

@@ -9,6 +9,7 @@ import Checkpoints from './Checkpoints'
 import Signposts from './Signposts'
 import RoundGates from './RoundGates'
 import { LOOP_CENTER, LOOP_RADIUS, PATH_LENGTH, GAP_START, GAP_END, CLIFF_T, pathPoint, seeded } from './constants'
+import { look } from './lookState'
 import { SECTIONS } from '../data/sections'
 import { useUiStore } from '../store/useUiStore'
 import { gainXp } from '../game/rewards'
@@ -1811,14 +1812,32 @@ function Rig({ progressRef, tRef, speedRef, mobile }) {
     const cam = pathPoint(Math.max(0, smoothed.current - Math.max(0.028, 0.052 * zoom)))
     const time = state.clock.elapsedTime
 
+    // ease the look-around back to center when the drag is released
+    if (!look.active) {
+      const decay = Math.exp(-delta * 4)
+      look.yaw *= decay
+      look.pitch *= decay
+    }
+
+    let cx = cam.x + cam.nx * 4.6 * zoom + Math.sin(time * 0.32) * 0.3
+    let cz = cam.z + cam.nz * 4.6 * zoom
+    // orbit the camera around the hero by the dragged yaw
+    if (Math.abs(look.yaw) > 0.001) {
+      const bx = cx - hero.x
+      const bz = cz - hero.z
+      const cos = Math.cos(look.yaw)
+      const sin = Math.sin(look.yaw)
+      cx = hero.x + bx * cos - bz * sin
+      cz = hero.z + bx * sin + bz * cos
+    }
     camera.position.set(
-      cam.x + cam.nx * 4.6 * zoom + Math.sin(time * 0.32) * 0.3,
-      Math.max(3.2, 6.2 * zoom) + Math.sin(time * 0.45) * 0.25,
-      cam.z + cam.nz * 4.6 * zoom
+      cx,
+      Math.max(2.2, Math.max(3.2, 6.2 * zoom) + Math.sin(time * 0.45) * 0.25 + look.pitch * 7),
+      cz
     )
     // look a touch past the hero so more of the world stays in frame
     const ahead = pathPoint(Math.min(1, smoothed.current + 0.012))
-    camera.lookAt((hero.x + ahead.x) / 2, 1.1, (hero.z + ahead.z) / 2)
+    camera.lookAt((hero.x + ahead.x) / 2, 1.1 - look.pitch * 2.5, (hero.z + ahead.z) / 2)
 
     const targetFov = 55 + Math.min(1, Math.abs(speedRef.current) * 3) * 8
     fov.current += (targetFov - fov.current) * (1 - Math.exp(-delta * 4))
