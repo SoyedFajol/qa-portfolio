@@ -185,18 +185,28 @@ export default function Hero({ speedRef, tRef }) {
           <boxGeometry args={[0.4, 0.06, 0.44]} />
           <meshStandardMaterial color={ALBI} />
         </mesh>
-        {/* REHEL 10 on the back */}
+        {/* REHEL 10 on the back — big enough to read from the chase camera */}
         <Html
           transform
-          position={[0, 0.06, -0.235]}
+          position={[0, 0.04, -0.235]}
           rotation={[0, Math.PI, 0]}
-          distanceFactor={1.6}
+          distanceFactor={2.8}
           style={{ pointerEvents: 'none' }}
           zIndexRange={[5, 0]}
         >
           <div className="select-none text-center leading-none">
-            <p className="font-pixel text-[9px] tracking-widest text-[#171d33]">REHEL</p>
-            <p className="font-pixel text-[26px] text-[#171d33]">10</p>
+            <p
+              className="font-pixel text-[12px] tracking-[0.2em] text-[#0a0d1a]"
+              style={{ textShadow: '0 0 2px #fff, 0 0 3px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff' }}
+            >
+              REHEL
+            </p>
+            <p
+              className="mt-0.5 font-pixel text-[34px] text-[#0a0d1a]"
+              style={{ textShadow: '0 0 3px #fff, 0 0 4px #fff, 2px 2px 0 #fff, -2px -2px 0 #fff' }}
+            >
+              10
+            </p>
           </div>
         </Html>
 
