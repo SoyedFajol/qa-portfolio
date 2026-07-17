@@ -1,5 +1,33 @@
 // Shared scene constants.
-export const PATH_LENGTH = 120 // world units the hero walks over the full scroll
+//
+// V3: the world is a CIRCULAR loop road around a mini city (Soyed's sketch:
+// "round one finish jump to round 2, and at the end fall off the cliff and
+// start again"). Progress t (0..1) maps to a point on the ring.
+
+export const LOOP_RADIUS = 21
+export const LOOP_CENTER = { x: 0, z: -LOOP_RADIUS } // start point stays at origin
+export const PATH_LENGTH = 2 * Math.PI * LOOP_RADIUS // ~132 world units walked per lap
+
+// the walkway gap the hero must JUMP across into Round 2
+export const GAP_START = 0.405
+export const GAP_END = 0.425
+// the cliff at the end of the lap — walk off, fall, respawn at start
+export const CLIFF_T = 0.982
+
+/** Point on the loop at progress t: position, outward normal, and the yaw
+ * that makes a group's local +z face the direction of travel. */
+export function pathPoint(t) {
+  const a = t * Math.PI * 2
+  const x = LOOP_CENTER.x + Math.sin(a) * LOOP_RADIUS
+  const z = LOOP_CENTER.z + Math.cos(a) * LOOP_RADIUS
+  return {
+    x,
+    z,
+    nx: Math.sin(a), // outward normal (unit)
+    nz: Math.cos(a),
+    yaw: Math.atan2(Math.cos(a), -Math.sin(a)),
+  }
+}
 
 /** Deterministic pseudo-random in [0,1) from an integer seed — keeps the
  * decorative layout stable across renders without Math.random(). */

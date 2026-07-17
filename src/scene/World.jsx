@@ -1,101 +1,346 @@
 import { useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Stars, Sparkles } from '@react-three/drei'
+import { Stars, Sparkles, Html } from '@react-three/drei'
 import Hero from './Hero'
 import BugsyNpc from './BugsyNpc'
 import Checkpoints from './Checkpoints'
 import Signposts from './Signposts'
 import RoundGates from './RoundGates'
-import { PATH_LENGTH, seeded } from './constants'
+import { LOOP_CENTER, LOOP_RADIUS, PATH_LENGTH, GAP_START, GAP_END, CLIFF_T, pathPoint, seeded } from './constants'
 import { SECTIONS } from '../data/sections'
+import { useUiStore } from '../store/useUiStore'
 import { gainXp } from '../game/rewards'
 import { sfx } from '../game/sfx'
 
-/** Wide neon grid + walkway + scattered tiles: a full floor, not a line. */
-function NeonFloor({ mobile }) {
-  const pulseTiles = useRef([])
+const TAU = Math.PI * 2
 
-  const tiles = useMemo(() => {
+/** Flat arc of the ring road between progress t1..t2 (one draw call).
+ * Mapping check: mesh is rotated x:-π/2, so ring angle φ lands at world
+ * (cos φ, −sin φ) relative to center, while pathPoint(t) is (sin a, cos a)
+ * with a = 2πt — hence φ = a − π/2. */
+function RingArc({ t1, t2, inner, outer, y = 0, color = '#2a356e', emissive, emissiveIntensity = 0.3, segments = 96 }) {
+  const thetaStart = TAU * t1 - Math.PI / 2
+  const thetaLength = TAU * (t2 - t1)
+  return (
+    <mesh position={[LOOP_CENTER.x, y, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <ringGeometry args={[inner, outer, segments, 1, thetaStart, thetaLength]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={emissive ?? '#000000'}
+        emissiveIntensity={emissive ? emissiveIntensity : 0}
+        side={2}
+      />
+    </mesh>
+  )
+}
+
+/** The loop road: two arcs (Round 1 → gap, gap → cliff), neon stripe, gap
+ * warning, cliff edge rubble and the finish flag. */
+function RingRoad() {
+  const gapSign = pathPoint(0.395)
+  const finish = pathPoint(0.965)
+  const rubble = useMemo(
+    () =>
+      [0, 1, 2].map((i) => {
+        const p = pathPoint(CLIFF_T - 0.004 + i * 0.002)
+        return { key: i, pos: [p.x + (seeded(i) - 0.5) * 2, 0.12 + seeded(i + 9) * 0.1, p.z], size: 0.3 + seeded(i + 5) * 0.35 }
+      }),
+    []
+  )
+  return (
+    <group>
+      {/* road surfaces */}
+      <RingArc t1={0} t2={GAP_START} inner={LOOP_RADIUS - 1.8} outer={LOOP_RADIUS + 1.8} />
+      <RingArc t1={GAP_END} t2={CLIFF_T} inner={LOOP_RADIUS - 1.8} outer={LOOP_RADIUS + 1.8} />
+      {/* neon center stripe */}
+      <RingArc t1={0} t2={GAP_START} inner={LOOP_RADIUS - 0.22} outer={LOOP_RADIUS + 0.22} y={0.02} color="#39ff88" emissive="#39ff88" />
+      <RingArc t1={GAP_END} t2={CLIFF_T} inner={LOOP_RADIUS - 0.22} outer={LOOP_RADIUS + 0.22} y={0.02} color="#a06bff" emissive="#a06bff" />
+
+      {/* JUMP! warning before the gap */}
+      <group position={[gapSign.x + gapSign.nx * 2.4, 0, gapSign.z + gapSign.nz * 2.4]}>
+        <mesh position={[0, 0.6, 0]}>
+          <boxGeometry args={[0.1, 1.2, 0.1]} />
+          <meshStandardMaterial color="#8a6a3b" />
+        </mesh>
+        <mesh position={[0, 1.25, 0]}>
+          <boxGeometry args={[1.0, 0.5, 0.08]} />
+          <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.35} />
+        </mesh>
+        <Html center position={[0, 1.25, 0.1]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
+          <span className="whitespace-nowrap font-pixel text-[8px] text-night">⚠️ JUMP!</span>
+        </Html>
+      </group>
+
+      {/* finish flag before the cliff */}
+      <group position={[finish.x + finish.nx * 2.3, 0, finish.z + finish.nz * 2.3]}>
+        <mesh position={[0, 1.1, 0]}>
+          <boxGeometry args={[0.08, 2.2, 0.08]} />
+          <meshStandardMaterial color="#c0c6e8" />
+        </mesh>
+        <mesh position={[0.35, 1.85, 0]}>
+          <boxGeometry args={[0.7, 0.45, 0.04]} />
+          <meshStandardMaterial color="#e6e9ff" emissive="#e6e9ff" emissiveIntensity={0.2} />
+        </mesh>
+        <Html center position={[0, 2.5, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
+          <span className="whitespace-nowrap border-2 border-danger bg-night/90 px-2 py-1 font-pixel text-[8px] text-danger">
+            🏁 CLIFF AHEAD — LOOP RESTARTS
+          </span>
+        </Html>
+      </group>
+
+      {/* crumbled cliff edge */}
+      {rubble.map((r) => (
+        <mesh key={r.key} position={r.pos} rotation={[seeded(r.key) * 0.8, seeded(r.key + 3) * 2, 0]}>
+          <boxGeometry args={[r.size, r.size, r.size]} />
+          <meshStandardMaterial color="#1d2650" />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** The mini city inside the loop: voxel towers, a beacon landmark, an inner
+ * ring street with cars and a van circling it. */
+function MiniCity({ mobile }) {
+  const buildings = useMemo(() => {
     const list = []
-    const count = mobile ? 30 : 60
+    const count = mobile ? 9 : 15
     for (let i = 0; i < count; i++) {
-      const z = -seeded(i) * (PATH_LENGTH + 14)
-      const x = (seeded(i + 100) - 0.5) * 30
-      if (Math.abs(x) < 2.4) continue
+      const ang = seeded(i * 7 + 1) * TAU
+      const rad = i % 3 === 0 ? 3 + seeded(i + 20) * 3 : 10.5 + seeded(i + 30) * 3.5
+      const h = 1.6 + seeded(i + 40) * 4.6
       list.push({
         key: i,
-        pos: [x, -0.26 + seeded(i + 200) * 0.15, z],
-        size: 0.9 + seeded(i + 300) * 1.8,
-        color: ['#1d2650', '#232e63', '#2a356e'][i % 3],
-        pulse: i % 4 === 0, // every 4th tile glows and breathes
-        pulseColor: ['#39ff88', '#a06bff', '#ffd93d', '#ff8a3d'][i % 4],
+        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, h / 2, LOOP_CENTER.z + Math.cos(ang) * rad],
+        w: 1.1 + seeded(i + 50) * 1.4,
+        h,
+        color: ['#141b3c', '#1d2650', '#232e63'][i % 3],
+        glow: ['#39ff88', '#ffd93d', '#a06bff', '#ff8a3d'][i % 4],
       })
     }
     return list
   }, [mobile])
 
+  const cars = useMemo(
+    () => [
+      { key: 0, radius: 8, speed: 0.055, offset: 0, color: '#ff5d5d', len: 0.9 },
+      { key: 1, radius: 8, speed: 0.055, offset: 0.45, color: '#ffd93d', len: 0.9 },
+      { key: 2, radius: 8, speed: 0.04, offset: 0.75, color: '#39ff88', len: 1.5 }, // the van
+    ],
+    []
+  )
+  const carRefs = useRef([])
+
   useFrame((state) => {
-    const t = state.clock.elapsedTime
-    pulseTiles.current.forEach((mat, i) => {
-      if (mat) mat.emissiveIntensity = 0.25 + (Math.sin(t * 1.6 + i * 1.7) + 1) * 0.3
+    const time = state.clock.elapsedTime
+    carRefs.current.forEach((c, i) => {
+      if (!c) return
+      const cfg = cars[i]
+      const a = (time * cfg.speed + cfg.offset) * TAU
+      c.position.set(
+        LOOP_CENTER.x + Math.sin(a) * cfg.radius,
+        0.25,
+        LOOP_CENTER.z + Math.cos(a) * cfg.radius
+      )
+      c.rotation.y = Math.atan2(Math.cos(a), -Math.sin(a))
     })
   })
 
-  let pulseIdx = -1
   return (
     <group>
-      {/* glowing wireframe grid across the whole floor */}
-      <gridHelper
-        args={[44, 44, '#3a4fa0', '#1d2650']}
-        position={[0, -0.27, -PATH_LENGTH / 2]}
-        scale={[1, 1, 3.4]}
-      />
-      {/* main walkway */}
-      <mesh position={[0, -0.15, -PATH_LENGTH / 2]} receiveShadow>
-        <boxGeometry args={[3.6, 0.3, PATH_LENGTH + 16]} />
-        <meshStandardMaterial color="#2a356e" />
-      </mesh>
-      <mesh position={[0, 0.01, -PATH_LENGTH / 2]}>
-        <boxGeometry args={[0.5, 0.02, PATH_LENGTH + 16]} />
-        <meshStandardMaterial color="#39ff88" emissive="#39ff88" emissiveIntensity={0.3} />
+      {/* inner street */}
+      <mesh position={[LOOP_CENTER.x, 0.005, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[7.2, 8.8, 64]} />
+        <meshStandardMaterial color="#181f45" side={2} />
       </mesh>
 
-      {tiles.map((tile) => {
-        if (tile.pulse) pulseIdx += 1
-        const idx = pulseIdx
-        return (
-          <mesh key={tile.key} position={tile.pos}>
-            <boxGeometry args={[tile.size, 0.3, tile.size]} />
-            {tile.pulse ? (
-              <meshStandardMaterial
-                ref={(m) => (pulseTiles.current[idx] = m)}
-                color={tile.color}
-                emissive={tile.pulseColor}
-                emissiveIntensity={0.4}
-              />
-            ) : (
-              <meshStandardMaterial color={tile.color} />
-            )}
+      {buildings.map((b) => (
+        <group key={b.key} position={b.pos}>
+          <mesh castShadow>
+            <boxGeometry args={[b.w, b.h, b.w]} />
+            <meshStandardMaterial color={b.color} />
           </mesh>
-        )
-      })}
+          {/* lit window strips */}
+          <mesh position={[0, b.h * 0.1, b.w / 2 + 0.01]}>
+            <boxGeometry args={[b.w * 0.55, b.h * 0.6, 0.02]} />
+            <meshStandardMaterial color={b.glow} emissive={b.glow} emissiveIntensity={0.5} transparent opacity={0.85} />
+          </mesh>
+          {/* rooftop light */}
+          <mesh position={[0, b.h / 2 + 0.08, 0]}>
+            <boxGeometry args={[0.14, 0.16, 0.14]} />
+            <meshStandardMaterial color={b.glow} emissive={b.glow} emissiveIntensity={1} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* central beacon tower */}
+      <group position={[LOOP_CENTER.x, 0, LOOP_CENTER.z]}>
+        <mesh position={[0, 3.4, 0]} castShadow>
+          <boxGeometry args={[1.6, 6.8, 1.6]} />
+          <meshStandardMaterial color="#1d2650" />
+        </mesh>
+        <mesh position={[0, 7, 0]}>
+          <octahedronGeometry args={[0.55, 0]} />
+          <meshStandardMaterial color="#39ff88" emissive="#39ff88" emissiveIntensity={0.9} />
+        </mesh>
+      </group>
+
+      {/* traffic */}
+      {cars.map((cfg, i) => (
+        <group key={cfg.key} ref={(el) => (carRefs.current[i] = el)}>
+          <mesh castShadow>
+            <boxGeometry args={[0.55, 0.3, cfg.len]} />
+            <meshStandardMaterial color={cfg.color} />
+          </mesh>
+          <mesh position={[0, 0.25, -cfg.len * 0.08]}>
+            <boxGeometry args={[0.45, 0.22, cfg.len * 0.55]} />
+            <meshStandardMaterial color="#181c33" />
+          </mesh>
+          <mesh position={[0, 0.02, cfg.len / 2 + 0.01]}>
+            <boxGeometry args={[0.4, 0.08, 0.02]} />
+            <meshStandardMaterial color="#fffbe6" emissive="#fffbe6" emissiveIntensity={1} />
+          </mesh>
+        </group>
+      ))}
     </group>
   )
 }
 
-/** Floating neon cubes + slow drifting clouds filling the sky. */
+/** Gardens: voxel trees + flowers around the outside of the loop, and birds
+ * circling over the city. */
+function Nature({ mobile }) {
+  const trees = useMemo(() => {
+    const list = []
+    const count = mobile ? 6 : 11
+    for (let i = 0; i < count; i++) {
+      const ang = seeded(i * 13 + 2) * TAU
+      const rad = LOOP_RADIUS + 3.5 + seeded(i + 60) * 5
+      list.push({
+        key: i,
+        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
+        h: 1 + seeded(i + 70) * 0.9,
+        leaf: i % 4 === 0 ? '#ff8fb0' : '#2fae62', // one in four blossoms pink
+      })
+    }
+    return list
+  }, [mobile])
+
+  const flowers = useMemo(() => {
+    const list = []
+    const count = mobile ? 12 : 26
+    for (let i = 0; i < count; i++) {
+      const ang = seeded(i * 17 + 3) * TAU
+      const inside = i % 3 === 0
+      const rad = inside ? 14.5 + seeded(i + 80) * 4 : LOOP_RADIUS + 2.4 + seeded(i + 80) * 4.5
+      list.push({
+        key: i,
+        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
+        color: ['#ffd93d', '#ff8a3d', '#ff8fb0', '#a06bff', '#e6e9ff'][i % 5],
+        s: 0.12 + seeded(i + 90) * 0.1,
+      })
+    }
+    return list
+  }, [mobile])
+
+  const birds = useMemo(
+    () =>
+      [...Array(mobile ? 2 : 4)].map((_, i) => ({
+        key: i,
+        radius: 6 + seeded(i + 11) * 9,
+        height: 7 + seeded(i + 12) * 3.5,
+        speed: 0.06 + seeded(i + 13) * 0.05,
+        offset: seeded(i + 14),
+        dir: i % 2 === 0 ? 1 : -1,
+      })),
+    [mobile]
+  )
+  const birdRefs = useRef([])
+
+  useFrame((state) => {
+    const time = state.clock.elapsedTime
+    birdRefs.current.forEach((b, i) => {
+      if (!b) return
+      const cfg = birds[i]
+      const a = (time * cfg.speed * cfg.dir + cfg.offset) * TAU
+      b.position.set(
+        LOOP_CENTER.x + Math.sin(a) * cfg.radius,
+        cfg.height + Math.sin(time * 2 + i) * 0.4,
+        LOOP_CENTER.z + Math.cos(a) * cfg.radius
+      )
+      b.rotation.y = Math.atan2(Math.cos(a), -Math.sin(a)) * cfg.dir
+      const flap = Math.sin(time * 9 + i * 2) * 0.7
+      b.children[1].rotation.z = flap
+      b.children[2].rotation.z = -flap
+    })
+  })
+
+  return (
+    <group>
+      {trees.map((tr) => (
+        <group key={tr.key} position={tr.pos}>
+          <mesh position={[0, tr.h / 2, 0]} castShadow>
+            <boxGeometry args={[0.22, tr.h, 0.22]} />
+            <meshStandardMaterial color="#6b4f2a" />
+          </mesh>
+          <mesh position={[0, tr.h + 0.45, 0]} castShadow>
+            <boxGeometry args={[1.0, 0.9, 1.0]} />
+            <meshStandardMaterial color={tr.leaf} />
+          </mesh>
+          <mesh position={[0.25, tr.h + 1.0, 0.15]}>
+            <boxGeometry args={[0.55, 0.45, 0.55]} />
+            <meshStandardMaterial color={tr.leaf} />
+          </mesh>
+        </group>
+      ))}
+
+      {flowers.map((f) => (
+        <group key={f.key} position={f.pos}>
+          <mesh position={[0, 0.14, 0]}>
+            <boxGeometry args={[0.04, 0.28, 0.04]} />
+            <meshStandardMaterial color="#2fae62" />
+          </mesh>
+          <mesh position={[0, 0.32, 0]}>
+            <boxGeometry args={[f.s, f.s, f.s]} />
+            <meshStandardMaterial color={f.color} emissive={f.color} emissiveIntensity={0.25} />
+          </mesh>
+        </group>
+      ))}
+
+      {birds.map((cfg, i) => (
+        <group key={cfg.key} ref={(el) => (birdRefs.current[i] = el)}>
+          <mesh>
+            <boxGeometry args={[0.16, 0.12, 0.34]} />
+            <meshStandardMaterial color="#e6e9ff" />
+          </mesh>
+          <mesh position={[-0.2, 0.05, 0]}>
+            <boxGeometry args={[0.36, 0.02, 0.18]} />
+            <meshStandardMaterial color="#c0c6e8" />
+          </mesh>
+          <mesh position={[0.2, 0.05, 0]}>
+            <boxGeometry args={[0.36, 0.02, 0.18]} />
+            <meshStandardMaterial color="#c0c6e8" />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  )
+}
+
+/** Sky: drifting clouds + floating neon cubes above the city. */
 function SkyLife({ mobile }) {
   const floatGroup = useRef()
   const cloudGroup = useRef()
 
   const floaters = useMemo(() => {
     const cubes = []
-    const count = mobile ? 10 : 20
+    const count = mobile ? 8 : 16
     for (let i = 0; i < count; i++) {
+      const ang = seeded(i + 500) * TAU
+      const rad = seeded(i + 550) * (LOOP_RADIUS + 8)
       cubes.push({
         key: i,
-        pos: [(seeded(i + 500) - 0.5) * 30, 2.5 + seeded(i + 600) * 6, -seeded(i + 700) * PATH_LENGTH],
-        size: 0.25 + seeded(i + 800) * 0.55,
+        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 3 + seeded(i + 600) * 6, LOOP_CENTER.z + Math.cos(ang) * rad],
+        size: 0.25 + seeded(i + 800) * 0.5,
         color: ['#39ff88', '#a06bff', '#ffd93d', '#ff8a3d'][i % 4],
         speed: 0.4 + seeded(i + 900) * 0.9,
       })
@@ -105,11 +350,11 @@ function SkyLife({ mobile }) {
 
   const clouds = useMemo(() => {
     const list = []
-    const count = mobile ? 4 : 8
+    const count = mobile ? 4 : 7
     for (let i = 0; i < count; i++) {
       list.push({
         key: i,
-        pos: [(seeded(i + 40) - 0.5) * 36, 7 + seeded(i + 41) * 4, -seeded(i + 42) * PATH_LENGTH],
+        pos: [0, 9 + seeded(i + 41) * 4, LOOP_CENTER.z + (seeded(i + 42) - 0.5) * 40],
         w: 3 + seeded(i + 43) * 4,
         speed: 0.15 + seeded(i + 44) * 0.25,
       })
@@ -127,8 +372,7 @@ function SkyLife({ mobile }) {
     })
     cloudGroup.current?.children.forEach((c, i) => {
       const cl = clouds[i]
-      // drift sideways and wrap around
-      c.position.x = ((cl.pos[0] + t * cl.speed + 18) % 36) - 18
+      c.position.x = ((cl.pos[0] + t * cl.speed + 26) % 52) - 26
     })
   })
 
@@ -169,10 +413,8 @@ function ShootingStar() {
     const t = state.clock.elapsedTime % cycle
     if (t < 1.1) {
       const p = t / 1.1
-      const lap = Math.floor(state.clock.elapsedTime / cycle)
-      const zBase = -seeded(lap) * PATH_LENGTH
       ref.current.visible = true
-      ref.current.position.set(-16 + p * 32, 12 - p * 5, zBase - 10)
+      ref.current.position.set(-20 + p * 40, 13 - p * 4, LOOP_CENTER.z - 14)
       ref.current.material.opacity = Math.sin(p * Math.PI) * 0.9
     } else {
       ref.current.visible = false
@@ -186,13 +428,64 @@ function ShootingStar() {
   )
 }
 
-/** Click anywhere on the ground → neon ripple + blip (pure play, Bruno-style). */
+/** Spinning XP coins hovering over the road — walk through to collect. */
+function Coins({ tRef, mobile }) {
+  const group = useRef()
+  const coins = useMemo(() => {
+    const list = []
+    const step = mobile ? 0.05 : 0.033
+    for (let t = 0.03; t < CLIFF_T - 0.01; t += step) {
+      if (t > GAP_START - 0.02 && t < GAP_END + 0.01) continue
+      const p = pathPoint(t)
+      const off = (seeded(Math.round(t * 1000)) - 0.5) * 1.6
+      list.push({ t, pos: [p.x + p.nx * off, 1.1, p.z + p.nz * off] })
+    }
+    return list
+  }, [mobile])
+  const collected = useRef(new Set())
+
+  useFrame((state) => {
+    if (!group.current) return
+    const time = state.clock.elapsedTime
+    const heroT = tRef.current
+    group.current.children.forEach((c, i) => {
+      if (collected.current.has(i)) return
+      c.rotation.y = time * 3
+      c.position.y = 1.1 + Math.sin(time * 2 + i) * 0.1
+      if (Math.abs(coins[i].t - heroT) < 0.005) {
+        collected.current.add(i)
+        c.visible = false
+        sfx.coin()
+        gainXp(2, { silent: true })
+      }
+    })
+    // fresh coins every lap
+    if (heroT < 0.015 && collected.current.size > 10) {
+      collected.current.clear()
+      group.current.children.forEach((c) => (c.visible = true))
+    }
+  })
+
+  return (
+    <group ref={group}>
+      {coins.map((c, i) => (
+        <mesh key={i} position={c.pos}>
+          <cylinderGeometry args={[0.16, 0.16, 0.05, 12]} />
+          <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.6} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** Click anywhere on the ground → neon ripple + tick. */
 function ClickPing() {
   const ring = useRef()
   const ping = useRef({ t0: -1, x: 0, z: 0 })
 
   useFrame((state) => {
     if (!ring.current) return
+    if (ping.current.t0 === -2) ping.current.t0 = state.clock.elapsedTime
     const { t0, x, z } = ping.current
     if (t0 < 0) {
       ring.current.visible = false
@@ -205,7 +498,7 @@ function ClickPing() {
       return
     }
     ring.current.visible = true
-    ring.current.position.set(x, 0.05, z)
+    ring.current.position.set(x, 0.06, z)
     const s = 0.3 + p * 2.2
     ring.current.scale.set(s, s, s)
     ring.current.material.opacity = 0.8 * (1 - p)
@@ -213,44 +506,33 @@ function ClickPing() {
 
   return (
     <>
-      {/* invisible catcher plane over the whole floor */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.05, -PATH_LENGTH / 2]}
+        position={[LOOP_CENTER.x, -0.05, LOOP_CENTER.z]}
         onPointerDown={(e) => {
-          // -2 = pending; PingRing stamps the scene-clock time next frame
           ping.current = { t0: -2, x: e.point.x, z: e.point.z }
           sfx.hover()
         }}
       >
-        <planeGeometry args={[44, PATH_LENGTH + 20]} />
+        <planeGeometry args={[72, 72]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-      <PingRing ring={ring} ping={ping} />
+      <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
+        <ringGeometry args={[0.34, 0.44, 24]} />
+        <meshBasicMaterial color="#39ff88" transparent opacity={0} depthWrite={false} side={2} />
+      </mesh>
     </>
   )
 }
 
-/** The ripple ring itself; resolves the -2 "pending" timestamp to clock time. */
-function PingRing({ ring, ping }) {
-  useFrame((state) => {
-    if (ping.current.t0 === -2) ping.current.t0 = state.clock.elapsedTime
-  })
-  return (
-    <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
-      <ringGeometry args={[0.34, 0.44, 24]} />
-      <meshBasicMaterial color="#39ff88" transparent opacity={0} depthWrite={false} side={2} />
-    </mesh>
-  )
-}
-
-/** Quiet chime whenever the hero walks past a checkpoint. */
-function CheckpointChimes({ heroZRef }) {
+/** Chimes when passing checkpoints; resets each lap. */
+function CheckpointChimes({ tRef }) {
   const passed = useRef(new Set())
   useFrame(() => {
+    const t = tRef.current
+    if (t < 0.02 && passed.current.size > 0) passed.current.clear()
     for (const s of SECTIONS) {
-      const z = -s.at * PATH_LENGTH
-      if (!passed.current.has(s.id) && heroZRef.current <= z + 0.4) {
+      if (!passed.current.has(s.id) && t >= s.at && t < s.at + 0.05) {
         passed.current.add(s.id)
         sfx.ding()
       }
@@ -259,50 +541,32 @@ function CheckpointChimes({ heroZRef }) {
   return null
 }
 
-/** Spinning XP coins hovering over the walkway — walk through to collect. */
-function Coins({ heroZRef, mobile }) {
-  const group = useRef()
-  const coins = useMemo(() => {
-    const list = []
-    const step = mobile ? 12 : 8
-    for (let z = -6; z > -PATH_LENGTH; z -= step) {
-      list.push({ z, x: (seeded(z) - 0.5) * 1.6 })
+/** The cliff → fall → respawn-at-start loop (Soyed's sketch, panel 2). */
+function RespawnController({ tRef }) {
+  const falling = useRef(false)
+  useFrame(() => {
+    const t = tRef.current
+    if (!falling.current && t > CLIFF_T + 0.003) {
+      falling.current = true
+      sfx.error()
+      setTimeout(() => {
+        useUiStore.getState().pushToast({
+          icon: '🌀',
+          title: 'LOOP COMPLETE!',
+          desc: 'The road is a circle — respawning at Round 1. +25 XP lap bonus.',
+        })
+        gainXp(25, { silent: true })
+        window.scrollTo({ top: 0, behavior: 'instant' })
+      }, 1400)
     }
-    return list
-  }, [mobile])
-  const collected = useRef(new Set())
-
-  useFrame((state) => {
-    if (!group.current) return
-    const t = state.clock.elapsedTime
-    group.current.children.forEach((c, i) => {
-      if (collected.current.has(i)) return
-      c.rotation.y = t * 3
-      c.position.y = 1.1 + Math.sin(t * 2 + i) * 0.1
-      if (Math.abs(coins[i].z - heroZRef.current) < 0.7) {
-        collected.current.add(i)
-        c.visible = false
-        sfx.coin()
-        gainXp(2, { silent: true })
-      }
-    })
+    if (falling.current && t < 0.5) falling.current = false
   })
-
-  return (
-    <group ref={group}>
-      {coins.map((c, i) => (
-        <mesh key={i} position={[c.x, 1.1, c.z]}>
-          <cylinderGeometry args={[0.16, 0.16, 0.05, 12]} />
-          <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.6} />
-        </mesh>
-      ))}
-    </group>
-  )
+  return null
 }
 
-/** Smoothly follows the scroll progress and drives hero + camera. The camera
- * sways gently and widens its FOV with walking speed (Bruno's speed feel). */
-function Rig({ progressRef, heroZRef, speedRef }) {
+/** Camera: follows behind the hero around the loop, swaying gently, FOV
+ * widening with speed. */
+function Rig({ progressRef, tRef, speedRef }) {
   const { camera } = useThree()
   const smoothed = useRef(0)
   const fov = useRef(50)
@@ -313,19 +577,19 @@ function Rig({ progressRef, heroZRef, speedRef }) {
     const k = 1 - Math.exp(-delta * 5)
     smoothed.current = prev + (target - prev) * k
     speedRef.current = (smoothed.current - prev) * PATH_LENGTH * 0.6
+    tRef.current = smoothed.current
 
-    const heroZ = -smoothed.current * PATH_LENGTH
-    heroZRef.current = heroZ
+    const hero = pathPoint(smoothed.current)
+    const cam = pathPoint(Math.max(0, smoothed.current - 0.042))
+    const time = state.clock.elapsedTime
 
-    const t = state.clock.elapsedTime
     camera.position.set(
-      4.6 + Math.sin(t * 0.32) * 0.35,
-      3.6 + Math.sin(t * 0.45) * 0.2,
-      heroZ + 7.5
+      cam.x + cam.nx * 2.6 + Math.sin(time * 0.32) * 0.3,
+      3.9 + Math.sin(time * 0.45) * 0.2,
+      cam.z + cam.nz * 2.6
     )
-    camera.lookAt(Math.sin(t * 0.2) * 0.2, 1.2, heroZ - 2.5)
+    camera.lookAt(hero.x, 1.3, hero.z)
 
-    // speed → wider FOV, eased back when idle
     const targetFov = 50 + Math.min(1, Math.abs(speedRef.current) * 3) * 9
     fov.current += (targetFov - fov.current) * (1 - Math.exp(-delta * 4))
     if (Math.abs(camera.fov - fov.current) > 0.05) {
@@ -337,11 +601,12 @@ function Rig({ progressRef, heroZRef, speedRef }) {
 }
 
 /**
- * The 3D pixel world. Rendered fixed behind the scroll container; the page's
- * native scroll (progressRef 0..1) walks the hero down the path.
+ * The 3D mini-city world. A circular loop road: Round 1 (portfolio) → gap
+ * jump → Round 2 (playground) → garden stretch → cliff → respawn. Rendered
+ * fixed behind the scroll container; native scroll walks the hero.
  */
 export default function World({ progressRef, visitedIds, onOpenSection }) {
-  const heroZRef = useRef(0)
+  const tRef = useRef(0) // smoothed loop progress shared with hero/bugsy/coins
   const speedRef = useRef(0)
   const mobile = typeof window !== 'undefined' && window.innerWidth < 640
 
@@ -349,40 +614,49 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
     <div className="fixed inset-0 z-0" aria-hidden="true">
       <Canvas
         dpr={[1, mobile ? 1.5 : 1.75]}
-        camera={{ fov: 50, near: 0.1, far: 90, position: [4.6, 3.6, 7.5] }}
+        camera={{ fov: 50, near: 0.1, far: 110, position: [0, 3.9, 8] }}
         shadows={!mobile}
         gl={{ antialias: !mobile, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={['#0b1026']} />
-        <fog attach="fog" args={['#0b1026', 14, mobile ? 36 : 50]} />
+        <fog attach="fog" args={['#0b1026', 16, mobile ? 44 : 60]} />
 
         <ambientLight intensity={0.55} />
         <directionalLight
-          position={[6, 10, 4]}
+          position={[8, 14, 6]}
           intensity={1.1}
           castShadow={!mobile}
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
-        <pointLight position={[-4, 3, -8]} intensity={12} color="#a06bff" />
+        <pointLight position={[LOOP_CENTER.x, 8, LOOP_CENTER.z]} intensity={18} color="#a06bff" />
 
-        <Stars radius={70} depth={40} count={mobile ? 1100 : 2600} factor={3.2} saturation={0.4} fade speed={0.9} />
-        <Sparkles count={mobile ? 40 : 110} scale={[26, 9, 44]} position={[0, 3, -18]} size={2.2} speed={0.35} color="#39ff88" />
-        <Sparkles count={mobile ? 25 : 70} scale={[26, 10, 44]} position={[0, 4, -60]} size={2.6} speed={0.25} color="#a06bff" />
+        <Stars radius={80} depth={40} count={mobile ? 1100 : 2600} factor={3.2} saturation={0.4} fade speed={0.9} />
+        <Sparkles count={mobile ? 40 : 100} scale={[52, 10, 52]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2.2} speed={0.35} color="#39ff88" />
+        <Sparkles count={mobile ? 25 : 60} scale={[46, 12, 46]} position={[LOOP_CENTER.x, 6, LOOP_CENTER.z]} size={2.6} speed={0.25} color="#a06bff" />
 
-        <NeonFloor mobile={mobile} />
+        <gridHelper
+          args={[64, 48, '#3a4fa0', '#1d2650']}
+          position={[LOOP_CENTER.x, -0.02, LOOP_CENTER.z]}
+        />
+
+        <RingRoad />
+        <MiniCity mobile={mobile} />
+        <Nature mobile={mobile} />
         <SkyLife mobile={mobile} />
         <ShootingStar />
-        <Coins heroZRef={heroZRef} mobile={mobile} />
+        <Coins tRef={tRef} mobile={mobile} />
         <ClickPing />
-        <CheckpointChimes heroZRef={heroZRef} />
-        <Hero speedRef={speedRef} positionRef={heroZRef} />
-        <BugsyNpc positionRef={heroZRef} />
+        <CheckpointChimes tRef={tRef} />
+        <RespawnController tRef={tRef} />
+
+        <Hero speedRef={speedRef} tRef={tRef} />
+        <BugsyNpc tRef={tRef} />
         <Checkpoints visitedIds={visitedIds} onOpen={onOpenSection} />
         <Signposts onOpen={onOpenSection} />
         <RoundGates />
 
-        <Rig progressRef={progressRef} heroZRef={heroZRef} speedRef={speedRef} />
+        <Rig progressRef={progressRef} tRef={tRef} speedRef={speedRef} />
       </Canvas>
     </div>
   )

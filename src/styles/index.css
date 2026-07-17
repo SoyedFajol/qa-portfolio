@@ -202,6 +202,26 @@ body::before {
   100% { opacity: 1; }
 }
 
+/* Resume page: paper-friendly print output */
+.resume-h {
+  @apply mb-2 font-pixel text-[10px] text-neon;
+}
+@media print {
+  body::before { display: none; }
+  html, body { background: #ffffff !important; }
+  .print-hide { display: none !important; }
+  .resume-sheet {
+    border: none !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+    padding: 0 !important;
+  }
+  .resume-sheet * { color: #111111 !important; }
+  .resume-sheet a { color: #1a4fd6 !important; text-decoration: none; }
+  .resume-h { color: #000000 !important; border-bottom: 1px solid #999; padding-bottom: 2px; }
+  .resume-sheet h1 { color: #000000 !important; }
+}
+
 /* Accessibility: kill heavy motion for users who ask for it (gate H3) */
 @media (prefers-reduced-motion: reduce) {
   *,

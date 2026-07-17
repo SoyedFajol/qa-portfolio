@@ -1,15 +1,15 @@
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
+import { pathPoint } from './constants'
 import { grantAchievement } from '../game/rewards'
 import { sfx } from '../game/sfx'
 
 /**
- * Bugsy — the pixel ladybug sidekick. Bobs alongside the hero; poking it
- * makes it chirp and barrel-roll (and unlocks NPC Whisperer). Kept
- * deliberately low-poly: a few boxes and wings.
+ * Bugsy — the pixel ladybug sidekick. Bobs alongside the hero on the loop;
+ * poking it makes it chirp and barrel-roll (and unlocks NPC Whisperer).
  */
-export default function BugsyNpc({ positionRef }) {
+export default function BugsyNpc({ tRef }) {
   const group = useRef()
   const wingL = useRef()
   const wingR = useRef()
@@ -20,12 +20,14 @@ export default function BugsyNpc({ positionRef }) {
     if (!group.current) return
     const t = state.clock.elapsedTime
     // hover beside and slightly behind the hero, with a lazy figure-eight bob
+    const p = pathPoint(Math.max(0, tRef.current - 0.006))
+    const side = 1.4 + Math.sin(t * 0.9) * 0.25
     group.current.position.set(
-      1.5 + Math.sin(t * 0.9) * 0.25,
+      p.x + p.nx * side,
       1.9 + Math.sin(t * 2.1) * 0.18,
-      positionRef.current + 0.9 + Math.cos(t * 0.7) * 0.2
+      p.z + p.nz * side + Math.cos(t * 0.7) * 0.2
     )
-    group.current.rotation.y = Math.PI + Math.sin(t * 0.9) * 0.2
+    group.current.rotation.y = p.yaw + Math.sin(t * 0.9) * 0.2
 
     // barrel roll for 0.8s after being poked (-2 = poked, start this frame)
     if (spinStart.current === -2) spinStart.current = t

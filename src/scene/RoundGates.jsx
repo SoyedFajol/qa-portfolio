@@ -1,18 +1,18 @@
 import { Html } from '@react-three/drei'
 import { ROUNDS } from '../data/sections'
-import { PATH_LENGTH } from './constants'
+import { pathPoint } from './constants'
 
 const COLORS = { 1: '#39ff88', 2: '#a06bff' }
 
-/** Pixel arches spanning the walkway where each round begins. */
+/** Pixel arches spanning the loop road where each round begins. */
 export default function RoundGates() {
   return (
     <group>
       {ROUNDS.map((round) => {
-        const z = -round.at * PATH_LENGTH
+        const p = pathPoint(round.at)
         const c = COLORS[round.id]
         return (
-          <group key={round.id} position={[0, 0, z]}>
+          <group key={round.id} position={[p.x, 0, p.z]} rotation={[0, p.yaw, 0]}>
             {/* pillars */}
             {[-2.2, 2.2].map((x) => (
               <mesh key={x} position={[x, 1.6, 0]} castShadow>

@@ -94,4 +94,44 @@ export const COMPANIES = [
     tags: ['Games', 'Mobile'], website: 'https://riseuplabs.com', careers: 'https://riseuplabs.com/career/',
     email: null,
   },
+  {
+    id: 'kaz', name: 'Kaz Software', city: 'Dhaka', focus: 'Outsourced product teams for US/EU clients',
+    tags: ['Product teams', 'Long-term clients'], website: 'https://kaz.com.bd', careers: 'https://kaz.com.bd/career/',
+    email: null,
+  },
+  {
+    id: 'southtech', name: 'Southtech Group', city: 'Dhaka', focus: 'Fintech & enterprise ERP (one of BD’s oldest software houses)',
+    tags: ['Fintech', 'ERP'], website: 'https://southtechgroup.com', careers: 'https://southtechgroup.com/career/',
+    email: null,
+  },
+  {
+    id: 'asthait', name: 'Astha IT', city: 'Dhaka', focus: 'Custom software & dedicated engineering teams',
+    tags: ['Outsourcing', 'US clients'], website: 'https://asthait.com', careers: 'https://asthait.com/careers/',
+    email: null,
+  },
+  {
+    id: 'dream71', name: 'Dream71 Bangladesh', city: 'Dhaka', focus: 'Games, govtech & mobile apps',
+    tags: ['Games', 'GovTech'], website: 'https://dream71.com', careers: 'https://dream71.com/career/',
+    email: null,
+  },
+  {
+    id: 'welldev', name: 'WellDev Bangladesh', city: 'Dhaka', focus: 'Swiss/EU software engineering teams',
+    tags: ['European clients', 'Product teams'], website: 'https://www.welldev.io', careers: 'https://www.welldev.io/careers',
+    email: null,
+  },
+  {
+    id: 'fieldnation', name: 'Field Nation Bangladesh', city: 'Dhaka', focus: 'US field-service marketplace platform engineering',
+    tags: ['Product', 'US clients', 'QA teams'], website: 'https://fieldnation.com', careers: 'https://fieldnation.com/careers',
+    email: null,
+  },
+  {
+    id: 'inverseai', name: 'Inverse.AI', city: 'Sylhet', focus: 'Mobile apps & AI products — proof great tech exists outside Dhaka',
+    tags: ['AI', 'Mobile', 'Sylhet'], website: 'https://inverseai.com', careers: 'https://inverseai.com/career',
+    email: null,
+  },
+  {
+    id: 'nascenia', name: 'Nascenia', city: 'Dhaka', focus: 'Ruby/JS web products for global clients',
+    tags: ['Web', 'Outsourcing'], website: 'https://nascenia.com', careers: 'https://nascenia.com/career/',
+    email: null,
+  },
 ]

@@ -127,3 +127,11 @@
   RESULT:   PASS
   GATE:     F3 (meta/canonical on new domain), B7 re-checked on new content
   DOCS:     TASK-LOG; company data disclaimer in-UI
+
+[2026-07-17] TASK: VERSION 3 — circular city loop (Soyed's sketch v2, full autonomy granted)
+  ROLE:     3D + DEV + DESIGN + BA + QA
+  CHANGE:   WORLD: straight path → CIRCULAR loop road (ring arcs, 1 draw call each) around a voxel MINI CITY — 15 lit buildings + beacon tower, inner street with 2 cars + 1 van driving, 4 flapping birds circling, 11 trees (some blossoming), 26 glowing flowers, garden ring; Round 1 ends at a WALKWAY GAP the hero auto-JUMPS into Round 2 (⚠️ JUMP! sign), lap ends at a crumbling CLIFF → hero falls (tilt + gravity) → toast + 25 XP lap bonus → respawn at start (the loop from the sketch). Camera follows around the ring; coins/chimes/signposts/gates/Bugsy all re-mapped to curve coordinates; coins respawn each lap. Caught + fixed a ring-geometry mirroring bug via numeric verification before ship. STRUCTURE: Side-Quest Board → "🏆 Achievement Hall", moved into ROUND 1. RESUME: /resume page generated from shared profile (career summary, UAT/ERP bullets, n8n skill — all synced from Soyed's real resume PDF), print stylesheet for clean PDF export, linked from Resume & Contact + sitemap. Phone/street address intentionally excluded (site-wide privacy rule; noted on page — references "on request"). COMPANIES: +8 (Kaz, Southtech, Astha IT, Dream71, WellDev, Field Nation, Inverse.AI Sylhet, Nascenia) → 26 total.
+  VERIFY:   lint 0/0; 55/55 tests; build ✓; ring-arc/hero-path alignment verified numerically (err < 2e-15)
+  RESULT:   PASS
+  GATE:     H1 watch: mini city adds draw calls — mobile counts reduced; real-device pass still recommended
+  DOCS:     TASK-LOG

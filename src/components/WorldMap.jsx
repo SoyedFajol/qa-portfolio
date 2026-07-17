@@ -62,8 +62,10 @@ export default function WorldMap() {
             </header>
 
             <p className="mb-4 font-body text-sm text-ink-dim">
-              Two rounds, one path. Walk it by scrolling — or tap any stop to
-              travel straight there.
+              One circular road around the city. Round 1 tells the story, then a
+              gap — <span className="text-pix-yellow">jump it</span> — into Round 2.
+              Past the last stop waits the cliff… and the loop begins again. Tap
+              any stop to travel straight there.
             </p>
 
             <div className="grid gap-4 md:grid-cols-2">

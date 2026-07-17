@@ -25,8 +25,8 @@ export default function ContactSection() {
           💼 LinkedIn
         </a>
         {RESUME_URL ? (
-          <a className="pixel-btn pixel-btn--warn !text-[10px]" href={RESUME_URL} download onClick={() => sfx.blip()}>
-            📄 Download Resume
+          <a className="pixel-btn pixel-btn--warn !text-[10px]" href={RESUME_URL} onClick={() => sfx.blip()}>
+            📄 View Resume (print-ready)
           </a>
         ) : (
           <button className="pixel-btn pixel-btn--warn !text-[10px]" onClick={() => { sfx.blip(); openSection('ask') }}>

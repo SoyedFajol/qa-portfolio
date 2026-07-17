@@ -1,18 +1,20 @@
 import { Html } from '@react-three/drei'
 import { PROFILE } from '../data/profile'
-import { PATH_LENGTH } from './constants'
+import { pathPoint } from './constants'
 
-/** The 6 story-arc milestone signposts planted along the journey. */
+/** The 6 story-arc milestone signposts, planted along Round 1 of the loop. */
 export default function Signposts({ onOpen }) {
   return (
     <group>
       {PROFILE.story.map((m, i) => {
-        // spread between the start and ~90% of the path, opposite the checkpoints
-        const at = 0.05 + (i / (PROFILE.story.length - 1)) * 0.85
-        const z = -at * PATH_LENGTH
-        const x = i % 2 === 0 ? 1.9 : -1.9
+        // spread across Round 1 (the portfolio half), opposite the checkpoints
+        const at = 0.035 + (i / (PROFILE.story.length - 1)) * 0.31
+        const p = pathPoint(at)
+        const side = i % 2 === 0 ? 1 : -1
+        const x = p.x + p.nx * side * 1.95
+        const z = p.z + p.nz * side * 1.95
         return (
-          <group key={m.title} position={[x, 0, z]} rotation={[0, i % 2 === 0 ? -0.4 : 0.4, 0]}>
+          <group key={m.title} position={[x, 0, z]} rotation={[0, Math.atan2(p.nx, p.nz), 0]}>
             {/* post */}
             <mesh position={[0, 0.55, 0]} castShadow>
               <boxGeometry args={[0.12, 1.1, 0.12]} />

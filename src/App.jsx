@@ -22,6 +22,7 @@ import WorldMap from './components/WorldMap'
 import Toasts from './components/Toasts'
 import LevelUpBurst from './components/LevelUpBurst'
 import SectionOverlay from './components/SectionOverlay'
+import ResumePage from './components/ResumePage'
 import { PrivacyPage, TermsPage, GameOverPage } from './components/StaticPages'
 
 import JourneySection from './components/sections/JourneySection'
@@ -111,7 +112,6 @@ function GameWorld() {
 
       <ScrollHint progressRef={progressRef} />
       <JourneyMap />
-      <EndOfPathCheer progressRef={progressRef} />
     </>
   )
 }
@@ -197,23 +197,6 @@ function JourneyMap() {
   )
 }
 
-/** One-time fanfare when the player walks the whole path (Bruno's finish line). */
-function EndOfPathCheer({ progressRef }) {
-  const done = useRef(false)
-  const pushToast = useUiStore((s) => s.pushToast)
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (!done.current && progressRef.current > 0.97) {
-        done.current = true
-        sfx.achievement()
-        pushToast({ icon: '🏁', title: 'END OF PATH', desc: 'You walked the whole world — thanks for playing!' })
-      }
-    }, 500)
-    return () => clearInterval(id)
-  }, [progressRef, pushToast])
-  return null
-}
-
 function Game() {
   const { started, activeSection, closeSection, navOpen } = useUiStore()
   const reducedMotion = usePrefersReducedMotion()
@@ -285,6 +268,7 @@ export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
   let page
   if (path === '/') page = <Game />
+  else if (path === '/resume') page = <ResumePage />
   else if (path === '/privacy') page = <PrivacyPage />
   else if (path === '/terms') page = <TermsPage />
   else page = <GameOverPage />

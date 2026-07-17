@@ -2,14 +2,15 @@ import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { SECTIONS } from '../data/sections'
-import { PATH_LENGTH } from './constants'
+import { pathPoint } from './constants'
 import { sfx } from '../game/sfx'
 
 function Checkpoint({ section, side, visited, onOpen }) {
   const crystal = useRef()
   const [hover, setHover] = useState(false)
-  const z = -section.at * PATH_LENGTH
-  const x = side * 2.6
+  const p = pathPoint(section.at)
+  const x = p.x + p.nx * side * 2.7
+  const z = p.z + p.nz * side * 2.7
 
   useFrame((state) => {
     if (!crystal.current) return
@@ -21,7 +22,7 @@ function Checkpoint({ section, side, visited, onOpen }) {
   const color = visited ? '#39ff88' : '#a06bff'
 
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} rotation={[0, p.yaw, 0]}>
       {/* pedestal */}
       <mesh position={[0, 0.25, 0]} castShadow>
         <boxGeometry args={[0.9, 0.5, 0.9]} />
