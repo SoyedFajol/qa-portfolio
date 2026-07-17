@@ -149,6 +149,12 @@ export const sfx = {
     tone(1046.5, 0.14, 'triangle', 0.03)
     tone(1568, 0.18, 'triangle', 0.02, 0.08)
   },
+  /** Hero jump */
+  jump() {
+    if (muted()) return
+    tone(320, 0.09, 'square', 0.035)
+    tone(560, 0.12, 'square', 0.03, 0.07)
+  },
   /** Bugsy chirp when poked */
   bugsy() {
     if (muted()) return

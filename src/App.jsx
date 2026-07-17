@@ -1,7 +1,7 @@
 // App shell: routes the static pages, gates the game behind PRESS START,
 // renders the 3D world (or the flat fallback), and mounts every overlay.
 
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Analytics } from '@vercel/analytics/react'
 
@@ -18,6 +18,7 @@ import LoadingScreen from './components/LoadingScreen'
 import FlatWorld from './components/FlatWorld'
 import Hud from './components/Hud'
 import NavMenu from './components/NavMenu'
+import WorldMap from './components/WorldMap'
 import Toasts from './components/Toasts'
 import LevelUpBurst from './components/LevelUpBurst'
 import SectionOverlay from './components/SectionOverlay'
@@ -30,6 +31,7 @@ import QuestionDungeon from './components/sections/QuestionDungeon'
 import RoadmapSection from './components/sections/RoadmapSection'
 import LearningGame from './components/sections/LearningGame'
 import JobQuestBoard from './components/sections/JobQuestBoard'
+import CompanyDirectory from './components/sections/CompanyDirectory'
 import AskMeSection from './components/sections/AskMeSection'
 import SideQuestsSection from './components/sections/SideQuestsSection'
 import ContactSection from './components/sections/ContactSection'
@@ -44,11 +46,12 @@ const SECTION_COMPONENTS = {
   roadmap: RoadmapSection,
   game: LearningGame,
   jobs: JobQuestBoard,
+  companies: CompanyDirectory,
   ask: AskMeSection,
   sidequests: SideQuestsSection,
   contact: ContactSection,
 }
-const WIDE_SECTIONS = new Set(['dungeon', 'game', 'jobs', 'ask', 'projects'])
+const WIDE_SECTIONS = new Set(['dungeon', 'game', 'jobs', 'companies', 'ask', 'projects'])
 
 const SCROLL_PAGES = 7 // how many viewport-heights the journey spans
 
@@ -107,7 +110,6 @@ function GameWorld() {
       </div>
 
       <ScrollHint progressRef={progressRef} />
-      <HowToPlay />
       <JourneyMap />
       <EndOfPathCheer progressRef={progressRef} />
     </>
@@ -132,45 +134,6 @@ function ScrollHint({ progressRef }) {
     >
       SCROLL TO WALK ▼
     </p>
-  )
-}
-
-/** Bruno-style controls card: shown once after PRESS START, dismissed by
- * scrolling, clicking, or the timer. */
-function HowToPlay() {
-  const [visible, setVisible] = useState(true)
-  useEffect(() => {
-    if (!visible) return
-    const hide = () => setVisible(false)
-    const timer = setTimeout(hide, 9000)
-    window.addEventListener('scroll', hide, { once: true, passive: true })
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('scroll', hide)
-    }
-  }, [visible])
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          className="pointer-events-none fixed left-1/2 top-20 z-20 -translate-x-1/2"
-          initial={{ opacity: 0, y: -14 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ delay: 0.6 }}
-        >
-          <div className="pixel-panel !border-pix-yellow !p-3 text-center">
-            <p className="font-pixel text-[9px] text-pix-yellow">HOW TO PLAY</p>
-            <p className="mt-2 font-body text-xs text-ink-dim">
-              🖱️ Scroll to walk · 💎 Click crystals to open levels
-              <br />
-              🪙 Walk through coins · 🐞 Poke Bugsy
-            </p>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   )
 }
 
@@ -221,7 +184,11 @@ function JourneyMap() {
             style={{
               left: `${s.at * 100}%`,
               background: visited.includes(s.id) ? 'var(--neon)' : 'var(--night)',
-              borderColor: visited.includes(s.id) ? 'var(--neon)' : 'var(--pix-purple)',
+              borderColor: visited.includes(s.id)
+                ? 'var(--neon)'
+                : s.round === 1
+                  ? 'var(--pix-yellow)'
+                  : 'var(--pix-purple)',
             }}
           />
         ))}
@@ -251,6 +218,15 @@ function Game() {
   const { started, activeSection, closeSection, navOpen } = useUiStore()
   const reducedMotion = usePrefersReducedMotion()
   const setFlatMode = useUiStore((s) => s.setFlatMode)
+  const setMapOpen = useUiStore((s) => s.setMapOpen)
+
+  // The world greets you with the map (Soyed's sketch: "we start a page like map")
+  useEffect(() => {
+    if (started) {
+      const t = setTimeout(() => setMapOpen(true), 700)
+      return () => clearTimeout(t)
+    }
+  }, [started, setMapOpen])
 
   // Pick the right render mode before the game starts (gates H3, H4).
   useEffect(() => {
@@ -285,6 +261,7 @@ function Game() {
           <GameWorld />
           <Hud />
           <NavMenu />
+          <WorldMap />
         </>
       )}
 

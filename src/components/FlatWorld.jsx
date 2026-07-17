@@ -18,8 +18,9 @@ export default function FlatWorld() {
     <main className="mx-auto max-w-2xl px-4 pb-24 pt-28">
       <header className="mb-8 text-center">
         <p aria-hidden="true" className="text-4xl">🐞</p>
-        <h1 className="mt-3 text-sm leading-relaxed text-pix-yellow sm:text-base">{PROFILE.name}</h1>
-        <p className="mt-3 font-body text-sm text-ink-dim">{PROFILE.title}</p>
+        <h1 className="mt-3 text-sm leading-relaxed text-pix-yellow sm:text-base">{PROFILE.displayName}</h1>
+        <p className="mt-2 font-pixel text-[10px] text-neon">{PROFILE.headline}</p>
+        <p className="mt-3 font-body text-sm text-ink-dim">{PROFILE.name} · {PROFILE.title}</p>
         {flatModeReason === 'webgl' && (
           <p className="mt-3 font-body text-xs text-pix-orange">
             Your browser couldn&apos;t start the 3D world — running the map view instead. Same loot, fewer polygons.

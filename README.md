@@ -1,4 +1,6 @@
-# 🎮 Soyed's Gamified 3D QA Portfolio
+# 🎮 Soyed Solaman — Software Engineer · Gamified 3D Portfolio
+
+**Live: https://soyed-solaman.vercel.app**
 
 A pixel/retro RPG portfolio rendered in 3D for **Soyed Md. Solaman Fajul** — Junior SQA Engineer @ BRAC IT Services Ltd., Dhaka. The visitor is a player: scroll to walk a voxel hero through the journey, open glowing checkpoints (Skills, Projects, Question Dungeon, Learning Game, Job Quest Board…), collect XP coins, and poke **Bugsy**, the ladybug sidekick — all over a synthesized chiptune soundtrack.
 

@@ -5,6 +5,7 @@ import Hero from './Hero'
 import BugsyNpc from './BugsyNpc'
 import Checkpoints from './Checkpoints'
 import Signposts from './Signposts'
+import RoundGates from './RoundGates'
 import { PATH_LENGTH, seeded } from './constants'
 import { SECTIONS } from '../data/sections'
 import { gainXp } from '../game/rewards'
@@ -379,6 +380,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         <BugsyNpc positionRef={heroZRef} />
         <Checkpoints visitedIds={visitedIds} onOpen={onOpenSection} />
         <Signposts onOpen={onOpenSection} />
+        <RoundGates />
 
         <Rig progressRef={progressRef} heroZRef={heroZRef} speedRef={speedRef} />
       </Canvas>

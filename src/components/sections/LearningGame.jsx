@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { TOPICS, FALLBACK_QUIZZES } from '../../../lib/fallbackQuizzes'
+import { TOPICS, sampleFallbackQuiz } from '../../../lib/fallbackQuizzes'
 import { validateQuiz } from '../../../lib/validateQuiz'
 import { useGameStore } from '../../store/useGameStore'
 import { gainXp, recordQuizAnswer, completeTopic } from '../../game/rewards'
@@ -20,7 +20,7 @@ async function fetchQuiz(topic, difficulty) {
   const res = await fetch('/api/generate-quiz', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic, difficulty, count: 4 }),
+    body: JSON.stringify({ topic, difficulty, count: 5 }),
   })
   if (!res.ok) throw new Error(`quiz api ${res.status}`)
   const data = await res.json()
@@ -61,7 +61,8 @@ export default function LearningGame() {
       setSource(src)
     } catch {
       // Network or validation failure — the game must never break (gate A1).
-      setQuiz(FALLBACK_QUIZZES[t.id])
+      // Sample 5 of the topic's 15-question bank so every replay differs.
+      setQuiz(sampleFallbackQuiz(t.id, 5))
       setSource('fallback')
     }
     setPhase('lesson')

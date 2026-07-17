@@ -3,7 +3,7 @@
 
 import { callAI } from '../lib/ai.js'
 import { extractJson, validateQuiz } from '../lib/validateQuiz.js'
-import { FALLBACK_QUIZZES, TOPICS, TOPIC_IDS, DIFFICULTIES } from '../lib/fallbackQuizzes.js'
+import { sampleFallbackQuiz, TOPICS, TOPIC_IDS, DIFFICULTIES } from '../lib/fallbackQuizzes.js'
 import { rateLimit, clientIp } from '../lib/rateLimit.js'
 
 function buildPrompt(topicId, difficulty, count) {
@@ -69,5 +69,5 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ quiz: FALLBACK_QUIZZES[topic], source: 'fallback' })
+  return res.status(200).json({ quiz: sampleFallbackQuiz(topic, count), source: 'fallback' })
 }

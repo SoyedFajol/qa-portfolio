@@ -1,6 +1,9 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { sfx } from '../game/sfx'
+
+const GRAVITY = 22
+const JUMP_VELOCITY = 7.5
 
 const SKIN = '#e8b17e'
 const HOODIE = '#7a4fd0'
@@ -19,10 +22,32 @@ export default function Hero({ speedRef, positionRef }) {
   const armL = useRef()
   const armR = useRef()
   const body = useRef()
+  const head = useRef()
   const stepAcc = useRef(0)
   const lastZ = useRef(0)
+  const jumpY = useRef(0)
+  const jumpVel = useRef(0)
 
-  useFrame((state) => {
+  function jump() {
+    if (jumpY.current > 0.01) return // no double jumps — this is a QA portfolio, rules are rules
+    jumpVel.current = JUMP_VELOCITY
+    sfx.jump()
+  }
+
+  // SPACE / ArrowUp = jump (without scrolling the page)
+  useEffect(() => {
+    function onKey(e) {
+      if (e.code !== 'Space' && e.code !== 'ArrowUp') return
+      const el = document.activeElement
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON')) return
+      e.preventDefault()
+      jump()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  useFrame((state, delta) => {
     if (!group.current) return
     const t = state.clock.elapsedTime
     const speed = Math.min(1, Math.abs(speedRef.current))
@@ -30,12 +55,39 @@ export default function Hero({ speedRef, positionRef }) {
 
     group.current.position.z = positionRef.current
 
+    // jump physics: simple gravity arc
+    if (jumpVel.current !== 0 || jumpY.current > 0) {
+      jumpY.current = Math.max(0, jumpY.current + jumpVel.current * delta)
+      jumpVel.current -= GRAVITY * delta
+      if (jumpY.current === 0 && jumpVel.current < 0) jumpVel.current = 0
+    }
+    group.current.position.y = jumpY.current
+    const airborne = jumpY.current > 0.01
+
+    // head follows the visitor's pointer (subtle, lerped)
+    if (head.current) {
+      const targetY = -state.pointer.x * 0.5
+      const targetX = -state.pointer.y * 0.22
+      head.current.rotation.y += (targetY - head.current.rotation.y) * 0.12
+      head.current.rotation.x += (targetX - head.current.rotation.x) * 0.12
+    }
+
     // footsteps: one soft tick roughly every stride of walked distance
     stepAcc.current += Math.abs(positionRef.current - lastZ.current)
     lastZ.current = positionRef.current
-    if (walking && stepAcc.current > 1.1) {
+    if (walking && !airborne && stepAcc.current > 1.1) {
       stepAcc.current = 0
       sfx.step()
+    }
+
+    // tuck the legs mid-air
+    if (airborne) {
+      legL.current.rotation.x = 0.55
+      legR.current.rotation.x = 0.4
+      armL.current.rotation.x = -0.5
+      armR.current.rotation.x = -0.3
+      body.current.position.y = 1.05
+      return
     }
 
     if (walking) {
@@ -56,7 +108,16 @@ export default function Hero({ speedRef, positionRef }) {
   })
 
   return (
-    <group ref={group} rotation={[0, Math.PI, 0]}>
+    <group
+      ref={group}
+      rotation={[0, Math.PI, 0]}
+      onClick={(e) => {
+        e.stopPropagation()
+        jump()
+      }}
+      onPointerOver={() => (document.body.style.cursor = 'pointer')}
+      onPointerOut={() => (document.body.style.cursor = 'auto')}
+    >
       {/* legs */}
       <group position={[-0.16, 0.55, 0]} ref={legL}>
         <mesh position={[0, -0.27, 0]} castShadow>
@@ -93,7 +154,7 @@ export default function Hero({ speedRef, positionRef }) {
         </mesh>
 
         {/* head */}
-        <group position={[0, 0.72, 0]}>
+        <group ref={head} position={[0, 0.72, 0]}>
           <mesh castShadow>
             <boxGeometry args={[0.52, 0.5, 0.48]} />
             <meshStandardMaterial color={SKIN} />

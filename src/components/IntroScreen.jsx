@@ -46,17 +46,18 @@ export default function IntroScreen() {
         🐞
       </motion.p>
       <div>
-        <h1 className="text-sm leading-relaxed text-pix-yellow sm:text-xl">
-          <Typewriter text={PROFILE.name.toUpperCase()} speed={45} onDone={() => setNameDone(true)} />
+        <h1 className="text-base leading-relaxed text-pix-yellow sm:text-2xl">
+          <Typewriter text={PROFILE.displayName.toUpperCase()} speed={55} onDone={() => setNameDone(true)} />
         </h1>
         {nameDone && (
-          <motion.p
-            className="mt-4 font-pixel text-[10px] leading-relaxed text-neon sm:text-xs"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            Junior SQA Engineer · Builder of fun things
-          </motion.p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <p className="mt-4 font-pixel text-[10px] leading-relaxed text-neon sm:text-xs">
+              {PROFILE.headline}
+            </p>
+            <p className="mt-2 font-body text-xs text-ink-dim">
+              {PROFILE.name} · Builder of fun things
+            </p>
+          </motion.div>
         )}
       </div>
 

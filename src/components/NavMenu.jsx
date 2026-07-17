@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SECTIONS } from '../data/sections'
+import { ROUNDS, sectionsInRound } from '../data/sections'
 import { useGameStore } from '../store/useGameStore'
 import { useUiStore } from '../store/useUiStore'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -48,40 +48,50 @@ export default function NavMenu() {
               </button>
             </header>
 
-            <motion.ul
-              className="grid gap-2 sm:grid-cols-2"
-              initial="hidden"
-              animate="show"
-              variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-            >
-              {SECTIONS.map((s) => (
-                <motion.li
-                  key={s.id}
-                  variants={{ hidden: { opacity: 0, x: -18 }, show: { opacity: 1, x: 0 } }}
+            {ROUNDS.map((round) => (
+              <section key={round.id} aria-label={round.title} className="mb-4">
+                <h3
+                  className="mb-2 text-[9px]"
+                  style={{ color: round.id === 1 ? 'var(--neon)' : 'var(--pix-purple)' }}
                 >
-                  <motion.button
-                    className="pixel-btn w-full !text-left !text-[10px]"
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => {
-                      sfx.blip()
-                      openSection(s.id)
-                    }}
-                  >
-                    <span aria-hidden="true">{s.icon} </span>
-                    {s.label}
-                    {visited.includes(s.id) && (
-                      <span className="text-neon" aria-label="visited">
-                        {' '}✓
-                      </span>
-                    )}
-                    <span className="mt-1 block font-body text-xs normal-case text-ink-dim">
-                      {s.blurb}
-                    </span>
-                  </motion.button>
-                </motion.li>
-              ))}
-            </motion.ul>
+                  {round.title}
+                </h3>
+                <motion.ul
+                  className="grid gap-2 sm:grid-cols-2"
+                  initial="hidden"
+                  animate="show"
+                  variants={{ show: { transition: { staggerChildren: 0.04 } } }}
+                >
+                  {sectionsInRound(round.id).map((s) => (
+                    <motion.li
+                      key={s.id}
+                      variants={{ hidden: { opacity: 0, x: -18 }, show: { opacity: 1, x: 0 } }}
+                    >
+                      <motion.button
+                        className="pixel-btn w-full !text-left !text-[10px]"
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => {
+                          sfx.blip()
+                          openSection(s.id)
+                        }}
+                      >
+                        <span aria-hidden="true">{s.icon} </span>
+                        {s.label}
+                        {visited.includes(s.id) && (
+                          <span className="text-neon" aria-label="visited">
+                            {' '}✓
+                          </span>
+                        )}
+                        <span className="mt-1 block font-body text-xs normal-case text-ink-dim">
+                          {s.blurb}
+                        </span>
+                      </motion.button>
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              </section>
+            ))}
 
             <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-4 border-panel-2 pt-3">
               <div className="font-body text-xs text-ink-dim">

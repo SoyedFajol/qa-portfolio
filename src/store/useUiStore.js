@@ -9,6 +9,7 @@ export const useUiStore = create((set, get) => ({
   started: false,          // PRESS START pressed
   activeSection: null,     // section id or null (world view)
   navOpen: false,
+  mapOpen: false,          // world-map popup (auto-opens once after start)
   flatMode: false,         // true = no-3D fallback (WebGL missing, reduced motion, or user choice)
   flatModeReason: null,    // 'webgl' | 'motion' | 'user' | null
   toasts: [],              // { id, icon, title, desc }
@@ -20,6 +21,7 @@ export const useUiStore = create((set, get) => ({
   closeSection: () => set({ activeSection: null }),
 
   setNavOpen: (navOpen) => set({ navOpen }),
+  setMapOpen: (mapOpen) => set({ mapOpen }),
 
   setFlatMode: (flatMode, reason = 'user') =>
     set({ flatMode, flatModeReason: flatMode ? reason : null }),

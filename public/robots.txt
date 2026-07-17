@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://soyed-qa-portfolio.vercel.app/sitemap.xml
+Sitemap: https://soyed-solaman.vercel.app/sitemap.xml

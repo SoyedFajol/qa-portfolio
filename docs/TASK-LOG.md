@@ -119,3 +119,11 @@
   RESULT:   PASS
   GATE:     H6 (full playthrough now actually possible by mouse), H7
   DOCS:     —
+
+[2026-07-17] TASK: VERSION 2 — per Soyed's sketch (rounds, map-first start, more fun, more content)
+  ROLE:     PM + DEV + DESIGN + 3D + BA
+  CHANGE:   BRANDING: direct name — intro/manifest/meta now "Soyed Solaman — Software Engineer" (full legal name kept in profile/contact); new primary domain soyed-solaman.vercel.app added to the Vercel project (old URL still works); canonical/OG/sitemap/robots/og.png updated. STRUCTURE: world split into ROUND 1 — THE PORTFOLIO (journey, skills, projects, roadmap, resume/contact) and ROUND 2 — THE PLAYGROUND (dungeon, learning game, jobs, company codex, side-quests, ask); 3D gate arches at each round; nav menu grouped by round; journey-map dots colored per round. MAP-FIRST: WorldMap popup auto-opens after PRESS START (all stops + one-line descriptions + controls legend, click-to-travel), reopenable via new 🗺️ HUD button; replaces the HowToPlay card. CONTENT: fallback quiz bank expanded 5→15 questions per topic (105 total), sessions now 5 questions sampled per replay (validateQuiz cap 10→20, api count 5); NEW Company Codex section — 18 real BD software companies with city, focus, tags, website + careers links (no invented emails/phones; careers page framed as the reliable channel). FUN: hero JUMP (Space/ArrowUp/click, gravity arc, legs tuck, jump sfx, no page-scroll hijack) and head follows the visitor's pointer.
+  VERIFY:   lint 0/0; 55/55 tests (new: companies data shape, ≥15-per-topic guard — which caught three off-by-one content bugs during authoring, sampleFallbackQuiz validity); build ✓
+  RESULT:   PASS
+  GATE:     F3 (meta/canonical on new domain), B7 re-checked on new content
+  DOCS:     TASK-LOG; company data disclaimer in-UI
