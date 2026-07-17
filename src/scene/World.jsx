@@ -4,6 +4,7 @@ import { Stars, Sparkles, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import Hero from './Hero'
 import BugsyNpc from './BugsyNpc'
+import Cat from './Cat'
 import Checkpoints from './Checkpoints'
 import Signposts from './Signposts'
 import RoundGates from './RoundGates'
@@ -1430,6 +1431,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
 
         <Hero speedRef={speedRef} tRef={tRef} />
         <BugsyNpc tRef={tRef} />
+        <Cat tRef={tRef} speedRef={speedRef} />
         <Checkpoints visitedIds={visitedIds} onOpen={onOpenSection} />
         <Signposts onOpen={onOpenSection} mobile={mobile} />
         <RoundGates />

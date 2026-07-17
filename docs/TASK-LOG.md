@@ -199,3 +199,11 @@
   RESULT:   PASS
   GATE:     B7 unaffected (hometown is a district, not a home address)
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.2 — the cat (per Soyed)
+  ROLE:     3D + DESIGN
+  CHANGE:   🐱 Orange voxel tabby joins the party: trots on the inner side of the road (opposite Bugsy), slightly behind the hero — scurrying legs and body bounce while walking, SITS when the hero stops (rear down, tail curling, head tilting), tabby stripes, white chest, glowing green eyes, pink nose, animated two-part tail. Poke it: synthesized MEOW (3-tone glide) + a happy hop. Hover tooltip "meow! 🐱". New sfx.meow.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG

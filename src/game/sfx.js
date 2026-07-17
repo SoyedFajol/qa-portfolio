@@ -155,6 +155,13 @@ export const sfx = {
     tone(320, 0.09, 'square', 0.035)
     tone(560, 0.12, 'square', 0.03, 0.07)
   },
+  /** The cat, when poked */
+  meow() {
+    if (muted()) return
+    tone(820, 0.1, 'triangle', 0.045)
+    tone(660, 0.16, 'triangle', 0.04, 0.09)
+    tone(520, 0.12, 'triangle', 0.025, 0.2)
+  },
   /** Bugsy chirp when poked */
   bugsy() {
     if (muted()) return
