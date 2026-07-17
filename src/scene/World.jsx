@@ -523,9 +523,13 @@ function People({ mobile }) {
       const swing = Math.sin(time * 6 + i) * 0.4
       g.children[0].rotation.x = swing
       g.children[1].rotation.x = -swing
+      // arms swing opposite the legs (children: 0,1 legs · 2 body · 3,4 arms · 5 head)
+      if (g.children[3]) g.children[3].rotation.x = -swing * 0.7
+      if (g.children[4]) g.children[4].rotation.x = swing * 0.7
     })
     if (greeter.current) {
-      greeter.current.children[3].rotation.z = 2.4 + Math.sin(time * 5) * 0.35
+      // left arm rests, right arm waves
+      greeter.current.children[4].rotation.z = 2.4 + Math.sin(time * 5) * 0.35
     }
   })
 
@@ -546,6 +550,11 @@ function People({ mobile }) {
         </group>
         <mesh position={[0, 0.62, 0]}>
           <boxGeometry args={[0.42, 0.5, 0.26]} />
+          <meshStandardMaterial color={shirt} />
+        </mesh>
+        {/* both arms — citizens are not action figures with missing parts */}
+        <mesh position={[-0.28, 0.72, 0]}>
+          <boxGeometry args={[0.11, 0.4, 0.13]} />
           <meshStandardMaterial color={shirt} />
         </mesh>
         <mesh position={[0.28, 0.72, 0]}>
