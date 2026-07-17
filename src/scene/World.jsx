@@ -683,17 +683,37 @@ function River({ t1, t2, bridgeU }) {
         <meshStandardMaterial color="#1d4e89" emissive="#4db3ff" emissiveIntensity={0.3} transparent opacity={0.9} side={2} />
       </mesh>
       <Sparkles count={22} scale={[10, 0.6, 10]} position={[bridge.x, 0.3, bridge.z]} size={1.6} speed={0.2} color="#bfe3ff" />
+      {/* footbridge — LANDS on both banks: stone abutments at the ends,
+          piers in the water, deck low enough to step onto */}
       <group position={[bridge.x, 0, bridge.z]} rotation={[0, bridge.yaw + Math.PI / 2, 0]}>
-        <mesh position={[0, 0.32, 0]}>
-          <boxGeometry args={[1.2, 0.1, RIVER_OUTER - RIVER_INNER + 1.6]} />
+        {/* deck (reaches well past both bank edges) */}
+        <mesh position={[0, 0.26, 0]}>
+          <boxGeometry args={[1.35, 0.14, RIVER_OUTER - RIVER_INNER + 4.4]} />
           <meshStandardMaterial color="#8a6a3b" />
         </mesh>
+        {/* railings */}
         {[-1, 1].map((s) => (
-          <mesh key={s} position={[s * 0.55, 0.55, 0]}>
-            <boxGeometry args={[0.06, 0.35, RIVER_OUTER - RIVER_INNER + 1.6]} />
+          <mesh key={s} position={[s * 0.6, 0.56, 0]}>
+            <boxGeometry args={[0.07, 0.46, RIVER_OUTER - RIVER_INNER + 4.4]} />
             <meshStandardMaterial color="#6b4f2a" />
           </mesh>
         ))}
+        {/* stone abutments where the deck meets each bank */}
+        {[-1, 1].map((s) => (
+          <mesh key={`ab${s}`} position={[0, 0.08, s * ((RIVER_OUTER - RIVER_INNER + 4.4) / 2 - 0.7)]}>
+            <boxGeometry args={[1.7, 0.4, 1.5]} />
+            <meshStandardMaterial color="#3d4468" />
+          </mesh>
+        ))}
+        {/* piers standing in the river */}
+        {[-1, 1].map((s) =>
+          [-0.45, 0.45].map((x) => (
+            <mesh key={`p${s}${x}`} position={[x, 0, s * 1.4]}>
+              <boxGeometry args={[0.28, 0.55, 0.28]} />
+              <meshStandardMaterial color="#4a3a1e" />
+            </mesh>
+          ))
+        )}
       </group>
       <Boxes items={reeds} />
     </group>
