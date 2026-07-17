@@ -135,3 +135,11 @@
   RESULT:   PASS
   GATE:     H1 watch: mini city adds draw calls — mobile counts reduced; real-device pass still recommended
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V3.1 — bigger, living city (per Soyed: wider city, homes, people, garden, river, birds, flowers)
+  ROLE:     3D + DESIGN
+  CHANGE:   LOOP_RADIUS 21→26 (everything parametric followed: road, camera, gates, checkpoints); buildings 15→20 with wider bands; 4 vehicles on a wider inner street; NEW Homes — 7 voxel houses (pyramid roofs, warm lit windows, chimneys) each with a private garden plot of flowers; NEW People — 6 voxel citizens strolling the sidewalk and city (animated legs) + a greeter waving "hi! 👋" at the starting line; NEW River — glinting water arc across the garden stretch with banks, animated shimmer, water sparkles, wooden footbridge, reeds (trees/flowers placement river-aware); flowers 26→60, trees 11→16, birds 4→7 (some golden); fog/far-plane/grid/sky scaled up; mobile counts scaled proportionally.
+  VERIFY:   lint 0/0; 55/55 tests; build ✓ (World chunk 8.3 kB gz)
+  RESULT:   PASS
+  GATE:     H1 watch stands — desktop fine, real-device mobile pass recommended
+  DOCS:     TASK-LOG
