@@ -41,7 +41,8 @@ export default function Hero({ speedRef, tRef }) {
     sfx.jump()
   }
 
-  // SPACE / ArrowUp = jump (without scrolling the page)
+  // SPACE / ArrowUp = jump (without scrolling the page); mobile's JUMP
+  // button fires the custom 'hero-jump' event
   useEffect(() => {
     function onKey(e) {
       if (e.code !== 'Space' && e.code !== 'ArrowUp') return
@@ -50,8 +51,13 @@ export default function Hero({ speedRef, tRef }) {
       e.preventDefault()
       jump()
     }
+    const onJumpEvent = () => jump()
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('hero-jump', onJumpEvent)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('hero-jump', onJumpEvent)
+    }
   }, [])
 
   useFrame((state, delta) => {

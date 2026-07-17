@@ -357,9 +357,9 @@ function MiniCity({ mobile, windowGlow = 0.35 }) {
 
   const cars = useMemo(
     () => [
-      { key: 0, radius: 13.5, speed: 0.05, offset: 0, color: '#ff5d5d', len: 0.9 },
-      { key: 1, radius: 13.5, speed: 0.05, offset: 0.32, color: '#ffd93d', len: 0.9 },
-      { key: 2, radius: 13.5, speed: 0.032, offset: 0.66, color: '#39ff88', len: 1.6 },
+      { key: 0, radius: 13.5, speed: 0.03, offset: 0, color: '#ff5d5d', len: 0.9 },
+      { key: 1, radius: 13.5, speed: 0.028, offset: 0.32, color: '#ffd93d', len: 0.9 },
+      { key: 2, radius: 13.5, speed: 0.02, offset: 0.66, color: '#39ff88', len: 1.6 },
     ],
     []
   )
@@ -573,7 +573,7 @@ function People({ mobile }) {
         // sidewalk radius clears the winding road (outer reach R+4.3) and
         // checkpoints; plaza ring sits between towers (≤9.5) and street (≥12.6)
         radius: sidewalk ? LOOP_RADIUS + 5.4 : 11.5,
-        speed: (0.005 + seeded(i + 32) * 0.006) * (i % 3 === 0 ? -1 : 1),
+        speed: (0.0032 + seeded(i + 32) * 0.004) * (i % 3 === 0 ? -1 : 1),
         offset: seeded(i + 33),
         shirt: SHIRTS[i % SHIRTS.length],
         skin: SKIN_TONES[i % SKIN_TONES.length],
@@ -875,7 +875,7 @@ function Nature({ mobile }) {
         key: i,
         radius: 8 + seeded(i + 11) * 26,
         height: 7.5 + seeded(i + 12) * 6,
-        speed: 0.05 + seeded(i + 13) * 0.05,
+        speed: 0.028 + seeded(i + 13) * 0.03,
         offset: seeded(i + 14),
         dir: i % 2 === 0 ? 1 : -1,
         color: i % 3 === 0 ? '#ffd93d' : '#e6e9ff',
@@ -1012,7 +1012,7 @@ function Park() {
   useFrame((state) => {
     const t = state.clock.elapsedTime
     swings.current.forEach((s, i) => {
-      if (s) s.rotation.x = Math.sin(t * 1.6 + i * 1.4) * 0.45
+      if (s) s.rotation.x = Math.sin(t * 1.15 + i * 1.4) * 0.45
     })
   })
   const at = (du, radius) => circlePoint(PARK_U1 + du * (PARK_U2 - PARK_U1), radius)
@@ -1547,7 +1547,7 @@ function TrainLine({ mobile }) {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    const head = (t / 55) % 1 // one lap ≈ 55s
+    const head = (t / 85) % 1 // one lap ≈ 85s — a calm commuter, not an express
     const gap = 2.55 / (TAU * RAIL_R) // car spacing along the arc
     carRefs.current.forEach((c, i) => {
       if (!c) return
@@ -1592,7 +1592,7 @@ function SkyLife({ mobile, cloudColor, cloudOpacity }) {
         key: i,
         pos: [0, 14 + seeded(i + 41) * 5, LOOP_CENTER.z + (seeded(i + 42) - 0.5) * 64],
         w: 4 + seeded(i + 43) * 5,
-        speed: 0.15 + seeded(i + 44) * 0.25,
+        speed: 0.09 + seeded(i + 44) * 0.14,
       })
     }
     return list
@@ -1629,7 +1629,7 @@ function ShootingStar() {
   const ref = useRef()
   useFrame((state) => {
     if (!ref.current) return
-    const cycle = 6.5
+    const cycle = 10
     const t = state.clock.elapsedTime % cycle
     if (t < 1.1) {
       const p = t / 1.1

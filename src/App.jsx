@@ -132,8 +132,30 @@ function GameWorld() {
       </div>
 
       <ScrollHint progressRef={progressRef} />
+      <JumpButton />
       <JourneyMap />
     </>
+  )
+}
+
+/** Thumb-sized JUMP button for touch players (most visitors are on phones). */
+function JumpButton() {
+  const isTouch =
+    typeof window !== 'undefined' &&
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  if (!isTouch) return null
+  return (
+    <button
+      className="fixed bottom-24 right-3 z-20 flex h-16 w-16 items-center justify-center border-4 border-pix-yellow bg-panel/90 font-pixel text-[10px] text-pix-yellow shadow-[4px_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-1"
+      onTouchStart={(e) => {
+        e.preventDefault()
+        window.dispatchEvent(new Event('hero-jump'))
+      }}
+      onClick={() => window.dispatchEvent(new Event('hero-jump'))}
+      aria-label="Jump"
+    >
+      ⤒<br />JUMP
+    </button>
   )
 }
 
@@ -201,7 +223,7 @@ function JourneyMap() {
             title={`${s.icon} ${s.label}`}
             aria-label={`Walk to ${s.label}`}
             onClick={() => travelTo(s.at)}
-            className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 border-2 transition-transform hover:scale-150"
+            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 border-2 transition-transform hover:scale-150 sm:h-3.5 sm:w-3.5"
             style={{
               left: `${s.at * 100}%`,
               background: visited.includes(s.id) ? 'var(--neon)' : 'var(--night)',
