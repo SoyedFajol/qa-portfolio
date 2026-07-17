@@ -420,46 +420,59 @@ function MiniCity({ mobile, windowGlow = 0.35 }) {
   )
 }
 
-/** The city-center billboard: tells every visitor what this world IS.
- * Front face greets the spawn point; the back face winks at Round 2. */
+/** The city-center billboard: raised on a mast ABOVE the whole skyline so
+ * it reads from anywhere on the loop. Front greets the start; back winks
+ * at Round 2. Each face is occluded by the panel — no ghost-through. */
 function CityBillboard() {
   const glow = useRef()
+  const panel = useRef()
   useFrame((state) => {
     if (glow.current) {
       glow.current.material.emissiveIntensity = 0.18 + (Math.sin(state.clock.elapsedTime * 1.6) + 1) * 0.08
     }
   })
+  const TOP = 15.5 // panel center — well above the tallest tower (~11)
   return (
     <group position={[LOOP_CENTER.x, 0, LOOP_CENTER.z]}>
-      {/* support struts off the beacon tower */}
-      {[-2.6, 2.6].map((x) => (
-        <mesh key={x} position={[x, 3.1, 0.9]}>
-          <boxGeometry args={[0.18, 6.2, 0.18]} />
-          <meshStandardMaterial color="#232e63" />
+      {/* twin masts */}
+      {[-4.6, 4.6].map((x) => (
+        <mesh key={x} position={[x, TOP / 2, 0]}>
+          <boxGeometry args={[0.45, TOP, 0.45]} />
+          <meshStandardMaterial color="#232e63" emissive="#39ff88" emissiveIntensity={0.08} />
         </mesh>
       ))}
       {/* panel frame + glowing screen */}
-      <mesh position={[0, 4.7, 1.0]}>
-        <boxGeometry args={[7.6, 3.6, 0.24]} />
+      <mesh ref={panel} position={[0, TOP, 0]}>
+        <boxGeometry args={[12.5, 5.6, 0.5]} />
         <meshStandardMaterial color="#141b3c" />
       </mesh>
-      <mesh ref={glow} position={[0, 4.7, 1.14]}>
-        <boxGeometry args={[7.15, 3.15, 0.02]} />
+      <mesh ref={glow} position={[0, TOP, 0]}>
+        <boxGeometry args={[11.9, 5.0, 0.62]} />
         <meshStandardMaterial color="#0b1026" emissive="#39ff88" emissiveIntensity={0.2} />
       </mesh>
+      {/* corner beacons so the eye finds it at night */}
+      {[-6, 6].map((x) =>
+        [TOP - 2.6, TOP + 2.6].map((y) => (
+          <mesh key={`${x}-${y}`} position={[x * 0.98, y, 0]}>
+            <boxGeometry args={[0.5, 0.5, 0.5]} />
+            <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.9} />
+          </mesh>
+        ))
+      )}
 
       {/* front: the pitch, facing the starting line */}
       <Html
         transform
-        position={[0, 4.7, 1.18]}
-        distanceFactor={5.5}
+        occlude={[panel]}
+        position={[0, TOP, 0.34]}
+        distanceFactor={9}
         style={{ pointerEvents: 'none' }}
         zIndexRange={[5, 0]}
       >
-        <div className="w-[300px] select-none text-center">
+        <div className="w-[310px] select-none text-center">
           <p className="font-pixel text-[9px] tracking-wider text-[#39ff88]">— WELCOME TO —</p>
-          <p className="mt-1.5 font-pixel text-[15px] leading-snug text-[#ffd93d]">SOYED SOLAMAN&apos;S</p>
-          <p className="font-pixel text-[11px] text-[#e6e9ff]">PORTFOLIO CITY</p>
+          <p className="mt-1.5 font-pixel text-[16px] leading-snug text-[#ffd93d]">SOYED SOLAMAN&apos;S</p>
+          <p className="font-pixel text-[12px] text-[#e6e9ff]">PORTFOLIO CITY</p>
           <p className="mt-2 font-body text-[11px] leading-snug text-[#9aa3d1]">
             Software Engineer · SQA · AI Engineer — this whole world is my resume.
           </p>
@@ -470,14 +483,15 @@ function CityBillboard() {
       {/* back: a wink for the Round-2 half of the loop */}
       <Html
         transform
-        position={[0, 4.7, 0.82]}
+        occlude={[panel]}
+        position={[0, TOP, -0.34]}
         rotation={[0, Math.PI, 0]}
-        distanceFactor={5.5}
+        distanceFactor={9}
         style={{ pointerEvents: 'none' }}
         zIndexRange={[5, 0]}
       >
-        <div className="w-[300px] select-none text-center">
-          <p className="font-pixel text-[13px] text-[#a06bff]">ROUND 2</p>
+        <div className="w-[310px] select-none text-center">
+          <p className="font-pixel text-[14px] text-[#a06bff]">ROUND 2</p>
           <p className="mt-1.5 font-body text-[11px] leading-snug text-[#9aa3d1]">
             Learning game · question dungeon · live job quests · company codex
           </p>
