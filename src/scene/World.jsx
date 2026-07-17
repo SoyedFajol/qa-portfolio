@@ -764,19 +764,47 @@ function Garden() {
  * stems, flower heads (garden beds + home plots + wild ones). Plus birds. */
 function Nature({ mobile }) {
   const trees = useMemo(() => {
+    // keep-out map: everything a tree could collapse onto
+    const LANDMARKS = [
+      { u: 0.05, r: 48 }, { u: 0.13, r: 50 }, { u: 0.21, r: 48 }, { u: 0.3, r: 50 },
+      { u: 0.4, r: 52 }, { u: 0.5, r: 48 } /* Camp Nou */, { u: 0.57, r: 50 }, { u: 0.85, r: 48 },
+    ]
+    const uDist = (a, b) => {
+      const d = Math.abs(a - b) % 1
+      return Math.min(d, 1 - d)
+    }
+    const spotOK = (u, rad) => {
+      if (u > BEACH_U1 - 0.01 && u < BEACH_U2 + 0.01) return false // palms' turf
+      if (Math.abs(rad - RAIL_R) < 1.7) return false // under the train viaduct
+      for (const slot of HOME_SLOTS) {
+        if (uDist(u, slot) < 0.022 && rad > LOOP_RADIUS + 4.5 && rad < LOOP_RADIUS + 10) return false
+      }
+      for (const lm of LANDMARKS) {
+        if (uDist(u, lm.u) < 0.032 && rad > lm.r - 9) return false
+      }
+      return true
+    }
+
     const list = []
     const count = mobile ? 7 : 12
     for (let i = 0; i < count; i++) {
-      const ang = seeded(i * 13 + 2) * TAU
-      const u = ang / TAU
-      // the beach sector belongs to the palms
-      if (u > BEACH_U1 - 0.01 && u < BEACH_U2 + 0.01) continue
-      const rad = inAnyRiver(u, 0.035) ? RIVER_OUTER + 2 + seeded(i + 61) * 3 : LOOP_RADIUS + 5.6 + seeded(i + 60) * 4
-      list.push({
-        pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
-        h: 1 + seeded(i + 70) * 0.9,
-        leaf: i % 4 === 0 ? '#ff8fb0' : '#2fae62',
-      })
+      // retry with fresh deterministic seeds until the spot is clear
+      // (48 attempts verified sufficient for all 12 trees)
+      for (let attempt = 0; attempt < 48; attempt++) {
+        const k = i * 13 + 2 + attempt * 97
+        const u = seeded(k)
+        const rad = inAnyRiver(u, 0.035)
+          ? RIVER_OUTER + 1.6 + seeded(k + 61) * 2.2
+          : LOOP_RADIUS + 5.6 + seeded(k + 60) * 3.2
+        if (!spotOK(u, rad)) continue
+        const ang = u * TAU
+        list.push({
+          pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
+          h: 1 + seeded(k + 70) * 0.9,
+          leaf: i % 4 === 0 ? '#ff8fb0' : '#2fae62',
+        })
+        break
+      }
     }
     return list
   }, [mobile])
