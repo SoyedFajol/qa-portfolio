@@ -223,3 +223,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     README, TASK-LOG
+
+[2026-07-17] TASK: V4.5 — landmark order = life order; original colors; vibrant skyline (per Soyed)
+  ROLE:     3D + DESIGN
+  CHANGE:   LANDMARK REORDER around the loop to match the life story: 🏫 Harimohan school (u.06) → 🕌 Choto Sona Mosque (u.18) → 🎓 AIUB (u.30) → then the rest one by one: 🏛️ Sangsad (u.44) → ✈️ Airport T3 (u.58, across the sea) → 🗼 Smriti Soudho (u.72) → 🌅 Shaheed Minar (u.87). ORIGINAL COLORS: airport gains its signature GOLDEN lattice canopy + brighter blue glass; parliament now sits on a TEAL lake ringed by green lawns; mosque domes brighter gold with glow; memorial shards whiter on red-brick + lawn base; school brick brighter red with a green field; AIUB sphere bluer/brighter. CITY: 16→21 buildings, taller (up to 10.5) and wider band — facades recolored from navy shades to a six-color vibrant palette (teal/indigo/magenta/coral/violet/sea-blue) with five window-glow colors.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG

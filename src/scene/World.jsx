@@ -271,20 +271,21 @@ function RingRoad() {
 function MiniCity({ mobile, windowGlow = 0.35 }) {
   const buildings = useMemo(() => {
     const list = []
-    const count = mobile ? 10 : 16
+    const count = mobile ? 13 : 21
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 7 + 1) * TAU
       const u = ang / TAU
       // keep the garden and park sectors clear
       if (u > GARDEN_U1 - 0.02 && u < PARK_U2 + 0.02 && i % 3 !== 0) continue
-      const rad = i % 3 === 0 ? 4 + seeded(i + 20) * 5.5 : 17 + seeded(i + 30) * 6
-      const h = 2.2 + seeded(i + 40) * 6.5
-      const w = 1.4 + seeded(i + 50) * 1.8
+      const rad = i % 3 === 0 ? 4 + seeded(i + 20) * 5.5 : 17 + seeded(i + 30) * 7
+      const h = 2.5 + seeded(i + 40) * 8
+      const w = 1.4 + seeded(i + 50) * 2
       list.push({
         ang, rad, h, w,
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, h / 2, LOOP_CENTER.z + Math.cos(ang) * rad],
-        color: ['#141b3c', '#1d2650', '#232e63'][i % 3],
-        glow: ['#39ff88', '#ffd93d', '#a06bff', '#ff8a3d'][i % 4],
+        // a vibrant skyline: teal, indigo, magenta, coral, violet, sea-blue
+        color: ['#1f8a70', '#2a5da8', '#a83a7e', '#c2603a', '#6b3fa8', '#1f6e8a'][i % 6],
+        glow: ['#39ff88', '#ffd93d', '#a06bff', '#ff8a3d', '#4db3ff'][i % 5],
       })
     }
     return list
@@ -1105,15 +1106,16 @@ function BangladeshLandmarks({ mobile }) {
   return (
     <group>
       {/* ✈️ Hazrat Shahjalal International Airport — Terminal 3 */}
-      <Landmark u={0.04} radius={76} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
+      <Landmark u={0.58} radius={80} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 1.6, 0]}>
             <boxGeometry args={[14, 3, 4]} />
-            <meshStandardMaterial color="#1d3a5f" emissive="#4db3ff" emissiveIntensity={0.18} />
+            <meshStandardMaterial color="#2456a0" emissive="#4db3ff" emissiveIntensity={0.28} />
           </mesh>
+          {/* the golden lattice canopy */}
           <mesh position={[0, 3.4, 0.4]}>
             <boxGeometry args={[16.5, 0.55, 5.6]} />
-            <meshStandardMaterial color="#d9d2c2" />
+            <meshStandardMaterial color="#d9a441" emissive="#d9a441" emissiveIntensity={0.18} />
           </mesh>
           {[-6, -3, 0, 3, 6].map((x) => (
             <mesh key={x} position={[x, 1.4, 2.35]}>
@@ -1140,11 +1142,16 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🏛️ Jatiya Sangsad Bhaban — Louis Kahn's parliament on its lake */}
-      <Landmark u={0.18} radius={74} label="🏛️ Jatiya Sangsad Bhaban" mobile={mobile}>
+      <Landmark u={0.44} radius={76} label="🏛️ Jatiya Sangsad Bhaban" mobile={mobile}>
         <group scale={[S, S, S]}>
-          <mesh position={[0, 0.06, 0]}>
+          {/* green lawns, then the teal lake — like the aerial photo */}
+          <mesh position={[0, 0.03, 0]}>
+            <cylinderGeometry args={[10.5, 10.5, 0.06, 24]} />
+            <meshStandardMaterial color="#1f7a44" />
+          </mesh>
+          <mesh position={[0, 0.09, 0]}>
             <cylinderGeometry args={[8, 8, 0.12, 24]} />
-            <meshStandardMaterial color="#1d4e89" emissive="#4db3ff" emissiveIntensity={0.15} />
+            <meshStandardMaterial color="#17808f" emissive="#2ec4d6" emissiveIntensity={0.22} />
           </mesh>
           <mesh position={[0, 2.6, 0]}>
             <cylinderGeometry args={[2.4, 2.4, 5.2, 8]} />
@@ -1177,7 +1184,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🕌 Choto Sona Mosque — the pride of Chapainawabganj */}
-      <Landmark u={0.32} radius={74} label="🕌 Choto Sona Mosque · Chapainawabganj" mobile={mobile}>
+      <Landmark u={0.18} radius={74} label="🕌 Choto Sona Mosque · Chapainawabganj" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.15, 0]}>
             <boxGeometry args={[9.5, 0.3, 7]} />
@@ -1192,7 +1199,7 @@ function BangladeshLandmarks({ mobile }) {
             [0, 1].map((r) => (
               <mesh key={`${c}-${r}`} position={[-2.4 + c * 1.6, 2.9, -0.9 + r * 1.8]}>
                 <sphereGeometry args={[0.62, 10, 8]} />
-                <meshStandardMaterial color="#b58a6a" flatShading />
+                <meshStandardMaterial color="#cf9a4e" emissive="#cf9a4e" emissiveIntensity={0.2} flatShading />
               </mesh>
             ))
           )}
@@ -1214,11 +1221,15 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🗼 Jatiyo Smriti Soudho — the Martyrs' Memorial spire */}
-      <Landmark u={0.46} radius={78} label="🗼 Jatiyo Smriti Soudho · Savar" mobile={mobile}>
+      <Landmark u={0.72} radius={80} label="🗼 Jatiyo Smriti Soudho · Savar" mobile={mobile}>
         <group scale={[S, S, S]}>
-          <mesh position={[0, 0.2, 0]}>
-            <boxGeometry args={[10, 0.4, 8]} />
-            <meshStandardMaterial color="#a5442f" />
+          <mesh position={[0, 0.1, 0]}>
+            <boxGeometry args={[12, 0.2, 10]} />
+            <meshStandardMaterial color="#1f7a44" />
+          </mesh>
+          <mesh position={[0, 0.3, 0]}>
+            <boxGeometry args={[10, 0.3, 8]} />
+            <meshStandardMaterial color="#b53a2a" />
           </mesh>
           {[
             { h: 3.5, z: 2.4 },
@@ -1228,14 +1239,14 @@ function BangladeshLandmarks({ mobile }) {
           ].map((t, i) => (
             <mesh key={i} position={[0, t.h / 2 + 0.4, t.z]} scale={[1, 1, 0.16]}>
               <coneGeometry args={[t.h * 0.42, t.h, 4]} />
-              <meshStandardMaterial color="#cfd2d8" flatShading />
+              <meshStandardMaterial color="#eef1f7" flatShading />
             </mesh>
           ))}
         </group>
       </Landmark>
 
       {/* 🌅 Shaheed Minar — the Language Martyrs' Memorial */}
-      <Landmark u={0.62} radius={80} label="🌅 Shaheed Minar · ২১শে ফেব্রুয়ারি" mobile={mobile}>
+      <Landmark u={0.87} radius={76} label="🌅 Shaheed Minar · ২১শে ফেব্রুয়ারি" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.25, 0]}>
             <boxGeometry args={[10, 0.5, 6]} />
@@ -1266,7 +1277,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🎓 AIUB — the glass sphere where the coding began */}
-      <Landmark u={0.76} radius={78} label="🎓 AIUB — my university" mobile={mobile}>
+      <Landmark u={0.3} radius={76} label="🎓 AIUB — my university" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[12, 0.2, 8]} />
@@ -1275,7 +1286,7 @@ function BangladeshLandmarks({ mobile }) {
           {/* the sphere */}
           <mesh position={[-3, 2.5, 0.5]}>
             <sphereGeometry args={[2.3, 16, 12]} />
-            <meshStandardMaterial color="#6fb0dd" emissive="#4db3ff" emissiveIntensity={0.3} flatShading />
+            <meshStandardMaterial color="#5fb3ec" emissive="#4db3ff" emissiveIntensity={0.45} flatShading />
           </mesh>
           <mesh position={[-3, 0.6, 0.5]}>
             <cylinderGeometry args={[1.2, 1.5, 1.2, 10]} />
@@ -1300,24 +1311,28 @@ function BangladeshLandmarks({ mobile }) {
         </group>
       </Landmark>
 
-      {/* 🏫 Harimohan Government High School — est. 1895 */}
-      <Landmark u={0.9} radius={74} label="🏫 Harimohan Govt. High School — my school" mobile={mobile}>
+      {/* 🏫 Harimohan Government High School — where it all started */}
+      <Landmark u={0.06} radius={74} label="🏫 Harimohan Govt. High School — my school" mobile={mobile}>
         <group scale={[S, S, S]}>
-          <mesh position={[0, 0.15, 0]}>
+          <mesh position={[0, 0.1, 0]}>
+            <boxGeometry args={[13, 0.2, 8]} />
+            <meshStandardMaterial color="#1f7a44" />
+          </mesh>
+          <mesh position={[0, 0.25, 0]}>
             <boxGeometry args={[11, 0.3, 6]} />
             <meshStandardMaterial color="#d8c9a8" />
           </mesh>
-          <mesh position={[0, 1.5, 0]}>
+          <mesh position={[0, 1.6, 0]}>
             <boxGeometry args={[9, 2.4, 3]} />
-            <meshStandardMaterial color="#a5442f" />
+            <meshStandardMaterial color="#c04a30" />
           </mesh>
-          <mesh position={[0, 2.9, 0]}>
+          <mesh position={[0, 3.0, 0]}>
             <boxGeometry args={[9.6, 0.5, 3.6]} />
-            <meshStandardMaterial color="#6e2c1d" />
+            <meshStandardMaterial color="#8a3520" />
           </mesh>
           {/* arched white verandah */}
           {[-3.2, -1.6, 0, 1.6, 3.2].map((x) => (
-            <mesh key={x} position={[x, 1.2, 1.55]}>
+            <mesh key={x} position={[x, 1.3, 1.55]}>
               <boxGeometry args={[0.9, 1.8, 0.1]} />
               <meshStandardMaterial color="#f4f6ff" />
             </mesh>
