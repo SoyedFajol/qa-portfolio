@@ -34,6 +34,9 @@ export const useUiStore = create((set, get) => ({
 
   toggleTheme: () => set({ theme: get().theme === 'day' ? 'night' : 'day' }),
 
+  /** Full restart: back to the PRESS START screen (used by RESET SAVE). */
+  restart: () => set({ started: false, activeSection: null, navOpen: false, mapOpen: false }),
+
   setFlatMode: (flatMode, reason = 'user') =>
     set({ flatMode, flatModeReason: flatMode ? reason : null }),
 

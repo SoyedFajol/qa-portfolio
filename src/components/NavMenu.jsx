@@ -12,7 +12,7 @@ import { sfx } from '../game/sfx'
  */
 export default function NavMenu() {
   const ref = useRef(null)
-  const { navOpen, setNavOpen, openSection } = useUiStore()
+  const { navOpen, setNavOpen, openSection, restart } = useUiStore()
   const visited = useGameStore((s) => s.progress.sectionsVisited)
   const resetSave = useGameStore((s) => s.resetSave)
   useFocusTrap(ref, navOpen, () => setNavOpen(false))
@@ -106,8 +106,10 @@ export default function NavMenu() {
               <button
                 className="pixel-btn pixel-btn--danger !px-3 !py-2 !text-[9px]"
                 onClick={() => {
-                  if (window.confirm('Reset your save file? XP, achievements and progress will be wiped.')) {
+                  if (window.confirm('Reset your save file? XP, achievements and progress will be wiped — the game starts over.')) {
                     resetSave()
+                    restart() // back to PRESS START…
+                    window.scrollTo({ top: 0, behavior: 'instant' }) // …at the start of the road
                     sfx.error()
                   }
                 }}
