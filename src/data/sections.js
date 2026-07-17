@@ -18,7 +18,7 @@ export const SECTIONS = [
   { id: 'skills', round: 1, icon: '🎒', label: 'Skills Inventory', blurb: 'Honest level bars', at: 0.12 },
   { id: 'projects', round: 1, icon: '🕹️', label: 'Projects Arcade', blurb: 'Real builds & repos', at: 0.18 },
   { id: 'sidequests', round: 1, icon: '🏆', label: 'Achievements & Extracurricular', blurb: 'CP trophies, sports, campus life', at: 0.24 },
-  { id: 'roadmap', round: 1, icon: '🧭', label: 'Roadmap', blurb: 'The skill tree ahead', at: 0.30 },
+  { id: 'roadmap', round: 1, icon: '🧭', label: 'Career Roadmaps', blurb: 'QA, AI, frontend, backend, CP — with resources', at: 0.30 },
   { id: 'contact', round: 1, icon: '💌', label: 'Resume & Contact', blurb: 'Join my party', at: 0.36 },
 
   // ── the GAP: jump to Round 2 ── (walkway hole at 0.405–0.425)
