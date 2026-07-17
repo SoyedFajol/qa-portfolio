@@ -247,3 +247,11 @@
   RESULT:   PASS
   GATE:     —
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V4.8 — landmarks to the outskirts, stadium-style (per Soyed)
+  ROLE:     3D + DESIGN
+  CHANGE:   The seven landmarks move from inside the ring to the OUTSKIRTS at Camp Nou's distance band (r 48–52, stadium is r 48 at u 0.5), spread around the loop in life order — school .05 → mosque .13 → AIUB .21 → Sangsad .30 → Airport .40 → (stadium .50) → Smriti Soudho .57 → Shaheed Minar .85 — all FACING the city, scaled back up (1.3, airport 1.1), labels raised; beach/sea sector (0.585–0.79) kept clear so nothing stands in the water. Inside the ring stays the clean plan: downtown core, open boulevard, garden, park.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG

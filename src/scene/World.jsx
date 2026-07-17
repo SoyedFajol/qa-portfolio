@@ -1140,18 +1140,16 @@ function Stadium() {
   )
 }
 
-/** 🇧🇩 The monument district: seven Bangladeshi landmarks INSIDE the city,
- * planned like a real capital — staggered on two tiers of a wide boulevard
- * between downtown and the ring road, facing outward to greet the walker. */
-function Landmark({ u, radius, label, children, mobile, s = 0.95 }) {
+/** 🇧🇩 Seven Bangladeshi landmarks stand OUTSIDE the ring road like the
+ * stadium does — spaced around the outskirts, each facing the city. */
+function Landmark({ u, radius, label, children, mobile, s = 1.3 }) {
   const p = circlePoint(u, radius)
-  // face OUT toward the road, where the hero walks
-  const faceRoad = Math.atan2(p.x - LOOP_CENTER.x, p.z - LOOP_CENTER.z)
+  const faceCity = Math.atan2(LOOP_CENTER.x - p.x, LOOP_CENTER.z - p.z)
   return (
-    <group position={[p.x, 0, p.z]} rotation={[0, faceRoad, 0]} scale={[s, s, s]}>
+    <group position={[p.x, 0, p.z]} rotation={[0, faceCity, 0]} scale={[s, s, s]}>
       {children}
       {!mobile && (
-        <Html center position={[0, 7.5, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[8, 0]}>
+        <Html center position={[0, 9, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[8, 0]}>
           <span className="whitespace-nowrap border-2 border-panel-2 bg-night/90 px-2 py-1 font-pixel text-[8px] text-ink">
             {label}
           </span>
@@ -1166,7 +1164,7 @@ function BangladeshLandmarks({ mobile }) {
   return (
     <group>
       {/* ✈️ Hazrat Shahjalal International Airport — Terminal 3 */}
-      <Landmark u={0.38} radius={23} s={0.8} label="✈️ Shahjalal Int'l Airport" mobile={mobile}>
+      <Landmark u={0.40} radius={52} s={1.1} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 1.6, 0]}>
             <boxGeometry args={[14, 3, 4]} />
@@ -1202,7 +1200,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🏛️ Jatiya Sangsad Bhaban — Louis Kahn's parliament on its lake */}
-      <Landmark u={0.29} radius={23} label="🏛️ Jatiya Sangsad Bhaban" mobile={mobile}>
+      <Landmark u={0.30} radius={50} label="🏛️ Jatiya Sangsad Bhaban" mobile={mobile}>
         <group scale={[S, S, S]}>
           {/* green lawns, then the teal lake — like the aerial photo */}
           <mesh position={[0, 0.03, 0]}>
@@ -1244,7 +1242,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🕌 Choto Sona Mosque — the pride of Chapainawabganj */}
-      <Landmark u={0.13} radius={23} label="🕌 Choto Sona Mosque · Chapainawabganj" mobile={mobile}>
+      <Landmark u={0.13} radius={50} label="🕌 Choto Sona Mosque · Chapainawabganj" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.15, 0]}>
             <boxGeometry args={[9.5, 0.3, 7]} />
@@ -1281,7 +1279,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🗼 Jatiyo Smriti Soudho — the Martyrs' Memorial spire */}
-      <Landmark u={0.46} radius={18.5} label="🗼 Jatiyo Smriti Soudho" mobile={mobile}>
+      <Landmark u={0.57} radius={50} label="🗼 Jatiyo Smriti Soudho · Savar" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[12, 0.2, 10]} />
@@ -1306,7 +1304,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🌅 Shaheed Minar — the Language Martyrs' Memorial */}
-      <Landmark u={0.53} radius={23} label="🌅 Shaheed Minar · ২১শে ফেব্রুয়ারি" mobile={mobile}>
+      <Landmark u={0.85} radius={48} label="🌅 Shaheed Minar · ২১শে ফেব্রুয়ারি" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.25, 0]}>
             <boxGeometry args={[10, 0.5, 6]} />
@@ -1337,7 +1335,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🎓 AIUB — the glass sphere where the coding began */}
-      <Landmark u={0.21} radius={18.5} label="🎓 AIUB — my university" mobile={mobile}>
+      <Landmark u={0.21} radius={48} label="🎓 AIUB — my university" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[12, 0.2, 8]} />
@@ -1372,7 +1370,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🏫 Harimohan Government High School — where it all started */}
-      <Landmark u={0.05} radius={18.5} label="🏫 Harimohan Govt. High School — my school" mobile={mobile}>
+      <Landmark u={0.05} radius={48} label="🏫 Harimohan Govt. High School — my school" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[13, 0.2, 8]} />
