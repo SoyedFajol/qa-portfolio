@@ -1483,13 +1483,71 @@ function BangladeshLandmarks({ mobile }) {
 const RAIL_R = 41
 const RAIL_Y = 2.75
 
+/** One car. Graffiti (if any) is sprayed on the city-facing side — the
+ * car's local +x always points inward on the loop — and occluded by the
+ * body so it never ghosts through from the far side. */
+function TrainCar({ cfg, carRef }) {
+  const body = useRef()
+  const spray = { textShadow: '1.5px 1.5px 0 #171d33, 0 0 6px rgba(255,255,255,0.35)' }
+  return (
+    <group ref={carRef}>
+      <mesh ref={body} castShadow>
+        <boxGeometry args={[0.85, 0.85, cfg.len]} />
+        <meshStandardMaterial color={cfg.color} />
+      </mesh>
+      <mesh position={[0, 0.12, 0]}>
+        <boxGeometry args={[0.87, 0.28, cfg.len * 0.82]} />
+        <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.5} />
+      </mesh>
+      {cfg.engine && (
+        <mesh position={[0, -0.1, cfg.len / 2 + 0.02]}>
+          <boxGeometry args={[0.5, 0.2, 0.05]} />
+          <meshStandardMaterial color="#fffbe6" emissive="#fffbe6" emissiveIntensity={1.2} />
+        </mesh>
+      )}
+      {cfg.graffiti && (
+        <Html
+          transform
+          occlude={[body]}
+          position={[0.45, -0.05, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+          distanceFactor={1.5}
+          style={{ pointerEvents: 'none' }}
+          zIndexRange={[6, 0]}
+        >
+          <div className="select-none text-center leading-none" style={{ transform: 'rotate(-3deg)' }}>
+            <p className="font-pixel text-[13px]" style={{ color: cfg.graffiti.color, ...spray }}>
+              {cfg.graffiti.top}
+            </p>
+            <p
+              className="font-pixel text-[15px]"
+              style={{ color: cfg.graffiti.bottomColor ?? cfg.graffiti.color, ...spray }}
+            >
+              {cfg.graffiti.bottom}
+            </p>
+          </div>
+        </Html>
+      )}
+    </group>
+  )
+}
+
 function TrainLine({ mobile }) {
   const cars = useMemo(
     () => [
       { len: 2.3, color: '#2fae62', engine: true }, // Bangladesh Railway green
-      { len: 2.1, color: '#e8e2d4' },
-      { len: 2.1, color: '#2fae62' },
-      { len: 2.1, color: '#e8e2d4' },
+      {
+        len: 2.1, color: '#e8e2d4',
+        graffiti: { top: 'MESSI 🐐', bottom: '10', color: '#2a5da8' },
+      },
+      {
+        len: 2.1, color: '#2fae62',
+        graffiti: { top: 'ARGENTINA', bottom: '★★★★', color: '#f4f6ff', bottomColor: '#ffd93d' },
+      },
+      {
+        len: 2.1, color: '#e8e2d4',
+        graffiti: { top: 'WC26', bottom: 'HOMECOMING 🏆', color: '#75aadb' },
+      },
     ],
     []
   )
@@ -1534,23 +1592,7 @@ function TrainLine({ mobile }) {
 
       {/* the train */}
       {cars.map((cfg, i) => (
-        <group key={i} ref={(el) => (carRefs.current[i] = el)}>
-          <mesh castShadow>
-            <boxGeometry args={[0.85, 0.85, cfg.len]} />
-            <meshStandardMaterial color={cfg.color} />
-          </mesh>
-          {/* window band */}
-          <mesh position={[0, 0.12, 0]}>
-            <boxGeometry args={[0.87, 0.28, cfg.len * 0.82]} />
-            <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.5} />
-          </mesh>
-          {cfg.engine && (
-            <mesh position={[0, -0.1, cfg.len / 2 + 0.02]}>
-              <boxGeometry args={[0.5, 0.2, 0.05]} />
-              <meshStandardMaterial color="#fffbe6" emissive="#fffbe6" emissiveIntensity={1.2} />
-            </mesh>
-          )}
-        </group>
+        <TrainCar key={i} cfg={cfg} carRef={(el) => (carRefs.current[i] = el)} />
       ))}
     </group>
   )
