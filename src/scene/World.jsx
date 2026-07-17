@@ -28,6 +28,14 @@ const RIVER_OUTER = LOOP_RADIUS + 9.5
 const GARDEN_U1 = 0.56
 const GARDEN_U2 = 0.74
 
+// the park sector, also inside the ring
+const PARK_U1 = 0.79
+const PARK_U2 = 0.94
+
+// the beach: sand + open sea beyond the Round-2 river (palms replace trees)
+const BEACH_U1 = 0.585
+const BEACH_U2 = 0.79
+
 const SKIN_TONES = ['#e8b17e', '#c68642', '#8d5524', '#f1c27d']
 const SHIRTS = ['#ff5d5d', '#39ff88', '#ffd93d', '#a06bff', '#4db3ff', '#ff8fb0']
 
@@ -200,8 +208,8 @@ function MiniCity({ mobile }) {
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 7 + 1) * TAU
       const u = ang / TAU
-      // keep the garden sector clear
-      if (u > GARDEN_U1 - 0.02 && u < GARDEN_U2 + 0.02 && i % 3 !== 0) continue
+      // keep the garden and park sectors clear
+      if (u > GARDEN_U1 - 0.02 && u < PARK_U2 + 0.02 && i % 3 !== 0) continue
       const rad = i % 3 === 0 ? 3.5 + seeded(i + 20) * 4.5 : 13.5 + seeded(i + 30) * 5
       const h = 1.6 + seeded(i + 40) * 5.2
       const w = 1.1 + seeded(i + 50) * 1.5
@@ -602,6 +610,8 @@ function Nature({ mobile }) {
     for (let i = 0; i < count; i++) {
       const ang = seeded(i * 13 + 2) * TAU
       const u = ang / TAU
+      // the beach sector belongs to the palms
+      if (u > BEACH_U1 - 0.01 && u < BEACH_U2 + 0.01) continue
       const rad = inAnyRiver(u, 0.035) ? RIVER_OUTER + 2 + seeded(i + 61) * 3 : LOOP_RADIUS + 5.6 + seeded(i + 60) * 4
       list.push({
         pos: [LOOP_CENTER.x + Math.sin(ang) * rad, 0, LOOP_CENTER.z + Math.cos(ang) * rad],
@@ -719,6 +729,183 @@ function Nature({ mobile }) {
           </mesh>
         </group>
       ))}
+    </group>
+  )
+}
+
+/** 🏖️ The beach: a sandy shore beyond the Round-2 river, palms, umbrella,
+ * a rolling sea that fades into the mountains. */
+function Beach() {
+  const sea = useRef()
+  useFrame((state) => {
+    if (sea.current) {
+      sea.current.material.emissiveIntensity = 0.22 + Math.sin(state.clock.elapsedTime * 0.9) * 0.08
+      sea.current.position.y = -0.06 + Math.sin(state.clock.elapsedTime * 0.7) * 0.02
+    }
+  })
+  const palms = useMemo(
+    () =>
+      [...Array(5)].map((_, i) => {
+        const u = BEACH_U1 + 0.02 + (i / 5) * (BEACH_U2 - BEACH_U1 - 0.04)
+        const p = circlePoint(u, 38.5 + seeded(i + 300) * 2.5)
+        return { key: i, pos: [p.x, 0, p.z], lean: (seeded(i + 301) - 0.5) * 0.3, h: 2 + seeded(i + 302) * 0.8 }
+      }),
+    []
+  )
+  const mid = circlePoint((BEACH_U1 + BEACH_U2) / 2, 39)
+  return (
+    <group>
+      {/* sand */}
+      <RingArc t1={BEACH_U1} t2={BEACH_U2} inner={RIVER_OUTER + 0.9} outer={43} y={-0.03} color="#c9b47f" />
+      {/* the sea */}
+      <mesh ref={sea} position={[LOOP_CENTER.x, -0.06, LOOP_CENTER.z]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[43, 58, 96, 1, TAU * BEACH_U1 - Math.PI / 2, TAU * (BEACH_U2 - BEACH_U1)]} />
+        <meshStandardMaterial color="#123f70" emissive="#4db3ff" emissiveIntensity={0.22} transparent opacity={0.95} side={2} />
+      </mesh>
+      {/* surf line */}
+      <RingArc t1={BEACH_U1 + 0.005} t2={BEACH_U2 - 0.005} inner={42.7} outer={43.15} y={-0.02} color="#bfe3ff" emissive="#bfe3ff" emissiveIntensity={0.35} />
+      <Sparkles count={26} scale={[16, 0.8, 16]} position={[mid.x, 0.3, mid.z]} size={1.5} speed={0.18} color="#bfe3ff" />
+
+      {/* palms */}
+      {palms.map((p) => (
+        <group key={p.key} position={p.pos} rotation={[0, seeded(p.key + 40) * TAU, p.lean]}>
+          <mesh position={[0, p.h / 2, 0]}>
+            <boxGeometry args={[0.18, p.h, 0.18]} />
+            <meshStandardMaterial color="#7a5a30" />
+          </mesh>
+          {[0, 1, 2, 3].map((f) => (
+            <mesh
+              key={f}
+              position={[Math.sin((f / 4) * TAU) * 0.55, p.h + 0.1, Math.cos((f / 4) * TAU) * 0.55]}
+              rotation={[0.35 * Math.cos((f / 4) * TAU), (f / 4) * TAU, -0.35 * Math.sin((f / 4) * TAU)]}
+            >
+              <boxGeometry args={[0.28, 0.06, 1.15]} />
+              <meshStandardMaterial color="#2fae62" />
+            </mesh>
+          ))}
+        </group>
+      ))}
+
+      {/* umbrella + towel + beach ball */}
+      <group position={[mid.x, 0, mid.z]}>
+        <mesh position={[0, 0.75, 0]}>
+          <boxGeometry args={[0.08, 1.5, 0.08]} />
+          <meshStandardMaterial color="#e6e9ff" />
+        </mesh>
+        <mesh position={[0, 1.5, 0]}>
+          <coneGeometry args={[1.0, 0.5, 8]} />
+          <meshStandardMaterial color="#ff5d5d" />
+        </mesh>
+        <mesh position={[1.1, 0.02, 0.4]}>
+          <boxGeometry args={[0.9, 0.03, 1.6]} />
+          <meshStandardMaterial color="#ffd93d" />
+        </mesh>
+        <mesh position={[-0.9, 0.18, -0.5]}>
+          <sphereGeometry args={[0.18, 10, 8]} />
+          <meshStandardMaterial color="#ff8a3d" />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
+/** 🌳 The park inside the ring: lawn, benches, lamp posts, a slide and a
+ * swing set that actually swings. */
+function Park() {
+  const swings = useRef([])
+  useFrame((state) => {
+    const t = state.clock.elapsedTime
+    swings.current.forEach((s, i) => {
+      if (s) s.rotation.x = Math.sin(t * 1.6 + i * 1.4) * 0.45
+    })
+  })
+  const at = (du, radius) => circlePoint(PARK_U1 + du * (PARK_U2 - PARK_U1), radius)
+  const benchSpots = [at(0.2, 19.2), at(0.8, 19.2)]
+  const lampSpots = [at(0.12, 15.2), at(0.5, 20), at(0.88, 15.2)]
+  const swingSpot = at(0.35, 16.2)
+  const slideSpot = at(0.68, 16.2)
+  return (
+    <group>
+      {/* lawn */}
+      <RingArc t1={PARK_U1} t2={PARK_U2} inner={13.8} outer={20.8} y={-0.01} color="#16482e" />
+
+      {/* benches */}
+      {benchSpots.map((b, i) => (
+        <group key={i} position={[b.x, 0, b.z]} rotation={[0, b.yaw, 0]}>
+          <mesh position={[0, 0.28, 0]}>
+            <boxGeometry args={[1.1, 0.08, 0.4]} />
+            <meshStandardMaterial color="#8a6a3b" />
+          </mesh>
+          <mesh position={[0, 0.55, -0.18]}>
+            <boxGeometry args={[1.1, 0.4, 0.08]} />
+            <meshStandardMaterial color="#8a6a3b" />
+          </mesh>
+          {[-0.45, 0.45].map((x) => (
+            <mesh key={x} position={[x, 0.12, 0]}>
+              <boxGeometry args={[0.08, 0.24, 0.34]} />
+              <meshStandardMaterial color="#4a3a1e" />
+            </mesh>
+          ))}
+        </group>
+      ))}
+
+      {/* lamp posts */}
+      {lampSpots.map((l, i) => (
+        <group key={i} position={[l.x, 0, l.z]}>
+          <mesh position={[0, 0.9, 0]}>
+            <boxGeometry args={[0.09, 1.8, 0.09]} />
+            <meshStandardMaterial color="#232e63" />
+          </mesh>
+          <mesh position={[0, 1.85, 0]}>
+            <boxGeometry args={[0.22, 0.24, 0.22]} />
+            <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.8} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* swing set — the swings actually swing */}
+      <group position={[swingSpot.x, 0, swingSpot.z]} rotation={[0, swingSpot.yaw, 0]}>
+        {[-0.8, 0.8].map((x) => (
+          <mesh key={x} position={[x, 0.75, 0]}>
+            <boxGeometry args={[0.1, 1.5, 0.1]} />
+            <meshStandardMaterial color="#4db3ff" />
+          </mesh>
+        ))}
+        <mesh position={[0, 1.5, 0]}>
+          <boxGeometry args={[1.8, 0.1, 0.1]} />
+          <meshStandardMaterial color="#4db3ff" />
+        </mesh>
+        {[-0.4, 0.4].map((x, i) => (
+          <group key={x} position={[x, 1.45, 0]} ref={(el) => (swings.current[i] = el)}>
+            {[-0.12, 0.12].map((rx) => (
+              <mesh key={rx} position={[rx, -0.5, 0]}>
+                <boxGeometry args={[0.03, 1.0, 0.03]} />
+                <meshStandardMaterial color="#c0c6e8" />
+              </mesh>
+            ))}
+            <mesh position={[0, -1.02, 0]}>
+              <boxGeometry args={[0.34, 0.05, 0.18]} />
+              <meshStandardMaterial color="#ff5d5d" />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* slide */}
+      <group position={[slideSpot.x, 0, slideSpot.z]} rotation={[0, slideSpot.yaw + 0.6, 0]}>
+        <mesh position={[0.55, 0.5, 0]}>
+          <boxGeometry args={[0.1, 1.0, 0.5]} />
+          <meshStandardMaterial color="#c0c6e8" />
+        </mesh>
+        <mesh position={[-0.25, 0.5, 0]} rotation={[0, 0, 0.62]}>
+          <boxGeometry args={[1.5, 0.07, 0.5]} />
+          <meshStandardMaterial color="#ffd93d" />
+        </mesh>
+        <mesh position={[0.55, 1.05, 0]}>
+          <boxGeometry args={[0.5, 0.06, 0.5]} />
+          <meshStandardMaterial color="#ff8a3d" />
+        </mesh>
+      </group>
     </group>
   )
 }
@@ -1190,6 +1377,8 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
           <River key={r.t1} t1={r.t1} t2={r.t2} bridgeU={r.bridgeU} />
         ))}
         <Garden />
+        <Park />
+        <Beach />
         <Stadium />
         <Nature mobile={mobile} />
         <Mountains mobile={mobile} />

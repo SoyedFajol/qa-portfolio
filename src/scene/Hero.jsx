@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { Html } from '@react-three/drei'
 import { pathPoint, PATH_LENGTH, GAP_START, CLIFF_T } from './constants'
 import { sfx } from '../game/sfx'
 
 const SKIN = '#e8b17e'
-const HOODIE = '#7a4fd0'
-const PANTS = '#22306e'
+// Argentina 2026 kit — REHEL 10 🇦🇷
+const JERSEY = '#f4f8ff'
+const ALBI = '#75aadb' // albiceleste sky blue
+const SHORTS = '#171d33'
+const SOCKS = '#f4f8ff'
 const DARK = '#181c33'
 
 const GRAVITY = 22
@@ -139,38 +143,62 @@ export default function Hero({ speedRef, tRef }) {
       onPointerOver={() => (document.body.style.cursor = 'pointer')}
       onPointerOut={() => (document.body.style.cursor = 'auto')}
     >
-      {/* legs */}
+      {/* legs: dark shorts over white socks */}
       <group position={[-0.16, 0.55, 0]} ref={legL}>
-        <mesh position={[0, -0.27, 0]} castShadow>
-          <boxGeometry args={[0.22, 0.55, 0.24]} />
-          <meshStandardMaterial color={PANTS} />
+        <mesh position={[0, -0.13, 0]} castShadow>
+          <boxGeometry args={[0.22, 0.28, 0.24]} />
+          <meshStandardMaterial color={SHORTS} />
+        </mesh>
+        <mesh position={[0, -0.41, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.28, 0.22]} />
+          <meshStandardMaterial color={SOCKS} />
         </mesh>
       </group>
       <group position={[0.16, 0.55, 0]} ref={legR}>
-        <mesh position={[0, -0.27, 0]} castShadow>
-          <boxGeometry args={[0.22, 0.55, 0.24]} />
-          <meshStandardMaterial color={PANTS} />
+        <mesh position={[0, -0.13, 0]} castShadow>
+          <boxGeometry args={[0.22, 0.28, 0.24]} />
+          <meshStandardMaterial color={SHORTS} />
+        </mesh>
+        <mesh position={[0, -0.41, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.28, 0.22]} />
+          <meshStandardMaterial color={SOCKS} />
         </mesh>
       </group>
 
-      {/* torso + head */}
+      {/* torso: the albiceleste jersey */}
       <group ref={body} position={[0, 1.05, 0]}>
         <mesh castShadow>
           <boxGeometry args={[0.72, 0.75, 0.42]} />
-          <meshStandardMaterial color={HOODIE} />
+          <meshStandardMaterial color={JERSEY} />
         </mesh>
-        <mesh position={[0, 0.28, -0.26]}>
-          <boxGeometry args={[0.5, 0.3, 0.14]} />
-          <meshStandardMaterial color={HOODIE} />
+        {/* sky-blue vertical stripes, front and back */}
+        {[0.215, -0.215].map((z) =>
+          [-0.22, 0, 0.22].map((x) => (
+            <mesh key={`${z}-${x}`} position={[x, 0, z]}>
+              <boxGeometry args={[0.13, 0.75, 0.015]} />
+              <meshStandardMaterial color={ALBI} />
+            </mesh>
+          ))
+        )}
+        {/* collar */}
+        <mesh position={[0, 0.36, 0]}>
+          <boxGeometry args={[0.4, 0.06, 0.44]} />
+          <meshStandardMaterial color={ALBI} />
         </mesh>
-        <mesh position={[0.1, 0.15, 0.22]}>
-          <boxGeometry args={[0.05, 0.2, 0.03]} />
-          <meshStandardMaterial color="#d9d9ff" />
-        </mesh>
-        <mesh position={[-0.1, 0.15, 0.22]}>
-          <boxGeometry args={[0.05, 0.2, 0.03]} />
-          <meshStandardMaterial color="#d9d9ff" />
-        </mesh>
+        {/* REHEL 10 on the back */}
+        <Html
+          transform
+          position={[0, 0.06, -0.235]}
+          rotation={[0, Math.PI, 0]}
+          distanceFactor={1.6}
+          style={{ pointerEvents: 'none' }}
+          zIndexRange={[5, 0]}
+        >
+          <div className="select-none text-center leading-none">
+            <p className="font-pixel text-[9px] tracking-widest text-[#171d33]">REHEL</p>
+            <p className="font-pixel text-[26px] text-[#171d33]">10</p>
+          </div>
+        </Html>
 
         {/* head */}
         <group ref={head} position={[0, 0.72, 0]}>
@@ -198,9 +226,13 @@ export default function Hero({ speedRef, tRef }) {
 
         {/* left arm + laptop */}
         <group ref={armL} position={[-0.45, 0.25, 0]}>
-          <mesh position={[0, -0.3, 0]} castShadow>
-            <boxGeometry args={[0.18, 0.6, 0.2]} />
-            <meshStandardMaterial color={HOODIE} />
+          <mesh position={[0, -0.14, 0]} castShadow>
+            <boxGeometry args={[0.18, 0.3, 0.2]} />
+            <meshStandardMaterial color={ALBI} />
+          </mesh>
+          <mesh position={[0, -0.44, 0]} castShadow>
+            <boxGeometry args={[0.17, 0.3, 0.19]} />
+            <meshStandardMaterial color={SKIN} />
           </mesh>
           <mesh position={[-0.08, -0.55, 0.12]} rotation={[0, 0, 0.12]}>
             <boxGeometry args={[0.1, 0.34, 0.46]} />
@@ -214,9 +246,13 @@ export default function Hero({ speedRef, tRef }) {
 
         {/* right arm + bug net */}
         <group ref={armR} position={[0.45, 0.25, 0]}>
-          <mesh position={[0, -0.3, 0]} castShadow>
-            <boxGeometry args={[0.18, 0.6, 0.2]} />
-            <meshStandardMaterial color={HOODIE} />
+          <mesh position={[0, -0.14, 0]} castShadow>
+            <boxGeometry args={[0.18, 0.3, 0.2]} />
+            <meshStandardMaterial color={ALBI} />
+          </mesh>
+          <mesh position={[0, -0.44, 0]} castShadow>
+            <boxGeometry args={[0.17, 0.3, 0.19]} />
+            <meshStandardMaterial color={SKIN} />
           </mesh>
           <group position={[0.05, -0.55, 0.15]} rotation={[0.5, 0, -0.2]}>
             <mesh position={[0, 0.45, 0]}>

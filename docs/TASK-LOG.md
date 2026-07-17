@@ -175,3 +175,11 @@
   RESULT:   PASS
   GATE:     B4 note recorded
   DOCS:     TASK-LOG
+
+[2026-07-17] TASK: V3.6 — REHEL 10 avatar, the beach, the park (per Soyed's photo + request)
+  ROLE:     3D + DESIGN
+  CHANGE:   AVATAR: hero redesigned in the Argentina 2026 kit from Soyed's photo — white jersey with three albiceleste stripes front & back, sky-blue collar and sleeves with bare forearms, dark shorts over white socks, and "REHEL / 10" rendered crisply on the back (Html transform); glasses, laptop and bug net stay. BEACH 🏖️: sandy shore beyond the Round-2 river (sand arc, animated open sea to the horizon with a glowing surf line and water sparkles, 5 leaning palms with 4-frond crowns, red umbrella, yellow towel, beach ball) — regular trees excluded from the sector. PARK 🌳: new sector inside the ring (0.79–0.94): lawn, 2 wooden benches, 3 glowing lamp posts, a slide, and a swing set whose two swings actually swing; city buildings now keep out of garden+park sectors.
+  VERIFY:   lint 0/0; 55/55; build ✓
+  RESULT:   PASS
+  GATE:     —
+  DOCS:     TASK-LOG
