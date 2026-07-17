@@ -22,13 +22,15 @@ describe('fallback quiz bank — the AI safety net (gate A1)', () => {
     }
   })
 
-  it('sampleFallbackQuiz returns a valid 5-question session with unique questions', () => {
+  it('sampleFallbackQuiz returns the EXACT count requested, unique, valid', () => {
     for (const id of TOPIC_IDS) {
-      const session = sampleFallbackQuiz(id, 5)
-      expect(validateQuiz(session), `sampled session for "${id}" invalid`).not.toBeNull()
-      expect(session.questions.length).toBe(5)
-      const texts = new Set(session.questions.map((q) => q.question))
-      expect(texts.size).toBe(5)
+      for (const n of [5, 15]) {
+        const session = sampleFallbackQuiz(id, n)
+        expect(validateQuiz(session), `sampled session for "${id}" invalid`).not.toBeNull()
+        expect(session.questions.length, `"${id}" must serve ${n}, not fewer`).toBe(n)
+        const texts = new Set(session.questions.map((q) => q.question))
+        expect(texts.size).toBe(n)
+      }
     }
     expect(sampleFallbackQuiz('nope')).toBeNull()
   })
