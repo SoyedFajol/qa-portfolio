@@ -431,7 +431,7 @@ function CityBillboard() {
       glow.current.material.emissiveIntensity = 0.18 + (Math.sin(state.clock.elapsedTime * 1.6) + 1) * 0.08
     }
   })
-  const TOP = 15.5 // panel center — well above the tallest tower (~11)
+  const TOP = 13 // panel center — clears the tallest tower (~11) without looming
   return (
     <group position={[LOOP_CENTER.x, 0, LOOP_CENTER.z]}>
       {/* twin masts */}
@@ -469,14 +469,23 @@ function CityBillboard() {
         style={{ pointerEvents: 'none' }}
         zIndexRange={[5, 0]}
       >
-        <div className="w-[310px] select-none text-center">
-          <p className="font-pixel text-[9px] tracking-wider text-[#39ff88]">— WELCOME TO —</p>
-          <p className="mt-1.5 font-pixel text-[16px] leading-snug text-[#ffd93d]">SOYED SOLAMAN&apos;S</p>
-          <p className="font-pixel text-[12px] text-[#e6e9ff]">PORTFOLIO CITY</p>
-          <p className="mt-2 font-body text-[11px] leading-snug text-[#9aa3d1]">
-            Software Engineer · SQA · AI Engineer — this whole world is my resume.
-          </p>
-          <p className="mt-1 font-pixel text-[8px] text-[#a06bff]">SCROLL THE ROAD · OPEN THE CRYSTALS · EARN XP</p>
+        <div className="flex w-[330px] select-none items-center gap-3 text-left">
+          <img
+            src="/soyed-photo.png"
+            alt=""
+            width={78}
+            height={86}
+            style={{ imageRendering: 'pixelated', border: '3px solid #39ff88', flexShrink: 0 }}
+          />
+          <div>
+            <p className="font-pixel text-[8px] tracking-wider text-[#39ff88]">— WELCOME TO —</p>
+            <p className="mt-1 font-pixel text-[14px] leading-snug text-[#ffd93d]">SOYED SOLAMAN&apos;S</p>
+            <p className="font-pixel text-[11px] text-[#e6e9ff]">PORTFOLIO CITY</p>
+            <p className="mt-1.5 font-body text-[10px] leading-snug text-[#9aa3d1]">
+              Software Engineer · SQA · AI Engineer — this world is my resume.
+            </p>
+            <p className="mt-1 font-pixel text-[7px] text-[#a06bff]">SCROLL · OPEN CRYSTALS · EARN XP</p>
+          </div>
         </div>
       </Html>
 
@@ -1273,16 +1282,17 @@ function BangladeshLandmarks({ mobile }) {
             <cylinderGeometry args={[8, 8, 0.12, 24]} />
             <meshStandardMaterial color="#17808f" emissive="#2ec4d6" emissiveIntensity={0.22} />
           </mesh>
+          {/* the brick-red masses of the Sangsad complex */}
           <mesh position={[0, 2.6, 0]}>
             <cylinderGeometry args={[2.4, 2.4, 5.2, 8]} />
-            <meshStandardMaterial color="#b8ac96" flatShading />
+            <meshStandardMaterial color="#a8503a" flatShading />
           </mesh>
           {[0, 1, 2, 3].map((i) => {
             const a = (i / 4) * TAU + Math.PI / 4
             return (
               <mesh key={i} position={[Math.sin(a) * 3.6, 2, Math.cos(a) * 3.6]}>
                 <cylinderGeometry args={[1.3, 1.3, 4, 10]} />
-                <meshStandardMaterial color="#a99d88" flatShading />
+                <meshStandardMaterial color="#96452f" flatShading />
               </mesh>
             )
           })}
@@ -1291,7 +1301,7 @@ function BangladeshLandmarks({ mobile }) {
             return (
               <mesh key={i} position={[Math.sin(a) * 3.8, 1.8, Math.cos(a) * 3.8]}>
                 <boxGeometry args={[2.4, 3.6, 2.4]} />
-                <meshStandardMaterial color="#b8ac96" />
+                <meshStandardMaterial color="#a8503a" />
               </mesh>
             )
           })}
@@ -1556,8 +1566,16 @@ function TrainLine({ mobile }) {
   const pillars = useMemo(() => {
     const list = []
     const count = mobile ? 20 : 30
+    const uDist = (a, b) => {
+      const d = Math.abs(a - b) % 1
+      return Math.min(d, 1 - d)
+    }
     for (let i = 0; i < count; i++) {
-      const p = circlePoint(i / count, RAIL_R)
+      const u = i / count
+      // no pillar may spear a footbridge — shift it aside instead
+      const clash = RIVERS.find((r) => uDist(u, r.bridgeU) < 0.028)
+      const uSafe = clash ? clash.bridgeU + (u >= clash.bridgeU ? 0.03 : -0.03) : u
+      const p = circlePoint(uSafe, RAIL_R)
       list.push({ pos: [p.x, RAIL_Y / 2, p.z], scale: [0.38, RAIL_Y, 0.38], color: '#1d2650' })
     }
     return list
