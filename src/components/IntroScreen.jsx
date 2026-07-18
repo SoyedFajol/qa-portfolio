@@ -55,7 +55,7 @@ export default function IntroScreen() {
               {PROFILE.headline}
             </p>
             <p className="mt-2 font-body text-xs text-ink-dim">
-              Builder of fun things · from {PROFILE.hometown.split(',')[0]} 🥭
+              Builder of fun things · from {PROFILE.hometown.split(',').pop().trim()} 🥭
             </p>
           </motion.div>
         )}

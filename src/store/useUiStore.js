@@ -46,6 +46,7 @@ export const useUiStore = create((set, get) => ({
       : 'night',
   toasts: [],              // { id, icon, title, desc }
   levelUpTo: null,         // level number while the LEVEL UP! burst is showing
+  endOpen: false,          // end-of-road bar after the cliff fall finishes
 
   start: () => {
     session.set('qa-started', '1')
@@ -57,6 +58,7 @@ export const useUiStore = create((set, get) => ({
 
   setNavOpen: (navOpen) => set({ navOpen }),
   setMapOpen: (mapOpen) => set({ mapOpen }),
+  setEndOpen: (endOpen) => set({ endOpen }),
 
   zoomBy: (delta) =>
     set({ zoom: Math.min(3.2, Math.max(0.5, get().zoom + delta)) }),
@@ -67,7 +69,7 @@ export const useUiStore = create((set, get) => ({
   restart: () => {
     session.del('qa-started')
     session.del('qa-map-seen')
-    set({ started: false, activeSection: null, navOpen: false, mapOpen: false })
+    set({ started: false, activeSection: null, navOpen: false, mapOpen: false, endOpen: false })
   },
 
   setFlatMode: (flatMode, reason = 'user') =>

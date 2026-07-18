@@ -1,12 +1,13 @@
 // App shell: routes the static pages, gates the game behind PRESS START,
 // renders the 3D world (or the flat fallback), and mounts every overlay.
 
-import { lazy, Suspense, useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Analytics } from '@vercel/analytics/react'
 
 import { SECTIONS, sectionById } from './data/sections'
 import { look } from './scene/lookState'
+import { enableGyro, disableGyro } from './scene/gyro'
 import { sfx } from './game/sfx'
 import { useGameStore } from './store/useGameStore'
 import { useUiStore } from './store/useUiStore'
@@ -22,6 +23,7 @@ import NavMenu from './components/NavMenu'
 import WorldMap from './components/WorldMap'
 import Toasts from './components/Toasts'
 import LevelUpBurst from './components/LevelUpBurst'
+import EndScreen from './components/EndScreen'
 import SectionOverlay from './components/SectionOverlay'
 import ResumePage from './components/ResumePage'
 import { PrivacyPage, TermsPage, GameOverPage } from './components/StaticPages'
@@ -55,7 +57,7 @@ const SECTION_COMPONENTS = {
 }
 const WIDE_SECTIONS = new Set(['dungeon', 'game', 'jobs', 'companies', 'ask', 'projects'])
 
-const SCROLL_PAGES = 7 // how many viewport-heights the journey spans
+const SCROLL_PAGES = 8 // how many viewport-heights the journey spans (the loop grew, so did the walk)
 
 function webglAvailable() {
   try {
@@ -237,15 +239,48 @@ function GameWorld() {
   )
 }
 
-/** Touch controls for phone players (most visitors): zoom the city in/out
- * and a thumb-sized JUMP — stacked in the right-thumb zone. */
+/** Touch controls for phone players (most visitors): tilt-to-look GYRO,
+ * zoom the city in/out and a thumb-sized JUMP — stacked in the right-thumb
+ * zone. (Desktop needs no toggle: the pointer parallax is always on.) */
 function TouchControls() {
   const isTouch =
     typeof window !== 'undefined' &&
     ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  const [gyroOn, setGyroOn] = useState(false)
+  useEffect(() => () => disableGyro(), []) // no orphaned sensor listener
   if (!isTouch) return null
+
+  async function toggleGyro() {
+    sfx.blip()
+    if (gyroOn) {
+      disableGyro()
+      setGyroOn(false)
+      return
+    }
+    const ok = await enableGyro()
+    setGyroOn(ok)
+    if (!ok) {
+      useUiStore.getState().pushToast({
+        icon: '📵',
+        title: 'GYRO BLOCKED',
+        desc: 'Tilt look-around needs motion access — check the browser permission and try again.',
+      })
+    }
+  }
+
   return (
     <div className="fixed bottom-24 right-3 z-20 flex flex-col items-end gap-2">
+      <button
+        className={`flex h-11 w-11 flex-col items-center justify-center border-4 bg-panel/90 font-pixel text-[7px] leading-tight shadow-[3px_3px_0_0_rgba(0,0,0,0.45)] active:translate-y-0.5 ${
+          gyroOn ? 'border-pix-yellow text-pix-yellow' : 'border-neon text-neon'
+        }`}
+        onClick={toggleGyro}
+        aria-label={gyroOn ? 'Turn off tilt look-around' : 'Tilt the phone to look around'}
+        aria-pressed={gyroOn}
+      >
+        <span className="text-[13px]">🧭</span>
+        {gyroOn ? 'ON' : 'GYRO'}
+      </button>
       <button
         className="flex h-11 w-11 items-center justify-center border-4 border-neon bg-panel/90 font-pixel text-[11px] text-neon shadow-[3px_3px_0_0_rgba(0,0,0,0.45)] active:translate-y-0.5"
         onClick={() => {
@@ -416,6 +451,7 @@ function Game() {
           <Hud />
           <NavMenu />
           <WorldMap />
+          <EndScreen />
         </>
       )}
 

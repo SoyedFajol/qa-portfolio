@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { SECTIONS } from '../data/sections'
 import { pathPoint } from './constants'
+import { useNearCamera } from './useNearCamera'
 import { sfx } from '../game/sfx'
 
 function Checkpoint({ section, side, visited, onOpen }) {
@@ -13,6 +14,7 @@ function Checkpoint({ section, side, visited, onOpen }) {
   const p = pathPoint(section.at)
   const x = p.x + p.nx * side * 2.7
   const z = p.z + p.nz * side * 2.7
+  const labelVisible = useNearCamera(x, z, 34, 40)
 
   useFrame((state) => {
     if (!crystal.current) return
@@ -81,8 +83,11 @@ function Checkpoint({ section, side, visited, onOpen }) {
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.7} transparent opacity={0.8} />
       </mesh>
 
-      {/* label — the portfolio is the point; make it unmissable */}
-      <Html center position={[0, 2.85, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
+      {/* label — the portfolio is the point; make it unmissable. It scales
+          with distance (near = big, far = small) and unmounts entirely when
+          far away, so cards never stack on each other and the DOM stays light */}
+      {labelVisible && (
+      <Html center position={[0, 2.85, 0]} distanceFactor={12} style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
         <div
           aria-hidden="true"
           className="checkpoint-glow whitespace-nowrap border-[3px] bg-[#0b1026] px-3 py-2 text-center"
@@ -101,6 +106,7 @@ function Checkpoint({ section, side, visited, onOpen }) {
           </p>
         </div>
       </Html>
+      )}
     </group>
   )
 }

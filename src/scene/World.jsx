@@ -9,6 +9,7 @@ import Checkpoints from './Checkpoints'
 import Signposts from './Signposts'
 import RoundGates from './RoundGates'
 import { LOOP_CENTER, LOOP_RADIUS, PATH_LENGTH, GAP_START, GAP_END, CLIFF_T, pathPoint, seeded } from './constants'
+import { useNearCamera } from './useNearCamera'
 import { look } from './lookState'
 import { SECTIONS } from '../data/sections'
 import { useUiStore } from '../store/useUiStore'
@@ -92,8 +93,10 @@ function Celestial({ theme }) {
  * the gap and the cliff so there is still somewhere to fall. */
 function VoxelTerrain({ mobile, theme }) {
   const { caps, dirt } = useMemo(() => {
-    const B = mobile ? 3.6 : 3
-    const RADIUS = mobile ? 46 : 58
+    // bigger blocks over the bigger map keep the instance count (and the
+    // frame budget) the same as the old, smaller city
+    const B = mobile ? 3.9 : 3.3
+    const RADIUS = mobile ? 54 : 66
     const capItems = []
     const dirtItems = []
     const grass = theme === 'day' ? [76, 155, 80] : [40, 105, 62]
@@ -518,7 +521,8 @@ function CityBillboard() {
 function Homes({ mobile }) {
   const homes = useMemo(() => {
     const list = []
-    const count = mobile ? 4 : 7
+    // a few cozy homes, not a suburb — the open land IS the aesthetic
+    const count = mobile ? 3 : 4
     for (let i = 0; i < count; i++) {
       const p = circlePoint(HOME_SLOTS[i % HOME_SLOTS.length], LOOP_RADIUS + 5.6 + seeded(i + 22) * 2.6)
       list.push({
@@ -567,7 +571,7 @@ function Homes({ mobile }) {
 function People({ mobile }) {
   const walkers = useMemo(() => {
     const list = []
-    const count = mobile ? 3 : 6
+    const count = mobile ? 2 : 4
     for (let i = 0; i < count; i++) {
       const sidewalk = i % 2 === 0
       list.push({
@@ -777,8 +781,8 @@ function Nature({ mobile }) {
   const trees = useMemo(() => {
     // keep-out map: everything a tree could collapse onto
     const LANDMARKS = [
-      { u: 0.05, r: 48 }, { u: 0.13, r: 50 }, { u: 0.21, r: 48 }, { u: 0.3, r: 50 },
-      { u: 0.4, r: 52 }, { u: 0.5, r: 48 } /* Camp Nou */, { u: 0.57, r: 50 }, { u: 0.85, r: 48 },
+      { u: 0.05, r: LOOP_RADIUS + 16 }, { u: 0.13, r: LOOP_RADIUS + 18 }, { u: 0.21, r: LOOP_RADIUS + 16 }, { u: 0.3, r: LOOP_RADIUS + 18 },
+      { u: 0.4, r: LOOP_RADIUS + 20 }, { u: 0.5, r: LOOP_RADIUS + 16 } /* Camp Nou */, { u: 0.57, r: LOOP_RADIUS + 18 }, { u: 0.85, r: LOOP_RADIUS + 16 },
     ]
     const uDist = (a, b) => {
       const d = Math.abs(a - b) % 1
@@ -797,7 +801,7 @@ function Nature({ mobile }) {
     }
 
     const list = []
-    const count = mobile ? 7 : 12
+    const count = mobile ? 5 : 8
     for (let i = 0; i < count; i++) {
       // retry with fresh deterministic seeds until the spot is clear
       // (48 attempts verified sufficient for all 12 trees)
@@ -824,7 +828,7 @@ function Nature({ mobile }) {
     const list = []
     // wild flowers: roadside strips PLACED RELATIVE TO THE WINDING ROAD so
     // they hug its bends without ever sitting on the asphalt
-    const wildCount = mobile ? 20 : 40
+    const wildCount = mobile ? 12 : 24
     for (let i = 0; i < wildCount; i++) {
       const u = seeded(i * 17 + 3)
       const inside = i % 3 === 0
@@ -853,7 +857,7 @@ function Nature({ mobile }) {
       }
     }
     // home garden plots
-    HOME_SLOTS.slice(0, mobile ? 4 : 7).forEach((slot, i) => {
+    HOME_SLOTS.slice(0, mobile ? 3 : 4).forEach((slot, i) => {
       const hp = circlePoint(slot, LOOP_RADIUS + 5.6 + seeded(i + 22) * 2.6)
       for (let f = 0; f < 4; f++) {
         list.push({
@@ -873,7 +877,7 @@ function Nature({ mobile }) {
 
   const birds = useMemo(
     () =>
-      [...Array(mobile ? 3 : 6)].map((_, i) => ({
+      [...Array(mobile ? 2 : 4)].map((_, i) => ({
         key: i,
         radius: 8 + seeded(i + 11) * 26,
         height: 7.5 + seeded(i + 12) * 6,
@@ -1214,15 +1218,18 @@ function Stadium() {
 }
 
 /** 🇧🇩 Seven Bangladeshi landmarks stand OUTSIDE the ring road like the
- * stadium does — spaced around the outskirts, each facing the city. */
+ * stadium does — spaced around the outskirts, each facing the city. Labels
+ * scale with distance and only mount when the hero is near — the skyline
+ * stays clean instead of wearing eight name tags at once. */
 function Landmark({ u, radius, label, children, mobile, s = 1.0 }) {
   const p = circlePoint(u, radius)
   const faceCity = Math.atan2(LOOP_CENTER.x - p.x, LOOP_CENTER.z - p.z)
+  const labelVisible = useNearCamera(p.x, p.z, 46, 54)
   return (
     <group position={[p.x, 0, p.z]} rotation={[0, faceCity, 0]} scale={[s, s, s]}>
       {children}
-      {!mobile && (
-        <Html center position={[0, 9, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[8, 0]}>
+      {!mobile && labelVisible && (
+        <Html center position={[0, 9, 0]} distanceFactor={24} style={{ pointerEvents: 'none' }} zIndexRange={[8, 0]}>
           <span className="whitespace-nowrap border-2 border-panel-2 bg-night/90 px-2 py-1 font-pixel text-[9px] text-ink">
             {label}
           </span>
@@ -1237,7 +1244,7 @@ function BangladeshLandmarks({ mobile }) {
   return (
     <group>
       {/* ✈️ Hazrat Shahjalal International Airport — Terminal 3 */}
-      <Landmark u={0.40} radius={52} s={0.9} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
+      <Landmark u={0.40} radius={LOOP_RADIUS + 20} s={0.9} label="✈️ Shahjalal Int'l Airport · Dhaka" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 1.6, 0]}>
             <boxGeometry args={[14, 3, 4]} />
@@ -1273,7 +1280,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🏛️ Jatiya Sangsad Bhaban — Louis Kahn's parliament on its lake */}
-      <Landmark u={0.30} radius={50} label="🏛️ Jatiya Sangsad Bhaban" mobile={mobile}>
+      <Landmark u={0.30} radius={LOOP_RADIUS + 18} label="🏛️ Jatiya Sangsad Bhaban" mobile={mobile}>
         <group scale={[S, S, S]}>
           {/* green lawns, then the teal lake — like the aerial photo */}
           <mesh position={[0, 0.03, 0]}>
@@ -1316,7 +1323,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🕌 Choto Sona Mosque — the pride of Chapainawabganj */}
-      <Landmark u={0.13} radius={50} label="🕌 Choto Sona Mosque · Chapainawabganj" mobile={mobile}>
+      <Landmark u={0.13} radius={LOOP_RADIUS + 18} label="🕌 Choto Sona Mosque · Chapainawabganj" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.15, 0]}>
             <boxGeometry args={[9.5, 0.3, 7]} />
@@ -1353,7 +1360,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🗼 Jatiyo Smriti Soudho — the Martyrs' Memorial spire */}
-      <Landmark u={0.57} radius={50} label="🗼 Jatiyo Smriti Soudho · Savar" mobile={mobile}>
+      <Landmark u={0.57} radius={LOOP_RADIUS + 18} label="🗼 Jatiyo Smriti Soudho · Savar" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[12, 0.2, 10]} />
@@ -1378,7 +1385,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🌅 Shaheed Minar — the Language Martyrs' Memorial */}
-      <Landmark u={0.85} radius={48} label="🌅 Shaheed Minar · ২১শে ফেব্রুয়ারি" mobile={mobile}>
+      <Landmark u={0.85} radius={LOOP_RADIUS + 16} label="🌅 Shaheed Minar · ২১শে ফেব্রুয়ারি" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.25, 0]}>
             <boxGeometry args={[10, 0.5, 6]} />
@@ -1409,7 +1416,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🎓 AIUB — the glass sphere where the coding began */}
-      <Landmark u={0.21} radius={48} label="🎓 AIUB — my university" mobile={mobile}>
+      <Landmark u={0.21} radius={LOOP_RADIUS + 16} label="🎓 AIUB — my university" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[12, 0.2, 8]} />
@@ -1444,7 +1451,7 @@ function BangladeshLandmarks({ mobile }) {
       </Landmark>
 
       {/* 🏫 Harimohan Government High School — where it all started */}
-      <Landmark u={0.05} radius={48} label="🏫 Harimohan Govt. High School — my school" mobile={mobile}>
+      <Landmark u={0.05} radius={LOOP_RADIUS + 16} label="🏫 Harimohan Govt. High School — my school" mobile={mobile}>
         <group scale={[S, S, S]}>
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[13, 0.2, 8]} />
@@ -1492,7 +1499,7 @@ function BangladeshLandmarks({ mobile }) {
 
 /** 🚆 The elevated train line: a viaduct ring OUTSIDE the city (over the
  * suburbs, rivers and beach edge) with a green train forever circling. */
-const RAIL_R = 41
+const RAIL_R = LOOP_RADIUS + 9
 const RAIL_Y = 2.75
 
 /** One train car: body, lit window band, headlight on the engine. */
@@ -1519,11 +1526,13 @@ function TrainCar({ cfg, carRef }) {
 
 function TrainLine({ mobile }) {
   const cars = useMemo(
+    // two-tone in the colors of the Bangladesh flag: bottle green + the red
+    // of the rising sun, alternating car by car 🇧🇩
     () => [
-      { len: 2.3, color: '#2fae62', engine: true }, // Bangladesh Railway green
-      { len: 2.1, color: '#e8e2d4' },
-      { len: 2.1, color: '#2fae62' },
-      { len: 2.1, color: '#e8e2d4' },
+      { len: 2.3, color: '#006a4e', engine: true },
+      { len: 2.1, color: '#f42a41' },
+      { len: 2.1, color: '#006a4e' },
+      { len: 2.1, color: '#f42a41' },
     ],
     []
   )
@@ -1655,7 +1664,7 @@ function Coins({ tRef, mobile }) {
   const inst = useRef()
   const coins = useMemo(() => {
     const list = []
-    const step = mobile ? 0.055 : 0.04
+    const step = mobile ? 0.045 : 0.033 // keeps coin spacing steady on the longer road
     for (let t = 0.03; t < CLIFF_T - 0.01; t += step) {
       if (t > GAP_START - 0.02 && t < GAP_END + 0.01) continue
       const p = pathPoint(t)
@@ -1763,7 +1772,7 @@ function CheckpointChimes({ tRef }) {
   return null
 }
 
-/** The cliff → fall → respawn-at-start loop. */
+/** The cliff → fall → END bar (the START NOW button restarts the lap). */
 function RespawnController({ tRef }) {
   const falling = useRef(false)
   useFrame(() => {
@@ -1772,17 +1781,17 @@ function RespawnController({ tRef }) {
       falling.current = true
       sfx.error()
       setTimeout(() => {
-        useUiStore.getState().pushToast({
-          icon: '🌀',
-          title: 'LOOP COMPLETE!',
-          desc: 'The road is a circle — respawning at Round 1. +25 XP lap bonus.',
-        })
+        if (!falling.current) return // scrolled back before the fall finished
         gainXp(25, { silent: true })
         trackEvent('loop_completed')
-        window.scrollTo({ top: 0, behavior: 'instant' })
+        useUiStore.getState().setEndOpen(true)
       }, 1400)
     }
-    if (falling.current && t < 0.5) falling.current = false
+    if (falling.current && t < 0.5) {
+      // scrolled back before the edge (or START NOW brought us home)
+      falling.current = false
+      useUiStore.getState().setEndOpen(false)
+    }
   })
   return null
 }
@@ -1795,7 +1804,8 @@ function Rig({ progressRef, tRef, speedRef, mobile }) {
   const smoothed = useRef(0)
   const fov = useRef(55)
   const zoomSmooth = useRef(1)
-  const fogBase = mobile ? 68 : 95
+  const extra = useRef({ yaw: 0, pitch: 0 }) // eased gyro / pointer-parallax look
+  const fogBase = mobile ? 80 : 112
 
   useFrame((state, delta) => {
     const target = progressRef.current
@@ -1821,25 +1831,35 @@ function Rig({ progressRef, tRef, speedRef, mobile }) {
       look.pitch *= decay
     }
 
+    // the extra look layered on top of the drag: phone tilt while GYRO is
+    // on, a gentle pointer parallax on desktop — always eased, never snaps
+    const exYaw = look.gyro.on ? look.gyro.yaw : mobile ? 0 : -state.pointer.x * 0.22
+    const exPitch = look.gyro.on ? look.gyro.pitch : mobile ? 0 : -state.pointer.y * 0.07
+    const ek = 1 - Math.exp(-delta * 3)
+    extra.current.yaw += (exYaw - extra.current.yaw) * ek
+    extra.current.pitch += (exPitch - extra.current.pitch) * ek
+    const lookYaw = look.yaw + extra.current.yaw
+    const lookPitch = look.pitch + extra.current.pitch
+
     let cx = cam.x + cam.nx * 4.6 * zoom + Math.sin(time * 0.32) * 0.3
     let cz = cam.z + cam.nz * 4.6 * zoom
-    // orbit the camera around the hero by the dragged yaw
-    if (Math.abs(look.yaw) > 0.001) {
+    // orbit the camera around the hero by the combined look yaw
+    if (Math.abs(lookYaw) > 0.001) {
       const bx = cx - hero.x
       const bz = cz - hero.z
-      const cos = Math.cos(look.yaw)
-      const sin = Math.sin(look.yaw)
+      const cos = Math.cos(lookYaw)
+      const sin = Math.sin(lookYaw)
       cx = hero.x + bx * cos - bz * sin
       cz = hero.z + bx * sin + bz * cos
     }
     camera.position.set(
       cx,
-      Math.max(2.2, Math.max(3.2, 6.2 * zoom) + Math.sin(time * 0.45) * 0.25 + look.pitch * 7),
+      Math.max(2.2, Math.max(3.2, 6.2 * zoom) + Math.sin(time * 0.45) * 0.25 + lookPitch * 7),
       cz
     )
     // look a touch past the hero so more of the world stays in frame
     const ahead = pathPoint(Math.min(1, smoothed.current + 0.012))
-    camera.lookAt((hero.x + ahead.x) / 2, 1.1 - look.pitch * 2.5, (hero.z + ahead.z) / 2)
+    camera.lookAt((hero.x + ahead.x) / 2, 1.1 - lookPitch * 2.5, (hero.z + ahead.z) / 2)
 
     const targetFov = 55 + Math.min(1, Math.abs(speedRef.current) * 3) * 8
     fov.current += (targetFov - fov.current) * (1 - Math.exp(-delta * 4))
@@ -1874,11 +1894,11 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
     <div className="fixed inset-0 z-0" aria-hidden="true">
       <Canvas
         dpr={[1, mobile ? 1.25 : 1.5]}
-        camera={{ fov: 55, near: 0.1, far: 175, position: [0, 6.2, 10] }}
+        camera={{ fov: 55, near: 0.1, far: 210, position: [0, 6.2, 10] }}
         gl={{ antialias: !mobile, powerPreference: 'high-performance' }}
       >
         <color attach="background" args={[T.bg]} />
-        <fog attach="fog" args={[T.bg, 24, mobile ? 68 : 95]} />
+        <fog attach="fog" args={[T.bg, 24, mobile ? 80 : 112]} />
 
         <ambientLight intensity={T.ambient} />
         <directionalLight position={[46, 34, -40]} color={T.dirColor} intensity={T.dirIntensity} />
@@ -1887,11 +1907,11 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         )}
 
         {theme === 'night' && (
-          <Stars radius={110} depth={50} count={mobile ? 800 : 1700} factor={3.4} saturation={0.4} fade speed={0.9} />
+          <Stars radius={120} depth={50} count={mobile ? 650 : 1300} factor={3.4} saturation={0.4} fade speed={0.9} />
         )}
         {theme === 'night' && <ShootingStar />}
         <Celestial theme={theme} />
-        <Sparkles count={mobile ? 20 : 40} scale={[78, 10, 78]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2} speed={0.3} color={theme === 'night' ? '#39ff88' : '#ffffff'} />
+        <Sparkles count={mobile ? 16 : 30} scale={[94, 10, 94]} position={[LOOP_CENTER.x, 4, LOOP_CENTER.z]} size={2} speed={0.3} color={theme === 'night' ? '#39ff88' : '#ffffff'} />
 
         <VoxelTerrain mobile={mobile} theme={theme} />
 
