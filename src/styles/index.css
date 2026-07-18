@@ -136,13 +136,20 @@
   }
   .skill-fill { @apply h-full; }
 
-  /* Glowing checkpoint pulse for HTML markers */
+  /* Glowing checkpoint pulse for HTML markers. Animated filters force a
+     repaint every frame — phones get a static glow instead (lag-free). */
   .checkpoint-glow {
     animation: cp-pulse 1.8s ease-in-out infinite;
   }
   @keyframes cp-pulse {
     0%, 100% { filter: drop-shadow(0 0 4px var(--neon)); }
     50% { filter: drop-shadow(0 0 14px var(--neon)); }
+  }
+  @media (max-width: 640px), (pointer: coarse) {
+    .checkpoint-glow {
+      animation: none;
+      filter: drop-shadow(0 0 6px var(--neon));
+    }
   }
 
   /* Blinking PRESS START */

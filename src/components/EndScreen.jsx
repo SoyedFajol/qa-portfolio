@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useUiStore } from '../store/useUiStore'
 import { sfx } from '../game/sfx'
@@ -10,17 +11,32 @@ export default function EndScreen() {
   const endOpen = useUiStore((s) => s.endOpen)
   const setEndOpen = useUiStore((s) => s.setEndOpen)
 
+  // lock the page while open so a stray swipe can't scroll the world behind
+  // the panel (and accidentally dismiss the ending mid-read)
+  useEffect(() => {
+    if (!endOpen) return
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [endOpen])
+
   function startAgain() {
     sfx.coin()
     trackEvent('loop_restarted')
+    // unlock BEFORE scrolling, and use the classic two-arg form — older
+    // mobile Safari throws on `behavior: 'instant'`, which made this button
+    // look dead on some phones
+    document.body.style.overflow = ''
+    window.scrollTo(0, 0)
     setEndOpen(false)
-    window.scrollTo({ top: 0, behavior: 'instant' })
   }
 
   return (
     <AnimatePresence>
       {endOpen && (
         <motion.div
+          data-ui=""
           className="fixed inset-0 z-40 flex items-center justify-center bg-night/80 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

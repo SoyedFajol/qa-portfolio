@@ -98,15 +98,24 @@ function GameWorld() {
 
   // Touch gestures: two-finger pinch zooms; a HORIZONTAL one-finger drag
   // looks left/right around the hero (vertical drags still scroll/walk).
+  // Touches that START on UI (buttons, dialogs, links) are left completely
+  // alone — a wobbly thumb tap must stay a tap, never become a camera drag.
   useEffect(() => {
     if (flatMode) return
     let lastDist = 0
     let start = null
     let mode = null // null | 'look'
+    let uiTouch = false
     let yaw0 = 0
     let pitch0 = 0
 
     function onTouchStart(e) {
+      if (e.target.closest('button, a, input, textarea, [role="dialog"], [data-ui]')) {
+        uiTouch = true
+        start = null
+        mode = null
+        return
+      }
       if (e.touches.length === 1) {
         start = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         mode = null
@@ -115,6 +124,7 @@ function GameWorld() {
       }
     }
     function onTouchMove(e) {
+      if (uiTouch) return
       if (e.touches.length === 2) {
         e.preventDefault()
         const d = Math.hypot(
@@ -144,6 +154,7 @@ function GameWorld() {
       if (e.touches.length === 0) {
         start = null
         mode = null
+        uiTouch = false
         look.active = false // rig eases the view back behind the hero
       }
     }
@@ -166,7 +177,7 @@ function GameWorld() {
     function onDown(e) {
       if (e.button !== 0) return
       // ignore drags starting on UI (buttons, overlays, links)
-      if (e.target.closest('button, a, input, textarea, [role="dialog"]')) return
+      if (e.target.closest('button, a, input, textarea, [role="dialog"], [data-ui]')) return
       start = { x: e.clientX, y: e.clientY }
       yaw0 = look.yaw
       pitch0 = look.pitch
