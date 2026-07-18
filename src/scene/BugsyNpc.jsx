@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { pathPoint } from './constants'
+import { pathPoint, CLIFF_T } from './constants'
 import { grantAchievement } from '../game/rewards'
 import { sfx } from '../game/sfx'
 
@@ -14,17 +14,30 @@ export default function BugsyNpc({ tRef }) {
   const wingL = useRef()
   const wingR = useRef()
   const spinStart = useRef(-1)
+  const fallY = useRef(0)
+  const fallVel = useRef(0)
   const [hover, setHover] = useState(false)
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!group.current) return
     const t = state.clock.elapsedTime
     // hover beside and slightly behind the hero, with a lazy figure-eight bob
-    const p = pathPoint(Math.max(0, tRef.current - 0.006))
+    const bt = Math.max(0, tRef.current - 0.006)
+    const p = pathPoint(bt)
     const side = 1.4 + Math.sin(t * 0.9) * 0.25
+    // loyal to the end: past the cliff Bugsy folds its wings and dives after
+    // the party (a ladybug CAN fly — it just refuses to be left out)
+    if (bt > CLIFF_T) {
+      fallVel.current += 20 * delta
+      fallY.current += fallVel.current * delta
+    } else if (fallY.current > 0 && bt < 0.5) {
+      fallY.current = 0
+      fallVel.current = 0
+      group.current.rotation.z = 0
+    }
     group.current.position.set(
       p.x + p.nx * side,
-      1.9 + Math.sin(t * 2.1) * 0.18,
+      1.9 + Math.sin(t * 2.1) * 0.18 - fallY.current,
       p.z + p.nz * side + Math.cos(t * 0.7) * 0.2
     )
     group.current.rotation.y = p.yaw + Math.sin(t * 0.9) * 0.2
@@ -39,6 +52,10 @@ export default function BugsyNpc({ tRef }) {
       } else {
         group.current.rotation.z = p * Math.PI * 2
       }
+    }
+    // tumble while diving (wins over any barrel roll in progress)
+    if (fallY.current > 0.01) {
+      group.current.rotation.z = Math.min(2.4, fallY.current * 0.35)
     }
 
     const flap = Math.sin(t * 18) * 0.6

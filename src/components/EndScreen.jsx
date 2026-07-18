@@ -3,13 +3,14 @@ import { useUiStore } from '../store/useUiStore'
 import { sfx } from '../game/sfx'
 import { trackEvent } from '../game/analytics'
 
-/** End-of-road bar: slides up after the cliff fall finishes. The lap only
- * restarts when the player presses START NOW (no more auto-respawn). */
+/** THE END screen: a centered panel that appears once the whole party —
+ * hero, Bugsy and the cat — has taken the final leap off the cliff. The lap
+ * only restarts when the player presses the button (no more auto-respawn). */
 export default function EndScreen() {
   const endOpen = useUiStore((s) => s.endOpen)
   const setEndOpen = useUiStore((s) => s.setEndOpen)
 
-  function startNow() {
+  function startAgain() {
     sfx.coin()
     trackEvent('loop_restarted')
     setEndOpen(false)
@@ -20,30 +21,62 @@ export default function EndScreen() {
     <AnimatePresence>
       {endOpen && (
         <motion.div
-          role="dialog"
-          aria-label="End of the road"
-          className="fixed inset-x-0 bottom-0 z-40 border-t-4 border-pix-yellow bg-night/95 px-4 pb-6 pt-5 text-center"
-          initial={{ y: 140 }}
-          animate={{ y: 0 }}
-          exit={{ y: 140 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+          className="fixed inset-0 z-40 flex items-center justify-center bg-night/80 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.35 }}
         >
-          <p className="font-pixel text-xs text-pix-yellow sm:text-sm">
-            🏁 THE END — LOOP COMPLETE!
-          </p>
-          <p className="mx-auto mt-2 max-w-md font-body text-xs text-ink-dim">
-            You walked the whole road and took the final leap. +25 XP lap bonus 🌀
-          </p>
-          <motion.button
-            className="pixel-btn press-start-blink mt-4 !border-pix-yellow !px-8 !py-3 !text-xs"
-            onClick={startNow}
-            autoFocus
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          <motion.div
+            role="dialog"
+            aria-label="The end — start again"
+            className="pixel-panel w-full max-w-md !border-pix-yellow text-center"
+            initial={{ scale: 0.85, y: 28 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 16 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 22 }}
           >
-            ▶ START NOW
-          </motion.button>
+            {/* the falling party, replayed as tiny sprites */}
+            <div aria-hidden="true" className="flex items-end justify-center gap-3 text-3xl">
+              <motion.span
+                animate={{ y: [0, -8, 0], rotate: [0, -14, 0] }}
+                transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
+              >
+                🐞
+              </motion.span>
+              <motion.span
+                className="text-4xl"
+                animate={{ y: [0, -12, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+              >
+                🏃
+              </motion.span>
+              <motion.span
+                animate={{ y: [0, -7, 0], rotate: [0, 12, 0] }}
+                transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut', delay: 0.3 }}
+              >
+                🐱
+              </motion.span>
+            </div>
+
+            <p className="mt-4 font-pixel text-sm text-pix-yellow sm:text-base">🏁 THE END</p>
+            <p className="mt-2 font-pixel text-[9px] leading-relaxed text-neon">LOOP COMPLETE — +25 XP LAP BONUS</p>
+            <p className="mx-auto mt-3 max-w-xs font-body text-xs leading-relaxed text-ink-dim">
+              The whole party took the leap — you, Bugsy and the cat. The road is
+              a circle: everything you unlocked stays yours.
+            </p>
+
+            <motion.button
+              className="pixel-btn press-start-blink mt-5 !border-pix-yellow !px-8 !py-4 !text-xs sm:!text-sm"
+              onClick={startAgain}
+              autoFocus
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            >
+              ▶ START FROM THE BEGINNING
+            </motion.button>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

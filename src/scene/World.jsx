@@ -1112,6 +1112,213 @@ function Park() {
   )
 }
 
+const GONDOLA_COLORS = ['#ff5d5d', '#ffd93d', '#39ff88', '#a06bff', '#4db3ff', '#ff8a3d', '#ff8fb0', '#e6e9ff']
+const WHEEL_R = 3.1
+
+/** 🎡 Fun in the open bands the bigger loop created: a ferris wheel on the
+ * playground side, a hot-air balloon overhead, kite-flying kids and a mango
+ * grove on the Round-1 meadow, and a rickshaw doing laps of the inner ring.
+ * Mobile keeps the two big-silhouette pieces (wheel + balloon). */
+function FunSpots({ mobile }) {
+  const wheel = useRef()
+  const gondolas = useRef([])
+  const balloon = useRef()
+  const rickshaw = useRef()
+  const kites = useRef([])
+
+  const wheelSpot = useMemo(() => circlePoint(0.49, 21), [])
+  const kiteSpots = useMemo(
+    () => [
+      { p: circlePoint(0.165, 30), shirt: '#ffd93d', kite: '#ff5d5d' },
+      { p: circlePoint(0.195, 29), shirt: '#39ff88', kite: '#a06bff' },
+    ],
+    []
+  )
+  // 🥭 the mango grove — Chapainawabganj comes to the meadow (1 draw call)
+  const grove = useMemo(() => {
+    const items = []
+    for (let i = 0; i < 5; i++) {
+      const p = circlePoint(0.065 + i * 0.012, 29 + seeded(i + 500) * 2.5)
+      const h = 1.1 + seeded(i + 501) * 0.5
+      items.push({ pos: [p.x, h / 2, p.z], scale: [0.16, h, 0.16], color: '#6b4f2a' })
+      items.push({ pos: [p.x, h + 0.5, p.z], scale: [1.15, 1.0, 1.15], color: '#2c8f55' })
+      items.push({ pos: [p.x + 0.35, h + 0.28, p.z + 0.3], scale: [0.16, 0.16, 0.16], color: '#ff8a3d' })
+      items.push({ pos: [p.x - 0.3, h + 0.18, p.z - 0.25], scale: [0.16, 0.16, 0.16], color: '#ffd93d' })
+    }
+    return items
+  }, [])
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime
+    // the wheel turns; gondolas ride the rim but stay level
+    const spin = t * 0.28
+    if (wheel.current) wheel.current.rotation.z = spin
+    gondolas.current.forEach((g, i) => {
+      if (!g) return
+      const a = spin + (i / GONDOLA_COLORS.length) * TAU
+      g.position.set(-Math.sin(a) * WHEEL_R, 4.1 + Math.cos(a) * WHEEL_R, 0)
+    })
+    // the balloon drifts a lazy circle over the meadow
+    if (balloon.current) {
+      const p = circlePoint((t * 0.006) % 1, 27)
+      balloon.current.position.set(p.x, 11.5 + Math.sin(t * 0.5) * 0.8, p.z)
+      balloon.current.rotation.y = t * 0.05
+    }
+    // the rickshaw laps the inner ring against the flow of the cars
+    if (rickshaw.current) {
+      const p = circlePoint(1 - ((t * 0.0075) % 1), 32)
+      rickshaw.current.position.set(p.x, 0, p.z)
+      rickshaw.current.rotation.y = p.yaw + Math.PI
+    }
+    // kites tug at their strings in the wind
+    kites.current.forEach((k, i) => {
+      if (k) k.rotation.z = Math.sin(t * (0.7 + i * 0.2) + i * 2) * 0.2
+    })
+  })
+
+  return (
+    <group>
+      {/* 🎡 ferris wheel */}
+      <group position={[wheelSpot.x, 0, wheelSpot.z]} rotation={[0, wheelSpot.yaw, 0]}>
+        {[-1, 1].map((s) => (
+          <mesh key={s} position={[0, 2.05, s * 0.55]} rotation={[s * 0.24, 0, 0]}>
+            <boxGeometry args={[0.24, 4.4, 0.24]} />
+            <meshStandardMaterial color="#232e63" />
+          </mesh>
+        ))}
+        <group position={[0, 4.1, 0]}>
+          <mesh>
+            <boxGeometry args={[0.32, 0.32, 0.55]} />
+            <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.45} />
+          </mesh>
+          <group ref={wheel}>
+            {[0, 1, 2, 3].map((i) => (
+              <mesh key={i} rotation={[0, 0, (i / 4) * Math.PI]}>
+                <boxGeometry args={[0.09, WHEEL_R * 2, 0.09]} />
+                <meshStandardMaterial color="#c0c6e8" emissive="#c0c6e8" emissiveIntensity={0.15} />
+              </mesh>
+            ))}
+          </group>
+        </group>
+        {GONDOLA_COLORS.map((c, i) => (
+          <group key={c} ref={(el) => (gondolas.current[i] = el)}>
+            <mesh position={[0, -0.2, 0]}>
+              <boxGeometry args={[0.44, 0.38, 0.36]} />
+              <meshStandardMaterial color={c} emissive={c} emissiveIntensity={0.3} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* 🎈 hot-air balloon */}
+      <group ref={balloon}>
+        <mesh position={[0, 0.25, 0]}>
+          <boxGeometry args={[0.6, 0.5, 0.6]} />
+          <meshStandardMaterial color="#6b4f2a" />
+        </mesh>
+        {[[-0.24, -0.24], [0.24, -0.24], [-0.24, 0.24], [0.24, 0.24]].map(([x, z], i) => (
+          <mesh key={i} position={[x, 1.05, z]}>
+            <boxGeometry args={[0.04, 1.2, 0.04]} />
+            <meshStandardMaterial color="#c0c6e8" />
+          </mesh>
+        ))}
+        <mesh position={[0, 1.95, 0]}>
+          <boxGeometry args={[1.05, 0.6, 1.05]} />
+          <meshStandardMaterial color="#ff8a3d" emissive="#ff8a3d" emissiveIntensity={0.18} />
+        </mesh>
+        <mesh position={[0, 2.95, 0]}>
+          <boxGeometry args={[1.85, 1.5, 1.85]} />
+          <meshStandardMaterial color="#ff5d5d" emissive="#ff5d5d" emissiveIntensity={0.18} />
+        </mesh>
+        <mesh position={[0, 3.95, 0]}>
+          <boxGeometry args={[1.2, 0.55, 1.2]} />
+          <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.18} />
+        </mesh>
+      </group>
+
+      {!mobile && (
+        <>
+          {/* 🪁 kite kids on the meadow */}
+          {kiteSpots.map(({ p, shirt, kite }, i) => (
+            <group key={i} position={[p.x, 0, p.z]} rotation={[0, seeded(i + 600) * TAU, 0]}>
+              <mesh position={[0, 0.15, 0]}>
+                <boxGeometry args={[0.2, 0.3, 0.15]} />
+                <meshStandardMaterial color="#22306e" />
+              </mesh>
+              <mesh position={[0, 0.5, 0]}>
+                <boxGeometry args={[0.34, 0.42, 0.22]} />
+                <meshStandardMaterial color={shirt} />
+              </mesh>
+              <mesh position={[0, 0.85, 0]}>
+                <boxGeometry args={[0.26, 0.26, 0.24]} />
+                <meshStandardMaterial color="#e8b17e" />
+              </mesh>
+              {/* string + kite sway together around the kid's hand */}
+              <group ref={(el) => (kites.current[i] = el)}>
+                <mesh position={[0.55, 2.1, 0]} rotation={[0, 0, -0.39]}>
+                  <boxGeometry args={[0.025, 2.5, 0.025]} />
+                  <meshStandardMaterial color="#e6e9ff" transparent opacity={0.7} />
+                </mesh>
+                <mesh position={[1.0, 3.3, 0]} rotation={[0, 0, Math.PI / 4]}>
+                  <boxGeometry args={[0.55, 0.55, 0.04]} />
+                  <meshStandardMaterial color={kite} emissive={kite} emissiveIntensity={0.25} />
+                </mesh>
+                <mesh position={[0.82, 2.85, 0]} rotation={[0, 0, 0.5]}>
+                  <boxGeometry args={[0.12, 0.12, 0.03]} />
+                  <meshStandardMaterial color="#ffd93d" />
+                </mesh>
+                <mesh position={[0.7, 2.62, 0]} rotation={[0, 0, -0.4]}>
+                  <boxGeometry args={[0.1, 0.1, 0.03]} />
+                  <meshStandardMaterial color="#e6e9ff" />
+                </mesh>
+              </group>
+            </group>
+          ))}
+
+          <Boxes items={grove} />
+
+          {/* 🛺 the rickshaw — no Bangladeshi city is complete without one */}
+          <group ref={rickshaw}>
+            <mesh position={[0, 0.38, 0]}>
+              <boxGeometry args={[0.7, 0.08, 1.35]} />
+              <meshStandardMaterial color="#181c33" />
+            </mesh>
+            <mesh position={[0, 0.62, -0.3]}>
+              <boxGeometry args={[0.62, 0.4, 0.4]} />
+              <meshStandardMaterial color="#4db3ff" />
+            </mesh>
+            {/* the hand-painted hood */}
+            <mesh position={[0, 1.05, -0.42]} rotation={[-0.35, 0, 0]}>
+              <boxGeometry args={[0.68, 0.5, 0.08]} />
+              <meshStandardMaterial color="#ff5d5d" emissive="#ff5d5d" emissiveIntensity={0.15} />
+            </mesh>
+            <mesh position={[0, 1.28, -0.28]}>
+              <boxGeometry args={[0.7, 0.08, 0.5]} />
+              <meshStandardMaterial color="#ffd93d" emissive="#ffd93d" emissiveIntensity={0.2} />
+            </mesh>
+            {/* saddle + handlebar for the (invisible, resting) driver */}
+            <mesh position={[0, 0.66, 0.3]}>
+              <boxGeometry args={[0.16, 0.1, 0.16]} />
+              <meshStandardMaterial color="#6b4f2a" />
+            </mesh>
+            <mesh position={[0, 0.78, 0.58]}>
+              <boxGeometry args={[0.5, 0.06, 0.06]} />
+              <meshStandardMaterial color="#c0c6e8" />
+            </mesh>
+            {/* wheels: two back, one front */}
+            {[[-0.38, -0.35], [0.38, -0.35], [0, 0.6]].map(([x, z], i) => (
+              <mesh key={i} position={[x, 0.28, z]} rotation={[0, 0, Math.PI / 2]}>
+                <cylinderGeometry args={[0.28, 0.28, 0.06, 12]} />
+                <meshStandardMaterial color="#232e63" />
+              </mesh>
+            ))}
+          </group>
+        </>
+      )}
+    </group>
+  )
+}
+
 /** ⚽ Camp Nou — a voxel homage to Barcelona's cathedral of football,
  * standing outside the loop where Round 2 begins. Blaugrana tiers, green
  * pitch, four floodlight towers and a crowd of sparkles. */
@@ -1924,6 +2131,7 @@ export default function World({ progressRef, visitedIds, onOpenSection }) {
         ))}
         <Garden />
         <Park />
+        <FunSpots mobile={mobile} />
         <Beach />
         <Stadium />
         <Nature mobile={mobile} />

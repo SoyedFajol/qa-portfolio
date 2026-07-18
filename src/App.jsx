@@ -239,9 +239,50 @@ function GameWorld() {
   )
 }
 
+/** Hold-to-walk arrow for the left thumb: presses scroll the journey at a
+ * steady rate, so phone players can walk without swiping. Releasing (or the
+ * finger sliding off) stops cleanly. */
+function WalkButton({ dir, className, children, label }) {
+  const raf = useRef(0)
+  const last = useRef(0)
+
+  useEffect(() => () => cancelAnimationFrame(raf.current), [])
+
+  function start() {
+    sfx.blip()
+    cancelAnimationFrame(raf.current)
+    last.current = performance.now()
+    const step = (now) => {
+      const dt = Math.min(50, now - last.current) // clamp hiccup frames
+      last.current = now
+      window.scrollBy(0, dir * dt * 0.42) // ~420 px/s of journey
+      raf.current = requestAnimationFrame(step)
+    }
+    raf.current = requestAnimationFrame(step)
+  }
+  function stop() {
+    cancelAnimationFrame(raf.current)
+  }
+
+  return (
+    <button
+      className={`flex select-none flex-col items-center justify-center border-4 bg-panel/90 font-pixel shadow-[4px_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-0.5 ${className}`}
+      style={{ touchAction: 'none' }}
+      onPointerDown={start}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      onContextMenu={(e) => e.preventDefault()}
+      aria-label={label}
+    >
+      {children}
+    </button>
+  )
+}
+
 /** Touch controls for phone players (most visitors): tilt-to-look GYRO,
  * zoom the city in/out and a thumb-sized JUMP — stacked in the right-thumb
- * zone. (Desktop needs no toggle: the pointer parallax is always on.) */
+ * zone, plus hold-to-walk arrows for the left thumb. */
 function TouchControls() {
   const isTouch =
     typeof window !== 'undefined' &&
@@ -269,7 +310,19 @@ function TouchControls() {
   }
 
   return (
-    <div className="fixed bottom-24 right-3 z-20 flex flex-col items-end gap-2">
+    <>
+      {/* left thumb: walk forward / backward */}
+      <div className="fixed bottom-24 left-3 z-20 flex flex-col items-start gap-2">
+        <WalkButton dir={1} label="Walk forward" className="h-16 w-14 border-neon text-[10px] leading-tight text-neon">
+          <span className="text-[15px]">▲</span>
+          GO
+        </WalkButton>
+        <WalkButton dir={-1} label="Walk backward" className="h-12 w-14 border-panel-2 text-[13px] text-ink-dim">
+          ▼
+        </WalkButton>
+      </div>
+
+      <div className="fixed bottom-24 right-3 z-20 flex flex-col items-end gap-2">
       <button
         className={`flex h-11 w-11 flex-col items-center justify-center border-4 bg-panel/90 font-pixel text-[7px] leading-tight shadow-[3px_3px_0_0_rgba(0,0,0,0.45)] active:translate-y-0.5 ${
           gyroOn ? 'border-pix-yellow text-pix-yellow' : 'border-neon text-neon'
@@ -312,7 +365,8 @@ function TouchControls() {
       >
         ⤒ JUMP
       </button>
-    </div>
+      </div>
+    </>
   )
 }
 

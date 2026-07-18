@@ -35,7 +35,6 @@ src/
   store/        zustand game store (persisted save)
   data/         re-exports of lib/profile for frontend imports
   styles/       Tailwind + palette CSS variables
-docs/           Master Prompt, team protocol, document suite D1–D10, task log
 tests/          vitest unit suite
 ```
 

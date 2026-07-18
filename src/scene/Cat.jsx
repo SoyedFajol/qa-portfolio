@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { pathPoint } from './constants'
+import { pathPoint, CLIFF_T } from './constants'
 import { sfx } from '../game/sfx'
 
 const FUR = '#f4f6ff' // white cat
@@ -21,6 +21,8 @@ export default function Cat({ tRef, speedRef }) {
   const legs = useRef([])
   const hopVel = useRef(0)
   const hopY = useRef(0)
+  const fallY = useRef(0)
+  const fallVel = useRef(0)
   const [hover, setHover] = useState(false)
 
   function poke(e) {
@@ -36,7 +38,8 @@ export default function Cat({ tRef, speedRef }) {
     const walking = speed > 0.02
 
     // trot slightly behind the hero, on the inner side of the road
-    const p = pathPoint(Math.max(0, tRef.current - 0.0045))
+    const ct = Math.max(0, tRef.current - 0.0045)
+    const p = pathPoint(ct)
     const side = -1.35 - Math.sin(time * 0.7) * 0.15
     // happy hop physics
     if (hopVel.current !== 0 || hopY.current > 0) {
@@ -44,7 +47,17 @@ export default function Cat({ tRef, speedRef }) {
       hopVel.current -= 14 * delta
       if (hopY.current === 0 && hopVel.current < 0) hopVel.current = 0
     }
-    group.current.position.set(p.x + p.nx * side, hopY.current, p.z + p.nz * side)
+    // the whole party takes the leap: past the cliff the cat tumbles too
+    if (ct > CLIFF_T) {
+      fallVel.current += 22 * delta
+      fallY.current += fallVel.current * delta
+      group.current.rotation.z = Math.min(1.2, fallY.current * 0.22)
+    } else if (fallY.current > 0 && ct < 0.5) {
+      fallY.current = 0
+      fallVel.current = 0
+      group.current.rotation.z = 0
+    }
+    group.current.position.set(p.x + p.nx * side, hopY.current - fallY.current, p.z + p.nz * side)
     group.current.rotation.y = p.yaw
 
     if (walking) {

@@ -8,5 +8,12 @@ coverage
 *.log
 .DS_Store
 
+# local working files — this is a public repo; only raw code + basic docs
+# (README) are shared. Internal prompts, protocols, document suite, task log
+# and Claude skills/settings stay on this machine.
+docs/
+.claude/
+SKILL.md
+
 .vercel
 .env*
